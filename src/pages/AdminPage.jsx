@@ -14,6 +14,7 @@ export default function AdminPage() {
   const [currentPage, setCurrentPage] = useState(location.state?.page ?? 0);
   const [totalPages, setTotalPages] = useState(0);
   const [totalElements, setTotalElements] = useState(0);
+  const [isInitialLoad, setIsInitialLoad] = useState(true);
 
   const currentUserId = getTokenPayload()?.userId;
 
@@ -32,8 +33,20 @@ export default function AdminPage() {
 
   useEffect(() => {
     if (!isAdmin()) { navigate('/forbidden'); return; }
-    fetchUsers(location.state?.page ?? 0, location.state?.keyword ?? keyword);
+    const initPage = location.state?.page ?? 0;
+    const initKeyword = location.state?.keyword ?? '';
+    fetchUsers(initPage, initKeyword);
+    setTimeout(() => setIsInitialLoad(false), 100);
   }, [navigate]);
+
+  // 검색어 변경 시 디바운스 (초기 로드 시엔 스킵)
+  useEffect(() => {
+    if (isInitialLoad) return;
+    const timer = setTimeout(() => {
+      fetchUsers(0, keyword);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [keyword]);
 
   const handleDelete = async (id, username) => {
     if (!window.confirm(`'${username}' 회원을 삭제하시겠습니까?`)) return;
