@@ -6,6 +6,8 @@ import MyPage from './pages/MyPage';
 import AdminPage from './pages/AdminPage';
 import ForbiddenPage from './pages/ForbiddenPage';
 
+import AdminUserDetailPage from './pages/AdminUserDetailPage';
+
 function App() {
   return (
     <BrowserRouter>
@@ -16,6 +18,7 @@ function App() {
         <Route path="/home" element={<HomePage />} />
         <Route path="/mypage" element={<MyPage />} />
         <Route path="/admin" element={<AdminPage />} />
+        <Route path="/admin/users/:id" element={<AdminUserDetailPage />} />
         <Route path="/forbidden" element={<ForbiddenPage />} />
       </Routes>
     </BrowserRouter>

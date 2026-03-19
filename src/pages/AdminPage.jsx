@@ -147,8 +147,11 @@ export default function AdminPage() {
                       <tr key={u.id} className="border-t border-gray-50 hover:bg-gray-50">
                         <td className="px-4 py-3 text-sm text-gray-500">{u.id}</td>
                         <td className="px-4 py-3 text-sm font-semibold text-gray-700">
-                          {u.username}
-                          {isMe && <span className="ml-1 text-xs text-blue-400">(나)</span>}
+                          <button onClick={() => navigate(`/admin/users/${u.id}`)}
+                            className="hover:text-blue-500 hover:underline transition-colors text-left">
+                            {u.username}
+                            {isMe && <span className="ml-1 text-xs text-blue-400">(나)</span>}
+                          </button>
                         </td>
                         <td className="px-4 py-3 text-sm text-gray-600">{u.email}</td>
                         <td className="px-4 py-3">
