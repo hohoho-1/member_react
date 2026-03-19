@@ -1,11 +1,12 @@
 import { useEffect, useState, useRef } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams, useLocation } from 'react-router-dom';
 import { authFetch, isAdmin, getTokenPayload } from '../utils/authFetch';
 
 const PAGE_SIZE = 5;
 
 export default function AdminPage() {
   const navigate = useNavigate();
+  const location = useLocation();
   const [searchParams, setSearchParams] = useSearchParams();
 
   const [users, setUsers] = useState([]);
@@ -38,17 +39,19 @@ export default function AdminPage() {
     setLoading(false);
   };
 
-  // 최초 로드: URL 파라미터에서 page, keyword 읽어서 시작
+  // URL 파라미터 변경 시 데이터 로드 (새로고침/뒤로가기 포함)
   useEffect(() => {
     if (!isAdmin()) { navigate('/forbidden'); return; }
     const page = parseInt(searchParams.get('page') ?? '0');
     const kw = searchParams.get('keyword') ?? '';
+    setKeyword(kw);
     fetchUsers(page, kw);
-  }, []);
+    isFirstRender.current = false;
+  }, [location.search]);
 
-  // 검색어 변경 시 디바운스 (첫 렌더링 제외)
+  // 검색어 입력 시 디바운스 (첫 렌더링 제외)
   useEffect(() => {
-    if (isFirstRender.current) { isFirstRender.current = false; return; }
+    if (isFirstRender.current) return;
     const timer = setTimeout(() => fetchUsers(0, keyword), 300);
     return () => clearTimeout(timer);
   }, [keyword]);
