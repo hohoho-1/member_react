@@ -16,9 +16,9 @@ export default function AdminPage() {
 
   const currentUserId = getTokenPayload()?.userId;
 
-  const fetchUsers = async (page = 0) => {
+  const fetchUsers = async (page = 0, search = keyword) => {
     setLoading(true);
-    const res = await authFetch(`/api/users/admin/users?page=${page}&size=${PAGE_SIZE}`);
+    const res = await authFetch(`/api/users/admin/users?page=${page}&size=${PAGE_SIZE}&keyword=${encodeURIComponent(search)}`);
     if (res.ok) {
       const data = await res.json();
       setUsers(data.users);
@@ -68,11 +68,15 @@ export default function AdminPage() {
     setTimeout(() => setErrorMsg(''), 3000);
   };
 
-  // 검색은 현재 페이지 내에서만
-  const filtered = users.filter(u =>
-    u.username.toLowerCase().includes(keyword.toLowerCase()) ||
-    u.email.toLowerCase().includes(keyword.toLowerCase())
-  );
+  // 검색어 변경 시 디바운스 처리
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      fetchUsers(0, keyword);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [keyword]);
+
+  const filtered = users;
 
   const adminCount = users.filter(u => u.role === 'ROLE_ADMIN').length;
 
