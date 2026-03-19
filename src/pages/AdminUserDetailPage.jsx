@@ -111,7 +111,15 @@ export default function AdminUserDetailPage() {
               {user.role === 'ROLE_ADMIN' ? '관리자' : '일반회원'}
             </span>
           </div>
-          <p className="text-xs text-gray-400">ID: {user.id} {isMe && <span className="text-blue-400">(현재 로그인 중인 계정)</span>}</p>
+          <div className="grid grid-cols-2 gap-2 text-xs text-gray-500 mt-2 border-t border-gray-200 pt-2">
+            <p>ID: <span className="font-medium text-gray-700">{user.id}</span></p>
+            <p>로그인 횟수: <span className="font-medium text-gray-700">{user.loginCount}회</span></p>
+            <p>가입일: <span className="font-medium text-gray-700">{user.createdAt ? new Date(user.createdAt).toLocaleDateString('ko-KR') : '-'}</span></p>
+            <p>최종 로그인: <span className="font-medium text-gray-700">{user.lastLoginAt ? new Date(user.lastLoginAt).toLocaleString('ko-KR') : '-'}</span></p>
+            <p>수정일: <span className="font-medium text-gray-700">{user.updatedAt ? new Date(user.updatedAt).toLocaleString('ko-KR') : '-'}</span></p>
+            {user.isDeleted && <p className="text-red-500">탈퇴일: <span className="font-medium">{new Date(user.deletedAt).toLocaleDateString('ko-KR')}</span></p>}
+          </div>
+          {isMe && <p className="text-xs text-blue-400 mt-2">(현재 로그인 중인 계정)</p>}
         </div>
 
         {/* 수정 폼 */}
