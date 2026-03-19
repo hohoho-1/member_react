@@ -1,33 +1,29 @@
-import { useEffect, useState } from 'react';
-import { useNavigate, useLocation, useSearchParams } from 'react-router-dom';
+import { useEffect, useState, useRef } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { authFetch, isAdmin, getTokenPayload } from '../utils/authFetch';
 
 const PAGE_SIZE = 5;
 
 export default function AdminPage() {
   const navigate = useNavigate();
-  const location = useLocation();
   const [searchParams, setSearchParams] = useSearchParams();
 
-  const initPage = parseInt(searchParams.get('page') ?? '0');
-  const initKeyword = searchParams.get('keyword') ?? '';
-
   const [users, setUsers] = useState([]);
-  const [keyword, setKeyword] = useState(initKeyword);
   const [loading, setLoading] = useState(true);
   const [errorMsg, setErrorMsg] = useState('');
-  const [currentPage, setCurrentPage] = useState(initPage);
   const [totalPages, setTotalPages] = useState(0);
   const [totalElements, setTotalElements] = useState(0);
-  const [isInitialLoad, setIsInitialLoad] = useState(true);
+  const [currentPage, setCurrentPage] = useState(parseInt(searchParams.get('page') ?? '0'));
+  const [keyword, setKeyword] = useState(searchParams.get('keyword') ?? '');
 
   const currentUserId = getTokenPayload()?.userId;
+  const isFirstRender = useRef(true);
 
-  const fetchUsers = async (page = 0, search = keyword) => {
+  const fetchUsers = async (page, search) => {
     setLoading(true);
-    // URL에 페이지/검색어 반영
+    // URL 파라미터 업데이트
     const params = {};
-    if (page > 0) params.page = page;
+    if (page > 0) params.page = String(page);
     if (search) params.keyword = search;
     setSearchParams(params, { replace: true });
 
@@ -42,20 +38,18 @@ export default function AdminPage() {
     setLoading(false);
   };
 
+  // 최초 로드: URL 파라미터에서 page, keyword 읽어서 시작
   useEffect(() => {
     if (!isAdmin()) { navigate('/forbidden'); return; }
-    const initPage = location.state?.page ?? 0;
-    const initKeyword = location.state?.keyword ?? '';
-    fetchUsers(initPage, initKeyword);
-    setTimeout(() => setIsInitialLoad(false), 100);
-  }, [navigate]);
+    const page = parseInt(searchParams.get('page') ?? '0');
+    const kw = searchParams.get('keyword') ?? '';
+    fetchUsers(page, kw);
+  }, []);
 
-  // 검색어 변경 시 디바운스 (초기 로드 시엔 스킵)
+  // 검색어 변경 시 디바운스 (첫 렌더링 제외)
   useEffect(() => {
-    if (isInitialLoad) return;
-    const timer = setTimeout(() => {
-      fetchUsers(0, keyword);
-    }, 300);
+    if (isFirstRender.current) { isFirstRender.current = false; return; }
+    const timer = setTimeout(() => fetchUsers(0, keyword), 300);
     return () => clearTimeout(timer);
   }, [keyword]);
 
@@ -63,9 +57,8 @@ export default function AdminPage() {
     if (!window.confirm(`'${username}' 회원을 삭제하시겠습니까?`)) return;
     const res = await authFetch(`/api/users/admin/users/${id}`, { method: 'DELETE' });
     if (res.ok) {
-      // 현재 페이지 새로고침 (마지막 항목 삭제 시 이전 페이지로)
       const newPage = users.length === 1 && currentPage > 0 ? currentPage - 1 : currentPage;
-      fetchUsers(newPage);
+      fetchUsers(newPage, keyword);
     } else {
       const data = await res.json();
       showError(data.message || '삭제에 실패했습니다.');
@@ -80,9 +73,8 @@ export default function AdminPage() {
       method: 'PATCH',
       body: JSON.stringify({ role: newRole })
     });
-    if (res.ok) {
-      fetchUsers(currentPage);
-    } else {
+    if (res.ok) fetchUsers(currentPage, keyword);
+    else {
       const data = await res.json();
       showError(data.message || '권한 변경에 실패했습니다.');
     }
@@ -93,19 +85,7 @@ export default function AdminPage() {
     setTimeout(() => setErrorMsg(''), 3000);
   };
 
-  // 검색어 변경 시 디바운스 처리
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      fetchUsers(0, keyword);
-    }, 300);
-    return () => clearTimeout(timer);
-  }, [keyword]);
-
-  const filtered = users;
-
   const adminCount = users.filter(u => u.role === 'ROLE_ADMIN').length;
-
-  // 페이지 번호 배열 생성
   const pageNumbers = Array.from({ length: totalPages }, (_, i) => i);
 
   return (
@@ -119,27 +99,22 @@ export default function AdminPage() {
           </button>
         </div>
 
-        {/* 에러 메시지 */}
         {errorMsg && (
           <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl mb-4 text-sm text-center">
             ⚠️ {errorMsg}
           </div>
         )}
 
-        {/* 통계 */}
         <div className="bg-white rounded-2xl shadow p-6 mb-6 text-center">
           <p className="text-4xl font-bold text-blue-500">{totalElements}</p>
           <p className="text-sm text-gray-400 mt-1">전체 회원 수</p>
         </div>
 
-        {/* 회원 목록 */}
         <div className="bg-white rounded-2xl shadow overflow-hidden">
           <div className="flex justify-between items-center px-6 py-4 border-b border-gray-100">
             <span className="font-semibold text-gray-700">
               전체 회원 목록
-              <span className="ml-2 text-sm text-gray-400">
-                ({currentPage + 1} / {totalPages} 페이지)
-              </span>
+              <span className="ml-2 text-sm text-gray-400">({currentPage + 1} / {totalPages} 페이지)</span>
             </span>
             <input
               type="text" placeholder="🔍 이름 또는 이메일 검색"
@@ -161,18 +136,18 @@ export default function AdminPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {filtered.length === 0 ? (
+                  {users.length === 0 ? (
                     <tr><td colSpan="5" className="text-center py-10 text-gray-400">회원이 없습니다.</td></tr>
-                  ) : filtered.map(u => {
+                  ) : users.map(u => {
                     const isMe = u.id === currentUserId;
                     const isLastAdmin = u.role === 'ROLE_ADMIN' && adminCount <= 1;
                     const canChangeRole = !isMe && !isLastAdmin;
-
                     return (
                       <tr key={u.id} className="border-t border-gray-50 hover:bg-gray-50">
                         <td className="px-4 py-3 text-sm text-gray-500">{u.id}</td>
                         <td className="px-4 py-3 text-sm font-semibold text-gray-700">
-                          <button onClick={() => navigate(`/admin/users/${u.id}?from=${currentPage}${keyword ? '&keyword=' + encodeURIComponent(keyword) : ''}`)}
+                          <button
+                            onClick={() => navigate(`/admin/users/${u.id}?from=${currentPage}${keyword ? '&keyword=' + encodeURIComponent(keyword) : ''}`)}
                             className="hover:text-blue-500 hover:underline transition-colors text-left">
                             {u.username}
                             {isMe && <span className="ml-1 text-xs text-blue-400">(나)</span>}
@@ -186,25 +161,14 @@ export default function AdminPage() {
                         </td>
                         <td className="px-4 py-3">
                           <div className="flex gap-2">
-                            <button
-                              onClick={() => canChangeRole && handleRoleChange(u.id, u.role)}
-                              disabled={!canChangeRole}
+                            <button onClick={() => canChangeRole && handleRoleChange(u.id, u.role)} disabled={!canChangeRole}
                               title={isMe ? '자신의 권한은 변경할 수 없습니다' : isLastAdmin ? '마지막 관리자는 강등할 수 없습니다' : ''}
-                              className={`px-3 py-1 rounded-lg text-xs transition-colors ${
-                                !canChangeRole ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                                  : u.role === 'ROLE_ADMIN' ? 'bg-pink-50 hover:bg-pink-100 text-pink-600'
-                                  : 'bg-purple-50 hover:bg-purple-100 text-purple-600'
-                              }`}>
+                              className={`px-3 py-1 rounded-lg text-xs transition-colors ${!canChangeRole ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : u.role === 'ROLE_ADMIN' ? 'bg-pink-50 hover:bg-pink-100 text-pink-600' : 'bg-purple-50 hover:bg-purple-100 text-purple-600'}`}>
                               {u.role === 'ROLE_ADMIN' ? '→ 일반' : '→ 관리자'}
                             </button>
-                            <button
-                              onClick={() => !isMe && handleDelete(u.id, u.username)}
-                              disabled={isMe}
+                            <button onClick={() => !isMe && handleDelete(u.id, u.username)} disabled={isMe}
                               title={isMe ? '자신은 삭제할 수 없습니다' : ''}
-                              className={`px-3 py-1 rounded-lg text-xs transition-colors ${
-                                isMe ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                                  : 'bg-red-50 hover:bg-red-100 text-red-600'
-                              }`}>
+                              className={`px-3 py-1 rounded-lg text-xs transition-colors ${isMe ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : 'bg-red-50 hover:bg-red-100 text-red-600'}`}>
                               삭제
                             </button>
                           </div>
@@ -215,37 +179,17 @@ export default function AdminPage() {
                 </tbody>
               </table>
 
-              {/* 페이지네이션 */}
               <div className="flex justify-center items-center gap-1 px-6 py-4 border-t border-gray-100">
-                {/* 이전 버튼 */}
-                <button
-                  onClick={() => fetchUsers(currentPage - 1)}
-                  disabled={currentPage === 0}
-                  className="px-3 py-1.5 rounded-lg text-sm font-medium transition-colors disabled:text-gray-300 disabled:cursor-not-allowed text-gray-500 hover:bg-gray-100">
-                  ‹
-                </button>
-
-                {/* 페이지 번호 */}
+                <button onClick={() => fetchUsers(currentPage - 1, keyword)} disabled={currentPage === 0}
+                  className="px-3 py-1.5 rounded-lg text-sm font-medium transition-colors disabled:text-gray-300 disabled:cursor-not-allowed text-gray-500 hover:bg-gray-100">‹</button>
                 {pageNumbers.map(num => (
-                  <button
-                    key={num}
-                    onClick={() => fetchUsers(num)}
-                    className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
-                      num === currentPage
-                        ? 'bg-blue-500 text-white'
-                        : 'text-gray-500 hover:bg-gray-100'
-                    }`}>
+                  <button key={num} onClick={() => fetchUsers(num, keyword)}
+                    className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${num === currentPage ? 'bg-blue-500 text-white' : 'text-gray-500 hover:bg-gray-100'}`}>
                     {num + 1}
                   </button>
                 ))}
-
-                {/* 다음 버튼 */}
-                <button
-                  onClick={() => fetchUsers(currentPage + 1)}
-                  disabled={currentPage >= totalPages - 1}
-                  className="px-3 py-1.5 rounded-lg text-sm font-medium transition-colors disabled:text-gray-300 disabled:cursor-not-allowed text-gray-500 hover:bg-gray-100">
-                  ›
-                </button>
+                <button onClick={() => fetchUsers(currentPage + 1, keyword)} disabled={currentPage >= totalPages - 1}
+                  className="px-3 py-1.5 rounded-lg text-sm font-medium transition-colors disabled:text-gray-300 disabled:cursor-not-allowed text-gray-500 hover:bg-gray-100">›</button>
               </div>
             </>
           )}
