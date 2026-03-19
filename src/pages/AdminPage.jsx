@@ -1,67 +1,63 @@
-import { useEffect, useState, useRef } from 'react';
-import { useNavigate, useSearchParams, useLocation } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { authFetch, isAdmin, getTokenPayload } from '../utils/authFetch';
 
 const PAGE_SIZE = 5;
 
 export default function AdminPage() {
   const navigate = useNavigate();
-  const location = useLocation();
   const [searchParams, setSearchParams] = useSearchParams();
-
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [errorMsg, setErrorMsg] = useState('');
   const [totalPages, setTotalPages] = useState(0);
   const [totalElements, setTotalElements] = useState(0);
-  const [currentPage, setCurrentPage] = useState(parseInt(searchParams.get('page') ?? '0'));
-  const [keyword, setKeyword] = useState(searchParams.get('keyword') ?? '');
+
+  // URL 파라미터가 진실의 원천 (source of truth)
+  const currentPage = parseInt(searchParams.get('page') ?? '0');
+  const keyword = searchParams.get('keyword') ?? '';
 
   const currentUserId = getTokenPayload()?.userId;
-  const isFirstRender = useRef(true);
 
-  const fetchUsers = async (page, search) => {
+  // URL 파라미터가 바뀔 때마다 데이터 로드 (새로고침/뒤로가기 포함)
+  useEffect(() => {
+    if (!isAdmin()) { navigate('/forbidden'); return; }
+    loadUsers(currentPage, keyword);
+  }, [searchParams.toString()]);
+
+  const loadUsers = async (page, kw) => {
     setLoading(true);
-    // URL 파라미터 업데이트
-    const params = {};
-    if (page > 0) params.page = String(page);
-    if (search) params.keyword = search;
-    setSearchParams(params, { replace: true });
-
-    const res = await authFetch(`/api/users/admin/users?page=${page}&size=${PAGE_SIZE}&keyword=${encodeURIComponent(search)}`);
+    const res = await authFetch(`/api/users/admin/users?page=${page}&size=${PAGE_SIZE}&keyword=${encodeURIComponent(kw)}`);
     if (res.ok) {
       const data = await res.json();
       setUsers(data.users);
       setTotalPages(data.totalPages);
       setTotalElements(data.totalElements);
-      setCurrentPage(data.currentPage);
     }
     setLoading(false);
   };
 
-  // URL 파라미터 변경 시 데이터 로드 (새로고침/뒤로가기 포함)
-  useEffect(() => {
-    if (!isAdmin()) { navigate('/forbidden'); return; }
-    const page = parseInt(searchParams.get('page') ?? '0');
-    const kw = searchParams.get('keyword') ?? '';
-    setKeyword(kw);
-    fetchUsers(page, kw);
-    isFirstRender.current = false;
-  }, [location.search]);
+  // URL 파라미터 업데이트 (이게 useEffect를 트리거해서 데이터 로드)
+  const goToPage = (page) => {
+    const params = {};
+    if (page > 0) params.page = String(page);
+    if (keyword) params.keyword = keyword;
+    setSearchParams(params);
+  };
 
-  // 검색어 입력 시 디바운스 (첫 렌더링 제외)
-  useEffect(() => {
-    if (isFirstRender.current) return;
-    const timer = setTimeout(() => fetchUsers(0, keyword), 300);
-    return () => clearTimeout(timer);
-  }, [keyword]);
+  const handleKeywordChange = (e) => {
+    const kw = e.target.value;
+    const params = {};
+    if (kw) params.keyword = kw;
+    setSearchParams(params);
+  };
 
   const handleDelete = async (id, username) => {
     if (!window.confirm(`'${username}' 회원을 삭제하시겠습니까?`)) return;
     const res = await authFetch(`/api/users/admin/users/${id}`, { method: 'DELETE' });
     if (res.ok) {
       const newPage = users.length === 1 && currentPage > 0 ? currentPage - 1 : currentPage;
-      fetchUsers(newPage, keyword);
+      goToPage(newPage);
     } else {
       const data = await res.json();
       showError(data.message || '삭제에 실패했습니다.');
@@ -76,7 +72,7 @@ export default function AdminPage() {
       method: 'PATCH',
       body: JSON.stringify({ role: newRole })
     });
-    if (res.ok) fetchUsers(currentPage, keyword);
+    if (res.ok) loadUsers(currentPage, keyword);
     else {
       const data = await res.json();
       showError(data.message || '권한 변경에 실패했습니다.');
@@ -121,7 +117,7 @@ export default function AdminPage() {
             </span>
             <input
               type="text" placeholder="🔍 이름 또는 이메일 검색"
-              value={keyword} onChange={e => setKeyword(e.target.value)}
+              value={keyword} onChange={handleKeywordChange}
               className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-blue-400 w-48"
             />
           </div>
@@ -183,15 +179,15 @@ export default function AdminPage() {
               </table>
 
               <div className="flex justify-center items-center gap-1 px-6 py-4 border-t border-gray-100">
-                <button onClick={() => fetchUsers(currentPage - 1, keyword)} disabled={currentPage === 0}
+                <button onClick={() => goToPage(currentPage - 1)} disabled={currentPage === 0}
                   className="px-3 py-1.5 rounded-lg text-sm font-medium transition-colors disabled:text-gray-300 disabled:cursor-not-allowed text-gray-500 hover:bg-gray-100">‹</button>
                 {pageNumbers.map(num => (
-                  <button key={num} onClick={() => fetchUsers(num, keyword)}
+                  <button key={num} onClick={() => goToPage(num)}
                     className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${num === currentPage ? 'bg-blue-500 text-white' : 'text-gray-500 hover:bg-gray-100'}`}>
                     {num + 1}
                   </button>
                 ))}
-                <button onClick={() => fetchUsers(currentPage + 1, keyword)} disabled={currentPage >= totalPages - 1}
+                <button onClick={() => goToPage(currentPage + 1)} disabled={currentPage >= totalPages - 1}
                   className="px-3 py-1.5 rounded-lg text-sm font-medium transition-colors disabled:text-gray-300 disabled:cursor-not-allowed text-gray-500 hover:bg-gray-100">›</button>
               </div>
             </>
