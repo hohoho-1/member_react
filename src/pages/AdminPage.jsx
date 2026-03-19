@@ -21,6 +21,20 @@ export default function AdminPage() {
     if (res.ok) setUsers(users.filter(u => u.id !== id));
   };
 
+  const handleRoleChange = async (id, currentRole) => {
+    const newRole = currentRole === 'ROLE_ADMIN' ? 'ROLE_USER' : 'ROLE_ADMIN';
+    const roleName = newRole === 'ROLE_ADMIN' ? '관리자' : '일반회원';
+    if (!window.confirm(`권한을 '${roleName}'으로 변경하시겠습니까?`)) return;
+    const res = await authFetch(`/api/users/admin/users/${id}/role`, {
+      method: 'PATCH',
+      body: JSON.stringify({ role: newRole })
+    });
+    if (res.ok) {
+      const updated = await res.json();
+      setUsers(users.map(u => u.id === id ? updated : u));
+    }
+  };
+
   const filtered = users.filter(u =>
     u.username.toLowerCase().includes(keyword.toLowerCase()) ||
     u.email.toLowerCase().includes(keyword.toLowerCase())
@@ -78,10 +92,16 @@ export default function AdminPage() {
                       </span>
                     </td>
                     <td className="px-4 py-3">
-                      <button onClick={() => handleDelete(u.id, u.username)}
-                        className="px-3 py-1 bg-red-50 hover:bg-red-100 text-red-600 rounded-lg text-xs transition-colors">
-                        삭제
-                      </button>
+                      <div className="flex gap-2">
+                        <button onClick={() => handleRoleChange(u.id, u.role)}
+                          className={`px-3 py-1 rounded-lg text-xs transition-colors ${u.role === 'ROLE_ADMIN' ? 'bg-pink-50 hover:bg-pink-100 text-pink-600' : 'bg-purple-50 hover:bg-purple-100 text-purple-600'}`}>
+                          {u.role === 'ROLE_ADMIN' ? '→ 일반' : '→ 관리자'}
+                        </button>
+                        <button onClick={() => handleDelete(u.id, u.username)}
+                          className="px-3 py-1 bg-red-50 hover:bg-red-100 text-red-600 rounded-lg text-xs transition-colors">
+                          삭제
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}
