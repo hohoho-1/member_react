@@ -1,12 +1,16 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { authFetch, isAdmin } from '../utils/authFetch';
+import { authFetch, isAdmin, getTokenPayload } from '../utils/authFetch';
 
 export default function AdminPage() {
   const navigate = useNavigate();
   const [users, setUsers] = useState([]);
   const [keyword, setKeyword] = useState('');
   const [loading, setLoading] = useState(true);
+  const [errorMsg, setErrorMsg] = useState('');
+
+  // 현재 로그인한 사용자 ID
+  const currentUserId = getTokenPayload()?.userId;
 
   useEffect(() => {
     if (!isAdmin()) { navigate('/forbidden'); return; }
@@ -18,7 +22,13 @@ export default function AdminPage() {
   const handleDelete = async (id, username) => {
     if (!window.confirm(`'${username}' 회원을 삭제하시겠습니까?`)) return;
     const res = await authFetch(`/api/users/admin/users/${id}`, { method: 'DELETE' });
-    if (res.ok) setUsers(users.filter(u => u.id !== id));
+    if (res.ok) {
+      setUsers(users.filter(u => u.id !== id));
+    } else {
+      const data = await res.json();
+      setErrorMsg(data.message || '삭제에 실패했습니다.');
+      setTimeout(() => setErrorMsg(''), 3000);
+    }
   };
 
   const handleRoleChange = async (id, currentRole) => {
@@ -32,6 +42,10 @@ export default function AdminPage() {
     if (res.ok) {
       const updated = await res.json();
       setUsers(users.map(u => u.id === id ? updated : u));
+    } else {
+      const data = await res.json();
+      setErrorMsg(data.message || '권한 변경에 실패했습니다.');
+      setTimeout(() => setErrorMsg(''), 3000);
     }
   };
 
@@ -39,6 +53,9 @@ export default function AdminPage() {
     u.username.toLowerCase().includes(keyword.toLowerCase()) ||
     u.email.toLowerCase().includes(keyword.toLowerCase())
   );
+
+  // 관리자 수 계산
+  const adminCount = users.filter(u => u.role === 'ROLE_ADMIN').length;
 
   return (
     <div className="min-h-screen bg-gray-100 p-10">
@@ -50,6 +67,13 @@ export default function AdminPage() {
             ← 홈으로
           </button>
         </div>
+
+        {/* 에러 메시지 */}
+        {errorMsg && (
+          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl mb-4 text-sm text-center">
+            ⚠️ {errorMsg}
+          </div>
+        )}
 
         {/* 통계 */}
         <div className="bg-white rounded-2xl shadow p-6 mb-6 text-center">
@@ -81,30 +105,55 @@ export default function AdminPage() {
               <tbody>
                 {filtered.length === 0 ? (
                   <tr><td colSpan="5" className="text-center py-10 text-gray-400">회원이 없습니다.</td></tr>
-                ) : filtered.map(u => (
-                  <tr key={u.id} className="border-t border-gray-50 hover:bg-gray-50">
-                    <td className="px-4 py-3 text-sm text-gray-500">{u.id}</td>
-                    <td className="px-4 py-3 text-sm font-semibold text-gray-700">{u.username}</td>
-                    <td className="px-4 py-3 text-sm text-gray-600">{u.email}</td>
-                    <td className="px-4 py-3">
-                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${u.role === 'ROLE_ADMIN' ? 'bg-pink-100 text-pink-700' : 'bg-blue-100 text-blue-700'}`}>
-                        {u.role === 'ROLE_ADMIN' ? '관리자' : '일반회원'}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3">
-                      <div className="flex gap-2">
-                        <button onClick={() => handleRoleChange(u.id, u.role)}
-                          className={`px-3 py-1 rounded-lg text-xs transition-colors ${u.role === 'ROLE_ADMIN' ? 'bg-pink-50 hover:bg-pink-100 text-pink-600' : 'bg-purple-50 hover:bg-purple-100 text-purple-600'}`}>
-                          {u.role === 'ROLE_ADMIN' ? '→ 일반' : '→ 관리자'}
-                        </button>
-                        <button onClick={() => handleDelete(u.id, u.username)}
-                          className="px-3 py-1 bg-red-50 hover:bg-red-100 text-red-600 rounded-lg text-xs transition-colors">
-                          삭제
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
+                ) : filtered.map(u => {
+                  const isMe = u.id === currentUserId;
+                  const isLastAdmin = u.role === 'ROLE_ADMIN' && adminCount <= 1;
+                  const canChangeRole = !isMe && !isLastAdmin;
+
+                  return (
+                    <tr key={u.id} className="border-t border-gray-50 hover:bg-gray-50">
+                      <td className="px-4 py-3 text-sm text-gray-500">{u.id}</td>
+                      <td className="px-4 py-3 text-sm font-semibold text-gray-700">
+                        {u.username}
+                        {isMe && <span className="ml-1 text-xs text-blue-400">(나)</span>}
+                      </td>
+                      <td className="px-4 py-3 text-sm text-gray-600">{u.email}</td>
+                      <td className="px-4 py-3">
+                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${u.role === 'ROLE_ADMIN' ? 'bg-pink-100 text-pink-700' : 'bg-blue-100 text-blue-700'}`}>
+                          {u.role === 'ROLE_ADMIN' ? '관리자' : '일반회원'}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3">
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => canChangeRole && handleRoleChange(u.id, u.role)}
+                            disabled={!canChangeRole}
+                            title={isMe ? '자신의 권한은 변경할 수 없습니다' : isLastAdmin ? '마지막 관리자는 강등할 수 없습니다' : ''}
+                            className={`px-3 py-1 rounded-lg text-xs transition-colors ${
+                              !canChangeRole
+                                ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                                : u.role === 'ROLE_ADMIN'
+                                  ? 'bg-pink-50 hover:bg-pink-100 text-pink-600'
+                                  : 'bg-purple-50 hover:bg-purple-100 text-purple-600'
+                            }`}>
+                            {u.role === 'ROLE_ADMIN' ? '→ 일반' : '→ 관리자'}
+                          </button>
+                          <button
+                            onClick={() => !isMe && handleDelete(u.id, u.username)}
+                            disabled={isMe}
+                            title={isMe ? '자신은 삭제할 수 없습니다' : ''}
+                            className={`px-3 py-1 rounded-lg text-xs transition-colors ${
+                              isMe
+                                ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                                : 'bg-red-50 hover:bg-red-100 text-red-600'
+                            }`}>
+                            삭제
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           )}
