@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation, useSearchParams } from 'react-router-dom';
 import { authFetch, isAdmin, getTokenPayload } from '../utils/authFetch';
 
 const PAGE_SIZE = 5;
@@ -7,11 +7,16 @@ const PAGE_SIZE = 5;
 export default function AdminPage() {
   const navigate = useNavigate();
   const location = useLocation();
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  const initPage = parseInt(searchParams.get('page') ?? '0');
+  const initKeyword = searchParams.get('keyword') ?? '';
+
   const [users, setUsers] = useState([]);
-  const [keyword, setKeyword] = useState(location.state?.keyword ?? '');
+  const [keyword, setKeyword] = useState(initKeyword);
   const [loading, setLoading] = useState(true);
   const [errorMsg, setErrorMsg] = useState('');
-  const [currentPage, setCurrentPage] = useState(location.state?.page ?? 0);
+  const [currentPage, setCurrentPage] = useState(initPage);
   const [totalPages, setTotalPages] = useState(0);
   const [totalElements, setTotalElements] = useState(0);
   const [isInitialLoad, setIsInitialLoad] = useState(true);
@@ -20,6 +25,12 @@ export default function AdminPage() {
 
   const fetchUsers = async (page = 0, search = keyword) => {
     setLoading(true);
+    // URL에 페이지/검색어 반영
+    const params = {};
+    if (page > 0) params.page = page;
+    if (search) params.keyword = search;
+    setSearchParams(params, { replace: true });
+
     const res = await authFetch(`/api/users/admin/users?page=${page}&size=${PAGE_SIZE}&keyword=${encodeURIComponent(search)}`);
     if (res.ok) {
       const data = await res.json();
@@ -161,7 +172,7 @@ export default function AdminPage() {
                       <tr key={u.id} className="border-t border-gray-50 hover:bg-gray-50">
                         <td className="px-4 py-3 text-sm text-gray-500">{u.id}</td>
                         <td className="px-4 py-3 text-sm font-semibold text-gray-700">
-                          <button onClick={() => navigate(`/admin/users/${u.id}`, { state: { page: currentPage, keyword } })}
+                          <button onClick={() => navigate(`/admin/users/${u.id}?from=${currentPage}${keyword ? '&keyword=' + encodeURIComponent(keyword) : ''}`)}
                             className="hover:text-blue-500 hover:underline transition-colors text-left">
                             {u.username}
                             {isMe && <span className="ml-1 text-xs text-blue-400">(나)</span>}
