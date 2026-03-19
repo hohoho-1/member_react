@@ -1,10 +1,13 @@
 import { useEffect, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import { authFetch, isAdmin, getTokenPayload } from '../utils/authFetch';
 
 export default function AdminUserDetailPage() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
+  const fromPage = location.state?.page ?? 0;
+  const fromKeyword = location.state?.keyword ?? '';
   const [user, setUser] = useState(null);
   const [form, setForm] = useState({ username: '', email: '', role: '' });
   const [updateMsg, setUpdateMsg] = useState({ text: '', type: '' });
@@ -91,7 +94,7 @@ export default function AdminUserDetailPage() {
         {/* 헤더 */}
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-2xl font-bold text-gray-700">👤 회원 상세</h2>
-          <button onClick={() => navigate('/admin')}
+          <button onClick={() => navigate('/admin', { state: { page: fromPage, keyword: fromKeyword } })}
             className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-600 rounded-lg text-sm transition-colors">
             ← 목록으로
           </button>

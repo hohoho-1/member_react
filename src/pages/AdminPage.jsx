@@ -1,16 +1,17 @@
 import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { authFetch, isAdmin, getTokenPayload } from '../utils/authFetch';
 
 const PAGE_SIZE = 5;
 
 export default function AdminPage() {
   const navigate = useNavigate();
+  const location = useLocation();
   const [users, setUsers] = useState([]);
-  const [keyword, setKeyword] = useState('');
+  const [keyword, setKeyword] = useState(location.state?.keyword ?? '');
   const [loading, setLoading] = useState(true);
   const [errorMsg, setErrorMsg] = useState('');
-  const [currentPage, setCurrentPage] = useState(0);
+  const [currentPage, setCurrentPage] = useState(location.state?.page ?? 0);
   const [totalPages, setTotalPages] = useState(0);
   const [totalElements, setTotalElements] = useState(0);
 
@@ -31,7 +32,7 @@ export default function AdminPage() {
 
   useEffect(() => {
     if (!isAdmin()) { navigate('/forbidden'); return; }
-    fetchUsers(0);
+    fetchUsers(location.state?.page ?? 0, location.state?.keyword ?? keyword);
   }, [navigate]);
 
   const handleDelete = async (id, username) => {
@@ -147,7 +148,7 @@ export default function AdminPage() {
                       <tr key={u.id} className="border-t border-gray-50 hover:bg-gray-50">
                         <td className="px-4 py-3 text-sm text-gray-500">{u.id}</td>
                         <td className="px-4 py-3 text-sm font-semibold text-gray-700">
-                          <button onClick={() => navigate(`/admin/users/${u.id}`)}
+                          <button onClick={() => navigate(`/admin/users/${u.id}`, { state: { page: currentPage, keyword } })}
                             className="hover:text-blue-500 hover:underline transition-colors text-left">
                             {u.username}
                             {isMe && <span className="ml-1 text-xs text-blue-400">(나)</span>}
