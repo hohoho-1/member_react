@@ -7,7 +7,7 @@ export default function AdminUserDetailPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const searchParams = new URLSearchParams(location.search);
-  const fromPage = searchParams.get('from') ?? '0';
+  const fromPage = searchParams.get('from') ?? '1';
   const fromKeyword = searchParams.get('keyword') ?? '';
   const [user, setUser] = useState(null);
   const [form, setForm] = useState({ username: '', email: '', role: '' });
@@ -77,12 +77,23 @@ export default function AdminUserDetailPage() {
 
   const handleDelete = async () => {
     if (isMe) { setUpdateMsg({ text: '자신은 삭제할 수 없습니다.', type: 'error' }); return; }
-    if (!window.confirm(`'${user.username}' 회원을 삭제하시겠습니까?`)) return;
+    if (!window.confirm(`'${user.username}' 회원을 즉시 삭제합니다.\n이 작업은 되돌릴 수 없습니다. 계속하시겠습니까?`)) return;
     const res = await authFetch(`/api/users/admin/users/${id}`, { method: 'DELETE' });
     if (res.ok) navigate('/admin');
     else {
       const data = await res.json();
       setUpdateMsg({ text: data.message || '삭제에 실패했습니다.', type: 'error' });
+    }
+  };
+
+  const handleWithdraw = async () => {
+    if (isMe) { setUpdateMsg({ text: '자신은 탈퇴 처리할 수 없습니다.', type: 'error' }); return; }
+    if (!window.confirm(`'${user.username}' 회원을 탈퇴 처리하시겠습니까?\n탈퇴 회원 탭에서 복구할 수 있습니다.`)) return;
+    const res = await authFetch(`/api/users/admin/users/${id}/withdraw`, { method: 'POST' });
+    if (res.ok) navigate('/admin?tab=deleted');
+    else {
+      const data = await res.json();
+      setUpdateMsg({ text: data.message || '탈퇴 처리에 실패했습니다.', type: 'error' });
     }
   };
 
@@ -167,12 +178,18 @@ export default function AdminUserDetailPage() {
 
         <hr className="my-6 border-gray-200" />
 
-        {/* 회원 삭제 */}
-        <button onClick={handleDelete} disabled={isMe}
-          className={`w-full py-2.5 rounded-lg font-medium transition-colors ${isMe ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : 'bg-red-500 hover:bg-red-600 text-white'}`}>
-          🗑️ 회원 삭제
-        </button>
-        {isMe && <p className="text-xs text-center text-gray-400 mt-2">자신은 삭제할 수 없습니다.</p>}
+        {/* 탈퇴 처리 / 영구 삭제 */}
+        <div className="flex gap-3">
+          <button onClick={handleWithdraw} disabled={isMe}
+            className={`flex-1 py-2.5 rounded-lg font-medium transition-colors ${isMe ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : 'bg-orange-400 hover:bg-orange-500 text-white'}`}>
+            탈퇴 처리
+          </button>
+          <button onClick={handleDelete} disabled={isMe}
+            className={`flex-1 py-2.5 rounded-lg font-medium transition-colors ${isMe ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : 'bg-red-500 hover:bg-red-600 text-white'}`}>
+            🗑️ 영구 삭제
+          </button>
+        </div>
+        {isMe && <p className="text-xs text-center text-gray-400 mt-2">자신은 탈퇴 처리하거나 삭제할 수 없습니다.</p>}
       </div>
     </div>
   );
