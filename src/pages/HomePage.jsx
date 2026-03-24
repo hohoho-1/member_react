@@ -36,6 +36,10 @@ export default function HomePage() {
             className="w-full py-2.5 bg-green-500 hover:bg-green-600 text-white rounded-lg font-medium transition-colors">
             ⚙️ 마이페이지
           </button>
+          <button onClick={() => navigate('/board')}
+            className="w-full py-2.5 bg-blue-500 hover:bg-blue-600 text-white rounded-lg font-medium transition-colors">
+            📋 게시판
+          </button>
           {isAdmin() && (
             <button onClick={() => navigate('/admin')}
               className="w-full py-2.5 bg-purple-500 hover:bg-purple-600 text-white rounded-lg font-medium transition-colors">

@@ -5,8 +5,10 @@ import HomePage from './pages/HomePage';
 import MyPage from './pages/MyPage';
 import AdminPage from './pages/AdminPage';
 import ForbiddenPage from './pages/ForbiddenPage';
-
 import AdminUserDetailPage from './pages/AdminUserDetailPage';
+import BoardPage from './pages/BoardPage';
+import PostDetailPage from './pages/PostDetailPage';
+import PostWritePage from './pages/PostWritePage';
 
 function App() {
   return (
@@ -20,6 +22,10 @@ function App() {
         <Route path="/admin" element={<AdminPage />} />
         <Route path="/admin/users/:id" element={<AdminUserDetailPage />} />
         <Route path="/forbidden" element={<ForbiddenPage />} />
+        <Route path="/board" element={<BoardPage />} />
+        <Route path="/board/write" element={<PostWritePage />} />
+        <Route path="/board/:id" element={<PostDetailPage />} />
+        <Route path="/board/:id/edit" element={<PostWritePage />} />
       </Routes>
     </BrowserRouter>
   );
