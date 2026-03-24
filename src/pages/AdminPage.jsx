@@ -110,6 +110,10 @@ export default function AdminPage() {
   // 알림 상태
   const [errorMsg, setErrorMsg] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
+  const [aiDays, setAiDays] = useState(7);
+  const [aiInsights, setAiInsights] = useState(null);
+  const [aiLoading, setAiLoading] = useState(false);
+  const [aiError, setAiError] = useState('');
 
   const currentPage = Math.max(0, parseInt(searchParams.get('page') ?? '1') - 1);
   const keyword = searchParams.get('keyword') ?? '';
@@ -117,6 +121,7 @@ export default function AdminPage() {
 
   useEffect(() => {
     if (!isAdmin()) { navigate('/forbidden'); return; }
+    loadAiInsights(aiDays);
     if (tab === 'logs') {
       setLogPage(0); setLogKeyword(''); setLogAction('');
       loadLogs(0, '', '');
@@ -127,6 +132,43 @@ export default function AdminPage() {
       loadUsers(currentPage, keyword, tab);
     }
   }, [searchParams.toString()]);
+
+  const loadAiInsights = async (days) => {
+    setAiLoading(true);
+    setAiError('');
+    const res = await authFetch(`/api/posts/admin/ai-insights?days=${days}`);
+    if (res.ok) {
+      const data = await res.json();
+      setAiInsights(data);
+    } else {
+      const data = await res.json().catch(() => ({}));
+      setAiError(data.message || 'AI 인사이트를 불러오지 못했습니다.');
+    }
+    setAiLoading(false);
+  };
+
+  const handleAiDaysChange = (days) => {
+    setAiDays(days);
+    loadAiInsights(days);
+  };
+
+  const normalizeCategoryStats = (stats) => {
+    if (!stats) return [];
+    if (Array.isArray(stats)) {
+      return stats
+        .map(item => ({
+          category: item?.category ?? item?.name ?? '-',
+          count: Number(item?.count ?? 0),
+        }))
+        .sort((a, b) => b.count - a.count);
+    }
+    if (typeof stats === 'object') {
+      return Object.entries(stats)
+        .map(([category, count]) => ({ category, count: Number(count ?? 0) }))
+        .sort((a, b) => b.count - a.count);
+    }
+    return [];
+  };
 
   const loadUsers = async (page, kw, currentTab) => {
     setLoading(true);
@@ -285,6 +327,84 @@ export default function AdminPage() {
             ✅ {successMsg}
           </div>
         )}
+
+        {/* 관리자 AI 인사이트 */}
+        <div className="bg-white rounded-2xl shadow p-6 mb-6">
+          <div className="flex flex-wrap justify-between items-center gap-3 mb-4">
+            <div>
+              <h3 className="text-lg font-bold text-gray-700">🤖 관리자 AI 인사이트</h3>
+              <p className="text-xs text-gray-400 mt-1">게시글 활동 요약과 AI 분석 결과를 확인할 수 있습니다.</p>
+            </div>
+            <button onClick={() => loadAiInsights(aiDays)}
+              disabled={aiLoading}
+              className="px-3 py-1.5 rounded-lg text-sm font-medium bg-gray-100 hover:bg-gray-200 text-gray-600 disabled:bg-gray-50 disabled:text-gray-300 transition-colors">
+              새로고침
+            </button>
+          </div>
+
+          <div className="flex gap-2 mb-4">
+            {[7, 14, 30].map(days => (
+              <button key={days}
+                onClick={() => handleAiDaysChange(days)}
+                disabled={aiLoading}
+                className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+                  aiDays === days ? 'bg-indigo-500 text-white' : 'bg-gray-100 hover:bg-gray-200 text-gray-600'
+                } disabled:bg-gray-50 disabled:text-gray-300`}>
+                {days}일
+              </button>
+            ))}
+          </div>
+
+          {aiLoading ? (
+            <div className="text-center py-8 text-gray-400 text-sm">AI 인사이트를 불러오는 중입니다...</div>
+          ) : aiError ? (
+            <div className="bg-red-50 border border-red-200 text-red-600 rounded-xl px-4 py-3 text-sm">
+              ⚠️ {aiError}
+            </div>
+          ) : aiInsights ? (
+            <div className="space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="bg-blue-50 rounded-xl px-4 py-3">
+                  <p className="text-xs text-blue-400">활성 게시글 수</p>
+                  <p className="text-2xl font-bold text-blue-600">{aiInsights.activePostCount ?? 0}</p>
+                </div>
+                <div className="bg-red-50 rounded-xl px-4 py-3">
+                  <p className="text-xs text-red-400">삭제 게시글 수</p>
+                  <p className="text-2xl font-bold text-red-500">{aiInsights.deletedPostCount ?? 0}</p>
+                </div>
+              </div>
+
+              <div className="bg-gray-50 rounded-xl p-4">
+                <p className="text-sm font-semibold text-gray-700 mb-2">카테고리별 게시글</p>
+                {normalizeCategoryStats(aiInsights.categoryStats).length === 0 ? (
+                  <p className="text-sm text-gray-400">카테고리 통계 데이터가 없습니다.</p>
+                ) : (
+                  <div className="flex flex-wrap gap-2">
+                    {normalizeCategoryStats(aiInsights.categoryStats).map(stat => (
+                      <span key={stat.category}
+                        className="px-3 py-1 rounded-full bg-gray-200 text-gray-600 text-xs font-medium">
+                        {stat.category}: {stat.count}
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              <div className="bg-indigo-50 rounded-xl p-4">
+                <p className="text-sm font-semibold text-indigo-700 mb-2">AI 분석</p>
+                <p className="text-sm text-gray-700 whitespace-pre-line">
+                  {aiInsights.insight || 'AI 분석 결과가 없습니다.'}
+                </p>
+              </div>
+
+              <p className="text-xs text-gray-400 text-right">
+                생성 시각: {aiInsights.generatedAt ? new Date(aiInsights.generatedAt).toLocaleString('ko-KR') : '-'}
+              </p>
+            </div>
+          ) : (
+            <div className="text-center py-8 text-gray-400 text-sm">AI 인사이트 데이터가 없습니다.</div>
+          )}
+        </div>
 
         {/* 회원 수 카드 (로그/삭제게시글 탭 제외) */}
         {tab !== 'logs' && tab !== 'deletedPosts' && (
