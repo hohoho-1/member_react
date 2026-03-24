@@ -121,7 +121,6 @@ export default function AdminPage() {
 
   useEffect(() => {
     if (!isAdmin()) { navigate('/forbidden'); return; }
-    loadAiInsights(aiDays);
     if (tab === 'logs') {
       setLogPage(0); setLogKeyword(''); setLogAction('');
       loadLogs(0, '', '');
@@ -392,9 +391,14 @@ export default function AdminPage() {
 
               <div className="bg-indigo-50 rounded-xl p-4">
                 <p className="text-sm font-semibold text-indigo-700 mb-2">AI 분석</p>
-                <p className="text-sm text-gray-700 whitespace-pre-line">
-                  {aiInsights.insight || 'AI 분석 결과가 없습니다.'}
-                </p>
+                {aiInsights.insight ? (
+                  <p className="text-sm text-gray-700 whitespace-pre-line">{aiInsights.insight}</p>
+                ) : (
+                  <div className="flex items-center gap-2 text-sm text-gray-400">
+                    <span>💳</span>
+                    <span>AI 분석을 사용하려면 OpenAI 크레딧 충전이 필요합니다.</span>
+                  </div>
+                )}
               </div>
 
               <p className="text-xs text-gray-400 text-right">
