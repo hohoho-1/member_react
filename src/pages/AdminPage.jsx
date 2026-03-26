@@ -2,6 +2,76 @@ import { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { authFetch, isAdmin, getTokenPayload } from '../utils/authFetch';
 
+// 삭제 게시글 상세 모달
+function DeletedPostModal({ post, onClose, onRestore, onPermanentDelete }) {
+  if (!post) return null;
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50"
+      onClick={onClose}>
+      <div className="bg-white rounded-2xl shadow-xl w-[480px] p-8"
+        onClick={e => e.stopPropagation()}>
+        <div className="flex justify-between items-center mb-6">
+          <h3 className="text-lg font-bold text-gray-700">📝 삭제된 게시글 상세</h3>
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 text-xl font-bold">×</button>
+        </div>
+
+        <div className="flex items-center gap-2 mb-4">
+          <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+            post.category === 'NOTICE' ? 'bg-red-100 text-red-500' : 'bg-blue-100 text-blue-500'
+          }`}>
+            {post.categoryName}
+          </span>
+          <span className="px-2 py-1 rounded-full text-xs font-medium bg-orange-100 text-orange-500">삭제됨</span>
+        </div>
+
+        <h4 className="text-base font-semibold text-gray-700 mb-3">{post.title}</h4>
+
+        <div className="bg-gray-50 rounded-xl p-4 text-sm text-gray-600 mb-4 max-h-40 overflow-y-auto whitespace-pre-wrap leading-relaxed">
+          {post.content || <span className="text-gray-400">내용 없음</span>}
+        </div>
+
+        <div className="bg-gray-50 rounded-xl p-4 space-y-2 text-sm mb-6">
+          <div className="flex justify-between">
+            <span className="text-gray-400">번호</span>
+            <span className="font-medium text-gray-600">{post.id}</span>
+          </div>
+          <div className="flex justify-between">
+            <span className="text-gray-400">작성자</span>
+            <span className="font-medium text-gray-600">{post.authorName}</span>
+          </div>
+          <div className="flex justify-between">
+            <span className="text-gray-400">조회수</span>
+            <span className="font-medium text-gray-600">{post.viewCount}</span>
+          </div>
+          <div className="flex justify-between">
+            <span className="text-gray-400">작성일</span>
+            <span className="font-medium text-gray-600">
+              {post.createdAt ? new Date(post.createdAt).toLocaleString('ko-KR') : '-'}
+            </span>
+          </div>
+          <div className="flex justify-between border-t border-gray-200 pt-2 mt-2">
+            <span className="text-orange-400">삭제일</span>
+            <span className="font-medium text-orange-400">
+              {post.deletedAt ? new Date(post.deletedAt).toLocaleString('ko-KR') : '-'}
+            </span>
+          </div>
+        </div>
+
+        <div className="flex gap-3">
+          <button onClick={() => onRestore(post.id, post.title)}
+            className="flex-1 py-2.5 bg-green-500 hover:bg-green-600 text-white rounded-lg text-sm font-medium transition-colors">
+            복구
+          </button>
+          <button onClick={() => onPermanentDelete(post.id, post.title)}
+            className="flex-1 py-2.5 bg-red-500 hover:bg-red-600 text-white rounded-lg text-sm font-medium transition-colors">
+            영구삭제
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // 탈퇴 회원 상세 모달
 function DeletedUserModal({ user, onClose, onRestore, onPermanentDelete }) {
   if (!user) return null;
@@ -106,6 +176,7 @@ export default function AdminPage() {
   const [deletedPostTotalElements, setDeletedPostTotalElements] = useState(0);
   const [deletedPostPage, setDeletedPostPage] = useState(0);
   const [deletedPostKeyword, setDeletedPostKeyword] = useState('');
+  const [selectedPost, setSelectedPost] = useState(null);
 
   // 알림 상태
   const [errorMsg, setErrorMsg] = useState('');
@@ -202,6 +273,7 @@ export default function AdminPage() {
     if (!window.confirm(`'${title}' 게시글을 복구하시겠습니까?`)) return;
     const res = await authFetch(`/api/posts/${id}/restore`, { method: 'POST' });
     if (res.ok) {
+      setSelectedPost(null);
       showSuccess(`게시글이 복구되었습니다.`);
       loadDeletedPosts(deletedPostPage, deletedPostKeyword);
     } else {
@@ -214,6 +286,7 @@ export default function AdminPage() {
     if (!window.confirm(`'${title}' 게시글을 완전히 삭제합니다.\n이 작업은 되돌릴 수 없습니다.`)) return;
     const res = await authFetch(`/api/posts/${id}/permanent`, { method: 'DELETE' });
     if (res.ok) {
+      setSelectedPost(null);
       showSuccess(`게시글이 영구 삭제되었습니다.`);
       const newPage = deletedPosts.length === 1 && deletedPostPage > 0 ? deletedPostPage - 1 : deletedPostPage;
       setDeletedPostPage(newPage);
@@ -306,6 +379,12 @@ export default function AdminPage() {
         onClose={() => setSelectedUser(null)}
         onRestore={handleRestore}
         onPermanentDelete={handlePermanentDelete}
+      />
+      <DeletedPostModal
+        post={selectedPost}
+        onClose={() => setSelectedPost(null)}
+        onRestore={handleRestorePost}
+        onPermanentDelete={handlePermanentDeletePost}
       />
       <div className="max-w-4xl mx-auto">
         <div className="flex justify-between items-center mb-6">
@@ -559,7 +638,9 @@ export default function AdminPage() {
                   </thead>
                   <tbody>
                     {deletedPosts.map(post => (
-                      <tr key={post.id} className="border-t border-gray-50 hover:bg-gray-50">
+                      <tr key={post.id}
+                        className="border-t border-gray-50 hover:bg-gray-50 cursor-pointer"
+                        onClick={() => setSelectedPost(post)}>
                         <td className="px-4 py-3 text-sm text-gray-400">{post.id}</td>
                         <td className="px-4 py-3">
                           <span className={`px-2 py-1 rounded-full text-xs font-medium ${
@@ -574,7 +655,7 @@ export default function AdminPage() {
                           {post.deletedAt ? new Date(post.deletedAt).toLocaleDateString('ko-KR') : '-'}
                         </td>
                         <td className="px-4 py-3">
-                          <div className="flex gap-2">
+                          <div className="flex gap-2" onClick={e => e.stopPropagation()}>
                             <button onClick={() => handleRestorePost(post.id, post.title)}
                               className="px-3 py-1 rounded-lg text-xs bg-green-50 hover:bg-green-100 text-green-600 transition-colors">
                               복구
