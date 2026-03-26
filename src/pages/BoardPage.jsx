@@ -139,8 +139,16 @@ export default function BoardPage() {
                           {post.categoryName}
                         </span>
                       </td>
-                      <td className="px-4 py-3 text-sm font-medium text-gray-700 hover:text-blue-600 max-w-[200px] truncate">
-                        {post.title}
+                      <td className="px-4 py-3 text-sm font-medium text-gray-700 hover:text-blue-600 max-w-[200px]">
+                        <div className="flex items-center gap-1.5">
+                          <span className="truncate">{post.title}</span>
+                          {(Date.now() - new Date(post.createdAt).getTime()) < 24 * 60 * 60 * 1000 && (
+                            <span className="shrink-0 px-1.5 py-0.5 bg-red-500 text-white text-[10px] font-bold rounded">NEW</span>
+                          )}
+                          {post.commentCount > 0 && (
+                            <span className="shrink-0 text-xs text-blue-400 font-normal">💬 {post.commentCount}</span>
+                          )}
+                        </div>
                       </td>
                       <td className="px-4 py-3 text-sm text-gray-500">{post.authorName}</td>
                       <td className="px-4 py-3 text-xs text-gray-400 whitespace-nowrap">
