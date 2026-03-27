@@ -15,6 +15,11 @@ export default function AdminUserDetailPage() {
   const [loading, setLoading] = useState(true);
   const [updateLoading, setUpdateLoading] = useState(false);
 
+  // 비밀번호 강제 변경 상태
+  const [pwForm, setPwForm] = useState({ newPassword: '', confirmPassword: '' });
+  const [pwMsg, setPwMsg] = useState({ text: '', type: '' });
+  const [pwLoading, setPwLoading] = useState(false);
+
   const currentUserId = getTokenPayload()?.userId;
   const isMe = user?.id === currentUserId;
 
@@ -97,6 +102,31 @@ export default function AdminUserDetailPage() {
     }
   };
 
+  const handleForceChangePassword = async () => {
+    if (pwForm.newPassword.length < 6) {
+      setPwMsg({ text: '비밀번호는 6자 이상이어야 합니다.', type: 'error' }); return;
+    }
+    if (pwForm.newPassword !== pwForm.confirmPassword) {
+      setPwMsg({ text: '비밀번호가 일치하지 않습니다.', type: 'error' }); return;
+    }
+    if (!window.confirm(`'${user.username}' 회원의 비밀번호를 강제 변경하시겠습니까?`)) return;
+    setPwLoading(true);
+    setPwMsg({ text: '', type: '' });
+    const res = await authFetch(`/api/users/admin/users/${id}/password`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ newPassword: pwForm.newPassword }),
+    });
+    const data = await res.json();
+    if (res.ok) {
+      setPwMsg({ text: '비밀번호가 변경되었습니다!', type: 'success' });
+      setPwForm({ newPassword: '', confirmPassword: '' });
+    } else {
+      setPwMsg({ text: data.message || '비밀번호 변경에 실패했습니다.', type: 'error' });
+    }
+    setPwLoading(false);
+  };
+
   if (loading) return <div className="min-h-screen bg-gray-100 flex items-center justify-center text-gray-400">로딩 중...</div>;
 
   return (
@@ -175,6 +205,36 @@ export default function AdminUserDetailPage() {
             {updateLoading ? '수정 중...' : '정보 수정'}
           </button>
         </form>
+
+        <hr className="my-6 border-gray-200" />
+
+        {/* 비밀번호 강제 변경 */}
+        <div className="space-y-3">
+          <p className="text-xs font-semibold text-orange-500 uppercase tracking-wide">🔑 비밀번호 강제 변경</p>
+          <div>
+            <label className="block text-sm text-gray-600 mb-1">새 비밀번호</label>
+            <input type="password" value={pwForm.newPassword}
+              onChange={e => setPwForm({ ...pwForm, newPassword: e.target.value })}
+              placeholder="6자 이상 입력"
+              className="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-orange-400 focus:ring-2 focus:ring-orange-100" />
+          </div>
+          <div>
+            <label className="block text-sm text-gray-600 mb-1">비밀번호 확인</label>
+            <input type="password" value={pwForm.confirmPassword}
+              onChange={e => setPwForm({ ...pwForm, confirmPassword: e.target.value })}
+              placeholder="비밀번호 재입력"
+              className="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-orange-400 focus:ring-2 focus:ring-orange-100" />
+          </div>
+          {pwMsg.text && (
+            <div className={`text-sm text-center px-3 py-2 rounded-lg ${pwMsg.type === 'success' ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'}`}>
+              {pwMsg.text}
+            </div>
+          )}
+          <button onClick={handleForceChangePassword} disabled={pwLoading || !pwForm.newPassword}
+            className="w-full py-2.5 bg-orange-400 hover:bg-orange-500 disabled:bg-orange-200 text-white rounded-lg font-medium transition-colors">
+            {pwLoading ? '변경 중...' : '비밀번호 강제 변경'}
+          </button>
+        </div>
 
         <hr className="my-6 border-gray-200" />
 
