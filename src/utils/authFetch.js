@@ -2,8 +2,11 @@
 export async function authFetch(url, options = {}) {
   const accessToken = localStorage.getItem('accessToken');
 
+  // FormData인 경우 Content-Type을 지정하지 않음 (브라우저가 자동으로 boundary 포함해서 설정)
+  const isFormData = options.body instanceof FormData;
+
   options.headers = {
-    'Content-Type': 'application/json',
+    ...(isFormData ? {} : { 'Content-Type': 'application/json' }),
     ...options.headers,
     'Authorization': 'Bearer ' + accessToken
   };
