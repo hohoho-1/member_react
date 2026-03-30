@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { authFetch, logout } from '../utils/authFetch';
+import NotificationBell from '../components/NotificationBell';
 
 const TABS = [
   { key: 'info', label: '⚙️ 내 정보' },
@@ -136,10 +137,13 @@ export default function MyPage() {
         {/* 헤더 */}
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-2xl font-bold text-gray-700">⚙️ 마이페이지</h2>
-          <button onClick={() => navigate('/home')}
-            className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-600 rounded-lg text-sm transition-colors">
-            ← 홈으로
-          </button>
+          <div className="flex items-center gap-2">
+            <NotificationBell />
+            <button onClick={() => navigate('/home')}
+              className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-600 rounded-lg text-sm transition-colors">
+              ← 홈으로
+            </button>
+          </div>
         </div>
 
         {/* 프로필 카드 */}

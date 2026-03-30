@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { authFetch, logout, isAdmin } from '../utils/authFetch';
+import NotificationBell from '../components/NotificationBell';
 
 export default function HomePage() {
   const navigate = useNavigate();
@@ -23,6 +24,9 @@ export default function HomePage() {
   return (
     <div className="min-h-screen bg-gray-100 flex items-center justify-center">
       <div className="bg-white p-10 rounded-2xl shadow-lg w-96 text-center">
+        <div className="flex justify-end mb-2">
+          <NotificationBell />
+        </div>
         <h2 className="text-2xl font-bold text-gray-700 mb-4">🏠 홈</h2>
         <div className="bg-blue-50 rounded-xl p-4 mb-6">
           <p className="text-gray-700">안녕하세요, <span className="font-bold text-blue-500">{user.username}</span>님!</p>

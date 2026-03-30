@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { authFetch, getTokenPayload } from '../utils/authFetch';
+import NotificationBell from '../components/NotificationBell';
 
 const MAX_FILES = 5;
 const MAX_SIZE = 10 * 1024 * 1024; // 10MB
@@ -131,10 +132,13 @@ export default function PostWritePage() {
           <h2 className="text-2xl font-bold text-gray-700">
             {isEditMode ? '✏️ 게시글 수정' : '✏️ 게시글 작성'}
           </h2>
-          <button onClick={() => navigate(isEditMode ? `/board/${id}` : '/board')}
-            className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-600 rounded-lg text-sm transition-colors">
-            취소
-          </button>
+          <div className="flex items-center gap-2">
+            <NotificationBell />
+            <button onClick={() => navigate(isEditMode ? `/board/${id}` : '/board')}
+              className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-600 rounded-lg text-sm transition-colors">
+              취소
+            </button>
+          </div>
         </div>
 
         <div className="bg-white rounded-2xl shadow p-8 space-y-5">

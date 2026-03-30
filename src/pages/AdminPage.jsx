@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { authFetch, isAdmin, getTokenPayload } from '../utils/authFetch';
+import NotificationBell from '../components/NotificationBell';
 
 // 삭제 게시글 상세 모달
 function DeletedPostModal({ post, onClose, onRestore, onPermanentDelete }) {
@@ -389,10 +390,13 @@ export default function AdminPage() {
       <div className="max-w-4xl mx-auto">
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-2xl font-bold text-gray-700">🛠️ 관리자 페이지</h2>
-          <button onClick={() => navigate('/home')}
-            className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-600 rounded-lg text-sm transition-colors">
-            ← 홈으로
-          </button>
+          <div className="flex items-center gap-2">
+            <NotificationBell />
+            <button onClick={() => navigate('/home')}
+              className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-600 rounded-lg text-sm transition-colors">
+              ← 홈으로
+            </button>
+          </div>
         </div>
 
         {errorMsg && (

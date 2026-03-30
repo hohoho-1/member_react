@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import { authFetch, isAdmin, getTokenPayload } from '../utils/authFetch';
+import NotificationBell from '../components/NotificationBell';
 
 export default function AdminUserDetailPage() {
   const { id } = useParams();
@@ -136,10 +137,13 @@ export default function AdminUserDetailPage() {
         {/* 헤더 */}
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-2xl font-bold text-gray-700">👤 회원 상세</h2>
-          <button onClick={() => navigate(`/admin?page=${fromPage}${fromKeyword ? '&keyword=' + encodeURIComponent(fromKeyword) : ''}`)}
-            className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-600 rounded-lg text-sm transition-colors">
-            ← 목록으로
-          </button>
+          <div className="flex items-center gap-2">
+            <NotificationBell />
+            <button onClick={() => navigate(`/admin?page=${fromPage}${fromKeyword ? '&keyword=' + encodeURIComponent(fromKeyword) : ''}`)}
+              className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-600 rounded-lg text-sm transition-colors">
+              ← 목록으로
+            </button>
+          </div>
         </div>
 
         {/* 회원 기본 정보 카드 */}
