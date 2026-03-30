@@ -13,6 +13,7 @@ export default function PostWritePage() {
   const [category, setCategory] = useState('FREE');
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
+  const [isPinned, setIsPinned] = useState(false);
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
 
@@ -34,6 +35,7 @@ export default function PostWritePage() {
       setCategory(data.category);
       setTitle(data.title);
       setContent(data.content);
+      setIsPinned(data.pinned ?? false);
     }
   };
 
@@ -44,7 +46,7 @@ export default function PostWritePage() {
     setLoading(true);
     setErrorMsg('');
 
-    const body = { category, title: title.trim(), content: content.trim() };
+    const body = { category, title: title.trim(), content: content.trim(), isPinned: isAdmin && category === 'NOTICE' ? isPinned : false };
     const res = isEditMode
       ? await authFetch(`/api/posts/${id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
       : await authFetch('/api/posts', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
@@ -77,7 +79,7 @@ export default function PostWritePage() {
           {/* 카테고리 선택 */}
           <div>
             <label className="block text-sm font-semibold text-gray-600 mb-2">카테고리</label>
-            <div className="flex gap-3">
+            <div className="flex items-center gap-3 flex-wrap">
               {isAdmin && (
                 <button onClick={() => setCategory('NOTICE')}
                   className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
@@ -86,12 +88,25 @@ export default function PostWritePage() {
                   📢 공지사항
                 </button>
               )}
-              <button onClick={() => setCategory('FREE')}
+              <button onClick={() => { setCategory('FREE'); setIsPinned(false); }}
                 className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
                   category === 'FREE' ? 'bg-blue-500 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                 }`}>
                 💬 자유게시판
               </button>
+
+              {/* 핀 고정 체크박스 - 관리자 + 공지 선택 시만 표시 */}
+              {isAdmin && category === 'NOTICE' && (
+                <label className="flex items-center gap-2 ml-2 cursor-pointer select-none">
+                  <input
+                    type="checkbox"
+                    checked={isPinned}
+                    onChange={e => setIsPinned(e.target.checked)}
+                    className="w-4 h-4 accent-amber-500 cursor-pointer"
+                  />
+                  <span className="text-sm font-medium text-amber-600">📌 상단 고정</span>
+                </label>
+              )}
             </div>
           </div>
 
