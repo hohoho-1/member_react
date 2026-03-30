@@ -150,37 +150,59 @@ export default function BoardPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {posts.map(post => (
-                    <tr key={post.id}
-                      className="border-t border-gray-50 hover:bg-gray-50 cursor-pointer"
-                      onClick={() => navigate(`/board/${post.id}`)}>
-                      <td className="px-4 py-3 text-sm text-gray-400">{post.id}</td>
-                      <td className="px-4 py-3">
-                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                          post.category === 'NOTICE'
-                            ? 'bg-red-100 text-red-600'
-                            : 'bg-blue-100 text-blue-600'
-                        }`}>
-                          {post.categoryName}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3 text-sm font-medium text-gray-700 hover:text-blue-600 max-w-[200px]">
-                        <div className="flex items-center gap-1.5">
-                          <span className="truncate">{post.title}</span>
-                          {(Date.now() - new Date(post.createdAt).getTime()) < 24 * 60 * 60 * 1000 && (
-                            <span className="shrink-0 px-1.5 py-0.5 bg-red-500 text-white text-[10px] font-bold rounded">NEW</span>
-                          )}
-                        </div>
-                      </td>
-                      <td className="px-4 py-3 text-sm text-gray-500">{post.authorName}</td>
-                      <td className="px-4 py-3 text-xs text-gray-400 whitespace-nowrap">
-                        {new Date(post.createdAt).toLocaleDateString('ko-KR')}
-                      </td>
-                      <td className="px-4 py-3 text-sm text-gray-400">{post.viewCount}</td>
-                      <td className="px-4 py-3 text-sm text-blue-400">{post.commentCount > 0 ? post.commentCount : '-'}</td>
-                      <td className="px-4 py-3 text-sm text-red-400">{post.likeCount > 0 ? post.likeCount : '-'}</td>
-                    </tr>
-                  ))}
+                  {posts.map((post, index) => {
+                    const prevPost = posts[index - 1];
+                    const isFirstFree = post.category !== 'NOTICE' &&
+                      (index === 0 || prevPost?.category === 'NOTICE');
+                    const isNotice = post.category === 'NOTICE';
+
+                    return (
+                      <>
+                        {isFirstFree && category === 'ALL' && index > 0 && (
+                          <tr key={`divider-${post.id}`}>
+                            <td colSpan={8}>
+                              <div className="border-t-2 border-dashed border-gray-200 mx-4 my-0.5" />
+                            </td>
+                          </tr>
+                        )}
+                        <tr key={post.id}
+                          className={`border-t border-gray-50 hover:bg-gray-50 cursor-pointer transition-colors ${
+                            isNotice && category === 'ALL' ? 'bg-amber-50 hover:bg-amber-100' : ''
+                          }`}
+                          onClick={() => navigate(`/board/${post.id}`)}>
+                          <td className="px-4 py-3 text-sm text-gray-400">
+                            {isNotice && category === 'ALL'
+                              ? <span className="text-amber-500 font-bold">📌</span>
+                              : post.id}
+                          </td>
+                          <td className="px-4 py-3">
+                            <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                              post.category === 'NOTICE'
+                                ? 'bg-red-100 text-red-600'
+                                : 'bg-blue-100 text-blue-600'
+                            }`}>
+                              {post.categoryName}
+                            </span>
+                          </td>
+                          <td className="px-4 py-3 text-sm font-medium text-gray-700 hover:text-blue-600 max-w-[200px]">
+                            <div className="flex items-center gap-1.5">
+                              <span className="truncate">{post.title}</span>
+                              {(Date.now() - new Date(post.createdAt).getTime()) < 24 * 60 * 60 * 1000 && (
+                                <span className="shrink-0 px-1.5 py-0.5 bg-red-500 text-white text-[10px] font-bold rounded">NEW</span>
+                              )}
+                            </div>
+                          </td>
+                          <td className="px-4 py-3 text-sm text-gray-500">{post.authorName}</td>
+                          <td className="px-4 py-3 text-xs text-gray-400 whitespace-nowrap">
+                            {new Date(post.createdAt).toLocaleDateString('ko-KR')}
+                          </td>
+                          <td className="px-4 py-3 text-sm text-gray-400">{post.viewCount}</td>
+                          <td className="px-4 py-3 text-sm text-blue-400">{post.commentCount > 0 ? post.commentCount : '-'}</td>
+                          <td className="px-4 py-3 text-sm text-red-400">{post.likeCount > 0 ? post.likeCount : '-'}</td>
+                        </tr>
+                      </>
+                    );
+                  })}
                 </tbody>
               </table>
 
