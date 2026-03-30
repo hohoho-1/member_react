@@ -16,6 +16,7 @@ export default function BoardPage() {
 
   const category = searchParams.get('category') ?? 'ALL';
   const keyword  = searchParams.get('keyword') ?? '';
+  const sort     = searchParams.get('sort') ?? 'latest';
   const currentPage = Math.max(0, parseInt(searchParams.get('page') ?? '1') - 1);
 
   const [posts, setPosts] = useState([]);
@@ -34,7 +35,7 @@ export default function BoardPage() {
   const loadPosts = async (cat, kw, page) => {
     setLoading(true);
     const res = await authFetch(
-      `/api/posts?category=${cat}&keyword=${encodeURIComponent(kw)}&page=${page}&size=${PAGE_SIZE}`
+      `/api/posts?category=${cat}&keyword=${encodeURIComponent(kw)}&page=${page}&size=${PAGE_SIZE}&sort=${sort}`
     );
     if (res.ok) {
       const data = await res.json();
@@ -46,11 +47,15 @@ export default function BoardPage() {
   };
 
   const switchCategory = (cat) => {
-    setSearchParams({ category: cat });
+    setSearchParams({ category: cat, sort });
+  };
+
+  const switchSort = (s) => {
+    setSearchParams({ category, sort: s });
   };
 
   const goToPage = (page) => {
-    const params = { category };
+    const params = { category, sort };
     if (page + 1 > 1) params.page = String(page + 1);
     if (keyword) params.keyword = keyword;
     setSearchParams(params);
@@ -58,7 +63,7 @@ export default function BoardPage() {
 
   const handleKeywordChange = (e) => {
     const kw = e.target.value;
-    const params = { category };
+    const params = { category, sort };
     if (kw) params.keyword = kw;
     setSearchParams(params);
   };
@@ -100,10 +105,30 @@ export default function BoardPage() {
         {/* 게시글 목록 */}
         <div className="bg-white rounded-2xl shadow overflow-hidden">
           <div className="flex justify-between items-center px-6 py-4 border-b border-gray-100">
-            <span className="font-semibold text-gray-700">
-              총 {totalElements}개
-              <span className="ml-2 text-sm text-gray-400">({currentPage + 1} / {totalPages || 1} 페이지)</span>
-            </span>
+            <div className="flex items-center gap-3">
+              <span className="font-semibold text-gray-700">
+                총 {totalElements}개
+                <span className="ml-2 text-sm text-gray-400">({currentPage + 1} / {totalPages || 1} 페이지)</span>
+              </span>
+              {/* 정렬 버튼 */}
+              <div className="flex gap-1">
+                {[
+                  { value: 'latest',   label: '최신순' },
+                  { value: 'views',    label: '👁️ 조회순' },
+                  { value: 'likes',    label: '❤️ 좋아요순' },
+                  { value: 'comments', label: '💬 댓글순' },
+                ].map(s => (
+                  <button key={s.value} onClick={() => switchSort(s.value)}
+                    className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${
+                      sort === s.value
+                        ? 'bg-blue-500 text-white'
+                        : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
+                    }`}>
+                    {s.label}
+                  </button>
+                ))}
+              </div>
+            </div>
             <input type="text" placeholder="🔍 제목 또는 작성자 검색"
               value={keyword} onChange={handleKeywordChange}
               className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-blue-400 w-52"
