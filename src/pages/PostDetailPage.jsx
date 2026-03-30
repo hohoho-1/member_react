@@ -166,6 +166,7 @@ export default function PostDetailPage() {
   const [likeCount, setLikeCount] = useState(0);
   const [likedByMe, setLikedByMe] = useState(false);
   const [likeLoading, setLikeLoading] = useState(false);
+  const [pinLoading, setPinLoading] = useState(false);
 
   const payload = getTokenPayload();
   const isLoggedIn = !!payload;
@@ -285,6 +286,19 @@ export default function PostDetailPage() {
     }
   };
 
+  const handleTogglePin = async () => {
+    setPinLoading(true);
+    const res = await authFetch(`/api/posts/${id}/pin`, { method: 'PATCH' });
+    if (res.ok) {
+      const data = await res.json();
+      setPost(prev => ({ ...prev, pinned: data.pinned }));
+    } else {
+      const data = await res.json();
+      alert(data.message || '핀 설정에 실패했습니다.');
+    }
+    setPinLoading(false);
+  };
+
   if (loading) return <div className="min-h-screen bg-gray-100 flex items-center justify-center text-gray-400">로딩 중...</div>;
 
   if (errorMsg) return (
@@ -307,6 +321,19 @@ export default function PostDetailPage() {
           </button>
           {canEdit && (
             <div className="flex gap-2">
+              {isAdmin && post.category === 'NOTICE' && (
+                <button
+                  onClick={handleTogglePin}
+                  disabled={pinLoading}
+                  title={post.pinned ? '상단 고정 해제' : '상단 고정'}
+                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                    post.pinned
+                      ? 'bg-amber-400 hover:bg-amber-500 text-white'
+                      : 'bg-gray-100 hover:bg-amber-100 text-gray-500 hover:text-amber-600'
+                  }`}>
+                  {post.pinned ? '📌 고정 해제' : '📌 상단 고정'}
+                </button>
+              )}
               <button onClick={() => navigate(`/board/${id}/edit`)}
                 className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg text-sm font-medium transition-colors">
                 수정

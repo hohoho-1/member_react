@@ -152,13 +152,13 @@ export default function BoardPage() {
                 <tbody>
                   {posts.map((post, index) => {
                     const prevPost = posts[index - 1];
-                    const isFirstFree = post.category !== 'NOTICE' &&
-                      (index === 0 || prevPost?.category === 'NOTICE');
-                    const isNotice = post.category === 'NOTICE';
+                    const isFirstUnpinned = !post.pinned &&
+                      (index === 0 || prevPost?.pinned === true);
+                    const isPinned = post.pinned;
 
                     return (
                       <>
-                        {isFirstFree && category === 'ALL' && index > 0 && (
+                        {isFirstUnpinned && category === 'ALL' && index > 0 && (
                           <tr key={`divider-${post.id}`}>
                             <td colSpan={8}>
                               <div className="border-t-2 border-dashed border-gray-200 mx-4 my-0.5" />
@@ -167,11 +167,11 @@ export default function BoardPage() {
                         )}
                         <tr key={post.id}
                           className={`border-t border-gray-50 hover:bg-gray-50 cursor-pointer transition-colors ${
-                            isNotice && category === 'ALL' ? 'bg-amber-50 hover:bg-amber-100' : ''
+                            isPinned ? 'bg-amber-50 hover:bg-amber-100' : ''
                           }`}
                           onClick={() => navigate(`/board/${post.id}`)}>
                           <td className="px-4 py-3 text-sm text-gray-400">
-                            {isNotice && category === 'ALL'
+                            {isPinned
                               ? <span className="text-amber-500 font-bold">📌</span>
                               : post.id}
                           </td>
