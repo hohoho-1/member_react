@@ -119,7 +119,7 @@ export default function BoardPage() {
               <table className="w-full">
                 <thead className="bg-gray-50">
                   <tr>
-                    {['번호', '카테고리', '제목', '작성자', '날짜', '조회'].map(h => (
+                    {['번호', '카테고리', '제목', '작성자', '날짜', '조회', '💬', '❤️'].map(h => (
                       <th key={h} className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">{h}</th>
                     ))}
                   </tr>
@@ -145,12 +145,6 @@ export default function BoardPage() {
                           {(Date.now() - new Date(post.createdAt).getTime()) < 24 * 60 * 60 * 1000 && (
                             <span className="shrink-0 px-1.5 py-0.5 bg-red-500 text-white text-[10px] font-bold rounded">NEW</span>
                           )}
-                          {post.commentCount > 0 && (
-                            <span className="shrink-0 text-xs text-blue-400 font-normal">💬 {post.commentCount}</span>
-                          )}
-                          {post.likeCount > 0 && (
-                            <span className="shrink-0 text-xs text-red-400 font-normal">❤️ {post.likeCount}</span>
-                          )}
                         </div>
                       </td>
                       <td className="px-4 py-3 text-sm text-gray-500">{post.authorName}</td>
@@ -158,6 +152,8 @@ export default function BoardPage() {
                         {new Date(post.createdAt).toLocaleDateString('ko-KR')}
                       </td>
                       <td className="px-4 py-3 text-sm text-gray-400">{post.viewCount}</td>
+                      <td className="px-4 py-3 text-sm text-blue-400">{post.commentCount > 0 ? post.commentCount : '-'}</td>
+                      <td className="px-4 py-3 text-sm text-red-400">{post.likeCount > 0 ? post.likeCount : '-'}</td>
                     </tr>
                   ))}
                 </tbody>
