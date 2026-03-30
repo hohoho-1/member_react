@@ -148,6 +148,9 @@ export default function BoardPage() {
                           {post.commentCount > 0 && (
                             <span className="shrink-0 text-xs text-blue-400 font-normal">💬 {post.commentCount}</span>
                           )}
+                          {post.likeCount > 0 && (
+                            <span className="shrink-0 text-xs text-red-400 font-normal">❤️ {post.likeCount}</span>
+                          )}
                         </div>
                       </td>
                       <td className="px-4 py-3 text-sm text-gray-500">{post.authorName}</td>

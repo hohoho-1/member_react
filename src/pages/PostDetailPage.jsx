@@ -162,6 +162,11 @@ export default function PostDetailPage() {
   const [replyInput, setReplyInput] = useState('');
   const [commentError, setCommentError] = useState('');
 
+  // 좋아요 상태
+  const [likeCount, setLikeCount] = useState(0);
+  const [likedByMe, setLikedByMe] = useState(false);
+  const [likeLoading, setLikeLoading] = useState(false);
+
   const payload = getTokenPayload();
   const isLoggedIn = !!payload;
   const isAdmin = payload?.role === 'ROLE_ADMIN';
@@ -176,7 +181,12 @@ export default function PostDetailPage() {
   const loadPost = async () => {
     setLoading(true);
     const res = await authFetch(`/api/posts/${id}`);
-    if (res.ok) setPost(await res.json());
+    if (res.ok) {
+      const data = await res.json();
+      setPost(data);
+      setLikeCount(data.likeCount ?? 0);
+      setLikedByMe(data.likedByMe ?? false);
+    }
     else setErrorMsg('게시글을 불러올 수 없습니다.');
     setLoading(false);
   };
@@ -253,6 +263,18 @@ export default function PostDetailPage() {
     }
   };
 
+  const handleToggleLike = async () => {
+    if (!isLoggedIn) { navigate('/login'); return; }
+    setLikeLoading(true);
+    const res = await authFetch(`/api/posts/${id}/like`, { method: 'POST' });
+    if (res.ok) {
+      const data = await res.json();
+      setLikeCount(data.likeCount);
+      setLikedByMe(data.liked);
+    }
+    setLikeLoading(false);
+  };
+
   const handleDelete = async () => {
     if (!window.confirm('이 게시글을 삭제하시겠습니까?\n삭제된 글은 관리자 페이지에서 복구할 수 있습니다.')) return;
     const res = await authFetch(`/api/posts/${id}`, { method: 'DELETE' });
@@ -316,6 +338,21 @@ export default function PostDetailPage() {
           </div>
           <div className="pt-6 text-gray-700 leading-relaxed whitespace-pre-wrap">
             {post.content}
+          </div>
+
+          {/* 좋아요 버튼 */}
+          <div className="flex justify-center mt-8 pt-6 border-t border-gray-100">
+            <button
+              onClick={handleToggleLike}
+              disabled={likeLoading}
+              className={`flex items-center gap-2 px-6 py-2.5 rounded-full text-sm font-semibold transition-all ${
+                likedByMe
+                  ? 'bg-red-500 text-white hover:bg-red-600 shadow-md'
+                  : 'bg-gray-100 text-gray-500 hover:bg-red-50 hover:text-red-400'
+              }`}>
+              <span className="text-base">{likedByMe ? '❤️' : '🤍'}</span>
+              <span>{likeCount}</span>
+            </button>
           </div>
         </div>
 
