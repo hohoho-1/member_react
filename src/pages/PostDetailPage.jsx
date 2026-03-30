@@ -8,7 +8,7 @@ function CommentItem({
   postId, payload, isAdmin,
   editingCommentId, editingContent, setEditingCommentId, setEditingContent,
   replyingToId, setReplyingToId, replyInput, setReplyInput,
-  onEdit, onDelete, onReply,
+  onEdit, onDelete, onReply, onLike,
 }) {
   const isMyComment = payload && comment.authorId === payload.userId;
   const canManage = isMyComment || isAdmin;
@@ -81,7 +81,18 @@ function CommentItem({
         </div>
 
         {!isEditing && !comment.deleted && (
-          <div className="flex gap-1 shrink-0">
+          <div className="flex items-center gap-1 shrink-0">
+            {/* 좋아요 버튼 */}
+            <button
+              onClick={() => onLike(comment.id)}
+              className={`flex items-center gap-1 px-2 py-1 rounded-lg text-xs transition-colors ${
+                comment.likedByMe
+                  ? 'text-red-500 bg-red-50 hover:bg-red-100'
+                  : 'text-gray-400 hover:bg-gray-100'
+              }`}>
+              <span>{comment.likedByMe ? '❤️' : '🤍'}</span>
+              {comment.likeCount > 0 && <span className="font-medium">{comment.likeCount}</span>}
+            </button>
             {payload && (
               <button onClick={() => {
                 setReplyingToId(isReplying ? null : comment.id);
@@ -128,6 +139,7 @@ function CommentItem({
               onEdit={onEdit}
               onDelete={onDelete}
               onReply={onReply}
+              onLike={onLike}
             />
           ))}
         </ul>
@@ -263,6 +275,23 @@ export default function PostDetailPage() {
       setCommentError(data.message || '댓글 삭제에 실패했습니다.');
     }
   };
+
+  const handleLikeComment = async (commentId) => {
+    if (!isLoggedIn) { navigate('/login'); return; }
+    const res = await authFetch(`/api/posts/${id}/comments/${commentId}/like`, { method: 'POST' });
+    if (res.ok) {
+      const data = await res.json();
+      // 댓글 트리에서 해당 댓글의 likeCount/likedByMe 업데이트
+      setComments(prev => updateCommentLike(prev, commentId, data.likeCount, data.liked));
+    }
+  };
+
+  const updateCommentLike = (comments, commentId, likeCount, liked) =>
+    comments.map(c => {
+      if (c.id === commentId) return { ...c, likeCount, likedByMe: liked };
+      if (c.children?.length) return { ...c, children: updateCommentLike(c.children, commentId, likeCount, liked) };
+      return c;
+    });
 
   const handleToggleLike = async () => {
     if (!isLoggedIn) { navigate('/login'); return; }
@@ -411,6 +440,7 @@ export default function PostDetailPage() {
                   onEdit={handleEditComment}
                   onDelete={handleDeleteComment}
                   onReply={handleReply}
+                  onLike={handleLikeComment}
                 />
               ))}
             </ul>
