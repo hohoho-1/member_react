@@ -1,11 +1,16 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { authFetch, getTokenPayload } from '../utils/authFetch';
 
+const MAX_FILES = 5;
+const MAX_SIZE = 10 * 1024 * 1024; // 10MB
+const ALLOWED_EXT = ['jpg','jpeg','png','gif','pdf','doc','docx','xlsx','xls'];
+
 export default function PostWritePage() {
-  const { id } = useParams(); // id가 있으면 수정 모드
+  const { id } = useParams();
   const navigate = useNavigate();
   const isEditMode = !!id;
+  const fileInputRef = useRef(null);
 
   const payload = getTokenPayload();
   const isAdmin = payload?.role === 'ROLE_ADMIN';
@@ -17,16 +22,23 @@ export default function PostWritePage() {
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
 
+  // 파일 관련 상태
+  const [pendingFiles, setPendingFiles] = useState([]);       // 새로 선택된 파일 (업로드 전)
+  const [existingFiles, setExistingFiles] = useState([]);     // 수정 모드 기존 파일
+  const [deletedFileIds, setDeletedFileIds] = useState([]);   // 수정 모드 삭제할 파일 ID
+
   useEffect(() => {
     if (!payload) { navigate('/login'); return; }
     if (isEditMode) loadPost();
   }, []);
 
   const loadPost = async () => {
-    const res = await authFetch(`/api/posts/${id}`);
-    if (res.ok) {
-      const data = await res.json();
-      // 본인 또는 관리자만 수정 가능
+    const [postRes, fileRes] = await Promise.all([
+      authFetch(`/api/posts/${id}`),
+      authFetch(`/api/posts/${id}/files`),
+    ]);
+    if (postRes.ok) {
+      const data = await postRes.json();
       if (data.authorId !== payload.userId && !isAdmin) {
         alert('수정 권한이 없습니다.');
         navigate(`/board/${id}`);
@@ -37,6 +49,37 @@ export default function PostWritePage() {
       setContent(data.content);
       setIsPinned(data.pinned ?? false);
     }
+    if (fileRes.ok) {
+      setExistingFiles(await fileRes.json());
+    }
+  };
+
+  const handleFileSelect = (e) => {
+    const selected = Array.from(e.target.files);
+    const totalCount = existingFiles.length - deletedFileIds.length + pendingFiles.length + selected.length;
+    if (totalCount > MAX_FILES) {
+      setErrorMsg(`파일은 최대 ${MAX_FILES}개까지 첨부할 수 있습니다.`);
+      return;
+    }
+    const invalid = selected.filter(f => {
+      const ext = f.name.split('.').pop().toLowerCase();
+      return !ALLOWED_EXT.includes(ext) || f.size > MAX_SIZE;
+    });
+    if (invalid.length > 0) {
+      setErrorMsg('허용되지 않는 파일 형식이거나 10MB를 초과하는 파일이 있습니다.');
+      return;
+    }
+    setErrorMsg('');
+    setPendingFiles(prev => [...prev, ...selected]);
+    e.target.value = '';
+  };
+
+  const removePending = (idx) => {
+    setPendingFiles(prev => prev.filter((_, i) => i !== idx));
+  };
+
+  const removeExisting = (fileId) => {
+    setDeletedFileIds(prev => [...prev, fileId]);
   };
 
   const handleSubmit = async () => {
@@ -46,25 +89,44 @@ export default function PostWritePage() {
     setLoading(true);
     setErrorMsg('');
 
+    // 1. 게시글 저장
     const body = { category, title: title.trim(), content: content.trim(), isPinned: isAdmin && category === 'NOTICE' ? isPinned : false };
     const res = isEditMode
       ? await authFetch(`/api/posts/${id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
       : await authFetch('/api/posts', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
 
-    if (res.ok) {
-      const data = await res.json();
-      navigate(`/board/${data.id}`);
-    } else {
+    if (!res.ok) {
       const data = await res.json();
       setErrorMsg(data.message || '저장에 실패했습니다.');
+      setLoading(false);
+      return;
     }
+
+    const postData = await res.json();
+    const postId = postData.id;
+
+    // 2. 수정 모드: 삭제할 파일 제거
+    for (const fileId of deletedFileIds) {
+      await authFetch(`/api/posts/${postId}/files/${fileId}`, { method: 'DELETE' });
+    }
+
+    // 3. 새 파일 업로드
+    if (pendingFiles.length > 0) {
+      const formData = new FormData();
+      pendingFiles.forEach(f => formData.append('files', f));
+      await authFetch(`/api/posts/${postId}/files`, { method: 'POST', body: formData });
+    }
+
+    navigate(`/board/${postId}`);
     setLoading(false);
   };
+
+  const activeExistingFiles = existingFiles.filter(f => !deletedFileIds.includes(f.id));
+  const totalCount = activeExistingFiles.length + pendingFiles.length;
 
   return (
     <div className="min-h-screen bg-gray-100 p-10">
       <div className="max-w-3xl mx-auto">
-        {/* 헤더 */}
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-2xl font-bold text-gray-700">
             {isEditMode ? '✏️ 게시글 수정' : '✏️ 게시글 작성'}
@@ -76,7 +138,7 @@ export default function PostWritePage() {
         </div>
 
         <div className="bg-white rounded-2xl shadow p-8 space-y-5">
-          {/* 카테고리 선택 */}
+          {/* 카테고리 */}
           <div>
             <label className="block text-sm font-semibold text-gray-600 mb-2">카테고리</label>
             <div className="flex items-center gap-3 flex-wrap">
@@ -94,16 +156,10 @@ export default function PostWritePage() {
                 }`}>
                 💬 자유게시판
               </button>
-
-              {/* 핀 고정 체크박스 - 관리자 + 공지 선택 시만 표시 */}
               {isAdmin && category === 'NOTICE' && (
                 <label className="flex items-center gap-2 ml-2 cursor-pointer select-none">
-                  <input
-                    type="checkbox"
-                    checked={isPinned}
-                    onChange={e => setIsPinned(e.target.checked)}
-                    className="w-4 h-4 accent-amber-500 cursor-pointer"
-                  />
+                  <input type="checkbox" checked={isPinned} onChange={e => setIsPinned(e.target.checked)}
+                    className="w-4 h-4 accent-amber-500 cursor-pointer" />
                   <span className="text-sm font-medium text-amber-600">📌 상단 고정</span>
                 </label>
               )}
@@ -114,8 +170,7 @@ export default function PostWritePage() {
           <div>
             <label className="block text-sm font-semibold text-gray-600 mb-2">제목</label>
             <input type="text" value={title} onChange={e => setTitle(e.target.value)}
-              placeholder="제목을 입력하세요"
-              maxLength={200}
+              placeholder="제목을 입력하세요" maxLength={200}
               className="w-full px-4 py-3 border border-gray-300 rounded-xl text-sm focus:outline-none focus:border-blue-400 transition-colors"
             />
             <p className="text-xs text-gray-400 mt-1 text-right">{title.length} / 200</p>
@@ -125,10 +180,64 @@ export default function PostWritePage() {
           <div>
             <label className="block text-sm font-semibold text-gray-600 mb-2">내용</label>
             <textarea value={content} onChange={e => setContent(e.target.value)}
-              placeholder="내용을 입력하세요"
-              rows={12}
+              placeholder="내용을 입력하세요" rows={12}
               className="w-full px-4 py-3 border border-gray-300 rounded-xl text-sm focus:outline-none focus:border-blue-400 transition-colors resize-none"
             />
+          </div>
+
+          {/* 파일 첨부 */}
+          <div>
+            <div className="flex items-center justify-between mb-2">
+              <label className="text-sm font-semibold text-gray-600">
+                📎 파일 첨부 <span className="text-gray-400 font-normal">({totalCount}/{MAX_FILES})</span>
+              </label>
+              {totalCount < MAX_FILES && (
+                <button type="button" onClick={() => fileInputRef.current?.click()}
+                  className="px-3 py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-600 rounded-lg text-xs font-medium transition-colors">
+                  + 파일 선택
+                </button>
+              )}
+            </div>
+            <input ref={fileInputRef} type="file" multiple className="hidden"
+              accept=".jpg,.jpeg,.png,.gif,.pdf,.doc,.docx,.xlsx,.xls"
+              onChange={handleFileSelect}
+            />
+            <p className="text-xs text-gray-400 mb-2">
+              jpg, jpeg, png, gif, pdf, doc, docx, xlsx, xls / 파일당 최대 10MB
+            </p>
+
+            {/* 기존 파일 (수정 모드) */}
+            {activeExistingFiles.map(file => (
+              <div key={file.id} className="flex items-center justify-between px-3 py-2 bg-blue-50 rounded-lg mb-1">
+                <div className="flex items-center gap-2 text-sm text-gray-700 truncate">
+                  <span>{file.image ? '🖼️' : '📄'}</span>
+                  <span className="truncate">{file.originalName}</span>
+                  <span className="text-xs text-gray-400 shrink-0">({(file.fileSize / 1024).toFixed(1)}KB)</span>
+                </div>
+                <button onClick={() => removeExisting(file.id)}
+                  className="ml-2 text-red-400 hover:text-red-600 text-xs shrink-0">✕</button>
+              </div>
+            ))}
+
+            {/* 새로 선택한 파일 */}
+            {pendingFiles.map((file, idx) => (
+              <div key={idx} className="flex items-center justify-between px-3 py-2 bg-green-50 rounded-lg mb-1">
+                <div className="flex items-center gap-2 text-sm text-gray-700 truncate">
+                  <span>{file.type.startsWith('image/') ? '🖼️' : '📄'}</span>
+                  <span className="truncate">{file.name}</span>
+                  <span className="text-xs text-gray-400 shrink-0">({(file.size / 1024).toFixed(1)}KB)</span>
+                  <span className="text-xs text-green-500 shrink-0">NEW</span>
+                </div>
+                <button onClick={() => removePending(idx)}
+                  className="ml-2 text-red-400 hover:text-red-600 text-xs shrink-0">✕</button>
+              </div>
+            ))}
+
+            {totalCount === 0 && (
+              <div className="text-center py-4 border-2 border-dashed border-gray-200 rounded-xl text-sm text-gray-400">
+                첨부 파일 없음
+              </div>
+            )}
           </div>
 
           {errorMsg && (
@@ -137,7 +246,6 @@ export default function PostWritePage() {
             </div>
           )}
 
-          {/* 제출 버튼 */}
           <div className="flex justify-end">
             <button onClick={handleSubmit} disabled={loading}
               className="px-6 py-3 bg-blue-500 hover:bg-blue-600 disabled:bg-blue-300 text-white rounded-xl text-sm font-medium transition-colors">

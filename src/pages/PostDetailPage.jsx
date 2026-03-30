@@ -164,6 +164,7 @@ export default function PostDetailPage() {
   const [post, setPost] = useState(null);
   const [loading, setLoading] = useState(true);
   const [errorMsg, setErrorMsg] = useState('');
+  const [files, setFiles] = useState([]);
 
   const [comments, setComments] = useState([]);
   const [commentInput, setCommentInput] = useState('');
@@ -189,7 +190,13 @@ export default function PostDetailPage() {
   useEffect(() => {
     loadPost();
     loadComments();
+    loadFiles();
   }, [id]);
+
+  const loadFiles = async () => {
+    const res = await authFetch(`/api/posts/${id}/files`);
+    if (res.ok) setFiles(await res.json());
+  };
 
   const loadPost = async () => {
     setLoading(true);
@@ -410,6 +417,35 @@ export default function PostDetailPage() {
               <span>{likeCount}</span>
             </button>
           </div>
+
+          {/* 첨부 파일 */}
+          {files.length > 0 && (
+            <div className="mt-6 pt-5 border-t border-gray-100">
+              <p className="text-sm font-semibold text-gray-600 mb-3">📎 첨부 파일 ({files.length})</p>
+              <div className="space-y-2">
+                {files.map(file => (
+                  <div key={file.id} className="flex items-center gap-3">
+                    {file.image ? (
+                      <a href={`http://localhost:8080${file.downloadUrl}`} target="_blank" rel="noreferrer"
+                        className="flex items-center gap-2 px-3 py-2 bg-blue-50 hover:bg-blue-100 rounded-lg text-sm text-blue-600 transition-colors max-w-full">
+                        <span>🖼️</span>
+                        <span className="truncate">{file.originalName}</span>
+                        <span className="text-xs text-gray-400 shrink-0">({(file.fileSize / 1024).toFixed(1)}KB)</span>
+                      </a>
+                    ) : (
+                      <a href={`http://localhost:8080${file.downloadUrl}`} download={file.originalName}
+                        className="flex items-center gap-2 px-3 py-2 bg-gray-50 hover:bg-gray-100 rounded-lg text-sm text-gray-600 transition-colors max-w-full">
+                        <span>📄</span>
+                        <span className="truncate">{file.originalName}</span>
+                        <span className="text-xs text-gray-400 shrink-0">({(file.fileSize / 1024).toFixed(1)}KB)</span>
+                        <span className="text-xs text-blue-400 shrink-0">↓</span>
+                      </a>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
 
         <div className="bg-white rounded-2xl shadow p-8 mt-4">
