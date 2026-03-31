@@ -303,32 +303,62 @@ export default function PostDetailPage() {
             </button>
           </div>
 
-          {/* 첨부 파일 */}
-          {files.length > 0 && (
-            <div className="mt-6 pt-5 border-t border-gray-100">
-              <p className="text-sm font-semibold text-gray-600 mb-3">📎 첨부 파일 ({files.length})</p>
-              <div className="space-y-2">
-                {files.map(file => (
-                  <div key={file.id}>
-                    {file.image ? (
-                      <a href={`http://localhost:8080${file.downloadUrl}`} target="_blank" rel="noreferrer"
-                        className="flex items-center gap-2 px-3 py-2 bg-blue-50 hover:bg-blue-100 rounded-lg text-sm text-blue-600 transition-colors">
-                        <span>🖼️</span><span className="truncate">{file.originalName}</span>
-                        <span className="text-xs text-gray-400 shrink-0">({(file.fileSize / 1024).toFixed(1)}KB)</span>
-                      </a>
-                    ) : (
-                      <a href={`http://localhost:8080${file.downloadUrl}`} download={file.originalName}
-                        className="flex items-center gap-2 px-3 py-2 bg-gray-50 hover:bg-gray-100 rounded-lg text-sm text-gray-600 transition-colors">
-                        <span>📄</span><span className="truncate">{file.originalName}</span>
-                        <span className="text-xs text-gray-400 shrink-0">({(file.fileSize / 1024).toFixed(1)}KB)</span>
-                        <span className="text-xs text-blue-400 shrink-0">↓</span>
-                      </a>
-                    )}
+          {/* 첨부 파일 - 이미지 인라인 표시 */}
+          {files.length > 0 && (() => {
+            const imageFiles = files.filter(f => f.image);
+            const docFiles = files.filter(f => !f.image);
+            return (
+              <div className="mt-6 pt-5 border-t border-gray-100 space-y-4">
+                {/* 이미지 인라인 표시 */}
+                {imageFiles.length > 0 && (
+                  <div>
+                    <p className="text-sm font-semibold text-gray-600 mb-3">🖼️ 이미지 ({imageFiles.length})</p>
+                    <div className="space-y-3">
+                      {imageFiles.map(file => (
+                        <div key={file.id} className="rounded-xl overflow-hidden border border-gray-100 bg-gray-50">
+                          <img
+                            src={`http://localhost:8080${file.downloadUrl}`}
+                            alt={file.originalName}
+                            className="w-full max-h-[600px] object-contain bg-white"
+                          />
+                          <div className="flex items-center justify-between px-3 py-2">
+                            <span className="text-xs text-gray-400 truncate">{file.originalName} ({(file.fileSize / 1024).toFixed(1)}KB)</span>
+                            <a
+                              href={`http://localhost:8080${file.downloadUrl}`}
+                              download={file.originalName}
+                              className="text-xs text-blue-500 hover:text-blue-700 hover:underline shrink-0 ml-2"
+                            >
+                              ↓ 다운로드
+                            </a>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
                   </div>
-                ))}
+                )}
+
+                {/* 문서 파일 다운로드 */}
+                {docFiles.length > 0 && (
+                  <div>
+                    <p className="text-sm font-semibold text-gray-600 mb-3">📎 첨부 파일 ({docFiles.length})</p>
+                    <div className="space-y-2">
+                      {docFiles.map(file => (
+                        <a key={file.id}
+                          href={`http://localhost:8080${file.downloadUrl}`}
+                          download={file.originalName}
+                          className="flex items-center gap-2 px-3 py-2 bg-gray-50 hover:bg-gray-100 rounded-lg text-sm text-gray-600 transition-colors">
+                          <span>📄</span>
+                          <span className="truncate flex-1">{file.originalName}</span>
+                          <span className="text-xs text-gray-400 shrink-0">({(file.fileSize / 1024).toFixed(1)}KB)</span>
+                          <span className="text-xs text-blue-400 shrink-0">↓ 다운로드</span>
+                        </a>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
-            </div>
-          )}
+            );
+          })()}
         </div>
 
         {/* 댓글 영역 */}
