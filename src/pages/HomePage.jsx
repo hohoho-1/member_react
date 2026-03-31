@@ -25,7 +25,7 @@ export default function HomePage() {
     <div className="min-h-screen bg-gray-100 flex items-center justify-center">
       <div className="bg-white p-10 rounded-2xl shadow-lg w-96 text-center">
         <div className="flex justify-end mb-2">
-          <NotificationBell />
+          <NotificationBell showProfile={false} />
         </div>
         <h2 className="text-2xl font-bold text-gray-700 mb-4">🏠 홈</h2>
         <div className="bg-blue-50 rounded-xl p-4 mb-6">

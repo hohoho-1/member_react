@@ -20,7 +20,7 @@ function timeAgo(dateStr) {
   return `${Math.floor(h / 24)}일 전`;
 }
 
-export default function NotificationBell() {
+export default function NotificationBell({ showProfile = true }) {
   const navigate = useNavigate();
   const payload = getTokenPayload();
   const [open, setOpen] = useState(false);
@@ -99,7 +99,7 @@ export default function NotificationBell() {
   return (
     <div className="flex items-center gap-2" ref={dropdownRef}>
       {/* 프로필 이미지 + 이름 → 마이페이지 */}
-      {payload && (
+      {showProfile && payload && (
         <button
           onClick={() => navigate('/mypage')}
           className="flex items-center gap-2 px-2 py-1 rounded-lg hover:bg-gray-100 transition-colors">

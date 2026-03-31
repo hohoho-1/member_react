@@ -168,7 +168,7 @@ export default function MyPage() {
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-2xl font-bold text-gray-700">⚙️ 마이페이지</h2>
           <div className="flex items-center gap-2">
-            <NotificationBell />
+            <NotificationBell showProfile={false} />
             <button onClick={() => navigate('/home')}
               className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-600 rounded-lg text-sm transition-colors">
               ← 홈으로
