@@ -152,6 +152,46 @@ export default function BoardListPage({ groupKey, groupLabel, groupEmoji, boards
             <div className="text-center py-16 text-gray-400">로딩 중...</div>
           ) : posts.length === 0 ? (
             <div className="text-center py-16 text-gray-400">게시글이 없습니다.</div>
+          ) : currentBoard?.boardType === 'GALLERY' ? (
+            /* ── 갤러리 그리드 뷰 ── */
+            <div className="p-4 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+              {posts.map(post => (
+                <div key={post.id}
+                  className="cursor-pointer rounded-xl overflow-hidden border border-gray-100 hover:shadow-md transition-shadow bg-white"
+                  onClick={() => navigate(
+                    `/board/${post.id}?scope=${scope}&keyword=${encodeURIComponent(keyword)}&sort=${sort}&returnTo=${encodeURIComponent(`${basePath}?scope=${scope}`)}`
+                  )}>
+                  {/* 썸네일 */}
+                  <div className="aspect-square bg-gray-100 flex items-center justify-center overflow-hidden">
+                    {post.thumbnailUrl ? (
+                      <img
+                        src={`http://localhost:8080${post.thumbnailUrl}`}
+                        alt={post.title}
+                        className="w-full h-full object-cover"
+                        onError={e => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'flex'; }}
+                      />
+                    ) : null}
+                    <div className={`w-full h-full flex items-center justify-center text-4xl text-gray-300 ${post.thumbnailUrl ? 'hidden' : ''}`}>
+                      🖼️
+                    </div>
+                  </div>
+                  {/* 정보 */}
+                  <div className="p-2">
+                    <p className="text-xs font-medium text-gray-700 truncate leading-snug">{post.title}</p>
+                    <div className="flex items-center justify-between mt-1">
+                      <span className="text-[10px] text-gray-400">{post.authorName}</span>
+                      <div className="flex items-center gap-1.5 text-[10px] text-gray-400">
+                        {post.likeCount > 0 && <span>❤️ {post.likeCount}</span>}
+                        {post.commentCount > 0 && <span>💬 {post.commentCount}</span>}
+                      </div>
+                    </div>
+                    {(Date.now() - new Date(post.createdAt).getTime()) < 24 * 60 * 60 * 1000 && (
+                      <span className="inline-block mt-1 px-1 py-0.5 bg-red-500 text-white text-[9px] font-bold rounded">NEW</span>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
           ) : (
             <>
               <table className="w-full">
@@ -236,6 +276,21 @@ export default function BoardListPage({ groupKey, groupLabel, groupEmoji, boards
                 </button>
               </div>
             </>
+          )}
+          {/* 갤러리/테이블 공통 페이지네이션 (갤러리 뷰) */}
+          {!loading && posts.length > 0 && currentBoard?.boardType === 'GALLERY' && totalPages > 1 && (
+            <div className="flex justify-center items-center gap-1 px-6 py-4 border-t border-gray-100">
+              <button onClick={() => goToPage(currentPage - 1)} disabled={currentPage === 0}
+                className="px-3 py-1.5 rounded-lg text-sm font-medium transition-colors disabled:text-gray-300 disabled:cursor-not-allowed text-gray-500 hover:bg-gray-100">‹</button>
+              {Array.from({ length: totalPages }, (_, i) => i).map(num => (
+                <button key={num} onClick={() => goToPage(num)}
+                  className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${num === currentPage ? 'bg-blue-500 text-white' : 'text-gray-500 hover:bg-gray-100'}`}>
+                  {num + 1}
+                </button>
+              ))}
+              <button onClick={() => goToPage(currentPage + 1)} disabled={currentPage >= totalPages - 1}
+                className="px-3 py-1.5 rounded-lg text-sm font-medium transition-colors disabled:text-gray-300 disabled:cursor-not-allowed text-gray-500 hover:bg-gray-100">›</button>
+            </div>
           )}
         </div>
       </div>
