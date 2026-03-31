@@ -141,7 +141,8 @@ export default function PostDetailPage() {
   const isAuthor = post && payload && post.authorId === payload.userId;
   const canEdit = isAuthor || isAdmin;
 
-  useEffect(() => { loadPost(); loadComments(); loadFiles(); loadAdjacent(); }, [id]);
+  useEffect(() => { loadPost(); loadComments(); loadFiles(); }, [id]);
+  useEffect(() => { loadAdjacent(); }, [id, boardCategory, boardKeyword, boardSort]);
 
   const loadPost = async () => {
     setLoading(true);
@@ -172,7 +173,10 @@ export default function PostDetailPage() {
       sort: boardSort,
     });
     const res = await authFetch(`/api/posts/${id}/adjacent?${params}`);
-    if (res.ok) setAdjacent(await res.json());
+    if (res.ok) {
+      const data = await res.json();
+      setAdjacent(data);
+    }
   };
 
   const handleSubmitComment = async () => {
