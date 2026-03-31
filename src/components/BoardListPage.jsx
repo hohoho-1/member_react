@@ -94,7 +94,7 @@ export default function BoardListPage({ groupKey, groupLabel, groupEmoji, boards
           <h2 className="text-2xl font-bold text-gray-700">{groupEmoji} {groupLabel}</h2>
           {canWrite && (
             <button
-              onClick={() => navigate(`/board/write?boardCode=${scope}&returnTo=${basePath}`)}
+              onClick={() => navigate(`/board/write?boardCode=${scope}&returnTo=${encodeURIComponent(`${basePath}?scope=${scope}`)}`)}>
               className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg text-sm font-medium transition-colors">
               ✏️ 글쓰기
             </button>
@@ -182,7 +182,7 @@ export default function BoardListPage({ groupKey, groupLabel, groupEmoji, boards
                             isPinned ? 'bg-amber-50 hover:bg-amber-100' : ''
                           }`}
                           onClick={() => navigate(
-                            `/board/${post.id}?scope=${scope}&keyword=${encodeURIComponent(keyword)}&sort=${sort}&returnTo=${basePath}`
+                            `/board/${post.id}?scope=${scope}&keyword=${encodeURIComponent(keyword)}&sort=${sort}&returnTo=${encodeURIComponent(`${basePath}?scope=${scope}`)}`
                           )}>
                           <td className="px-4 py-3 text-sm text-gray-400">
                             {isPinned

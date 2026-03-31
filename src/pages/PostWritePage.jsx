@@ -18,7 +18,7 @@ export default function PostWritePage() {
 
   // URL 파라미터로 초기 게시판 코드, 돌아갈 경로 수신
   const initialBoardCode = searchParams.get('boardCode') ?? 'FREE';
-  const returnTo = searchParams.get('returnTo') ?? '/community';
+  const returnTo = decodeURIComponent(searchParams.get('returnTo') ?? '/community?scope=FREE');
 
   // 쓰기 가능한 게시판 목록 (API에서 로드)
   const [boards, setBoards] = useState([]);
@@ -149,7 +149,7 @@ export default function PostWritePage() {
       await authFetch(`/api/posts/${postId}/files`, { method: 'POST', body: formData });
     }
 
-    navigate(`/board/${postId}?scope=${boardCode}&returnTo=${returnTo}`);
+    navigate(`/board/${postId}?scope=${boardCode}&returnTo=${encodeURIComponent(returnTo)}`);
     setLoading(false);
   };
 
@@ -177,7 +177,7 @@ export default function PostWritePage() {
             {isEditMode ? '✏️ 게시글 수정' : '✏️ 게시글 작성'}
           </h2>
           <button
-            onClick={() => navigate(isEditMode ? `/board/${id}?scope=${boardCode}&returnTo=${returnTo}` : returnTo)}
+            onClick={() => navigate(isEditMode ? `/board/${id}?scope=${boardCode}&returnTo=${encodeURIComponent(returnTo)}` : returnTo)}
             className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-600 rounded-lg text-sm transition-colors">
             취소
           </button>
