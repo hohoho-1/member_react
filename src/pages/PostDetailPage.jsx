@@ -324,7 +324,7 @@ export default function PostDetailPage() {
                           <div className="flex items-center justify-between px-3 py-2">
                             <span className="text-xs text-gray-400 truncate">{file.originalName} ({(file.fileSize / 1024).toFixed(1)}KB)</span>
                             <a
-                              href={`http://localhost:8080${file.downloadUrl}`}
+                              href={`http://localhost:8080${file.downloadUrl}/download`}
                               download={file.originalName}
                               className="text-xs text-blue-500 hover:text-blue-700 hover:underline shrink-0 ml-2"
                             >
