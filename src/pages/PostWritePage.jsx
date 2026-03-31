@@ -149,7 +149,7 @@ export default function PostWritePage() {
       await authFetch(`/api/posts/${postId}/files`, { method: 'POST', body: formData });
     }
 
-    navigate(`/board/${postId}?returnTo=${returnTo}`);
+    navigate(`/board/${postId}?scope=${boardCode}&returnTo=${returnTo}`);
     setLoading(false);
   };
 
@@ -177,7 +177,7 @@ export default function PostWritePage() {
             {isEditMode ? '✏️ 게시글 수정' : '✏️ 게시글 작성'}
           </h2>
           <button
-            onClick={() => navigate(isEditMode ? `/board/${id}?returnTo=${returnTo}` : returnTo)}
+            onClick={() => navigate(isEditMode ? `/board/${id}?scope=${boardCode}&returnTo=${returnTo}` : returnTo)}
             className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-600 rounded-lg text-sm transition-colors">
             취소
           </button>

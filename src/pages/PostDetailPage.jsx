@@ -262,7 +262,7 @@ export default function PostDetailPage() {
   const handleDelete = async () => {
     if (!window.confirm('이 게시글을 삭제하시겠습니까?\n삭제된 글은 관리자 페이지에서 복구할 수 있습니다.')) return;
     const res = await authFetch(`/api/posts/${id}`, { method: 'DELETE' });
-    if (res.ok) navigate(returnTo);
+    if (res.ok) navigate(returnTo.startsWith('/mypage') ? returnTo : `${returnTo}?scope=${boardScope}`);
     else { const d = await res.json(); setErrorMsg(d.message || '삭제에 실패했습니다.'); }
   };
 
@@ -289,7 +289,10 @@ export default function PostDetailPage() {
       <div className="max-w-3xl mx-auto">
         {/* 상단 버튼 영역 */}
         <div className="flex justify-between items-center mb-6">
-          <button onClick={() => navigate(`${returnTo}?scope=${boardScope}&keyword=${encodeURIComponent(boardKeyword)}&sort=${boardSort}`)}
+          <button onClick={() => {
+            const isMyPage = returnTo.startsWith('/mypage');
+            navigate(isMyPage ? returnTo : `${returnTo}?scope=${boardScope}&keyword=${encodeURIComponent(boardKeyword)}&sort=${boardSort}`);
+          }}
             className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-600 rounded-lg text-sm transition-colors">
             ← 목록으로
           </button>
@@ -304,7 +307,7 @@ export default function PostDetailPage() {
             )}
             {canEdit && (
               <>
-                <button onClick={() => navigate(`/board/${id}/edit`)}
+                <button onClick={() => navigate(`/board/${id}/edit?boardCode=${post?.boardCode ?? ''}&returnTo=${returnTo}`)}
                   className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg text-sm font-medium transition-colors">수정</button>
                 <button onClick={handleDelete}
                   className="px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg text-sm font-medium transition-colors">삭제</button>
