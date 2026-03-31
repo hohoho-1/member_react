@@ -132,6 +132,8 @@ export default function PostDetailPage() {
   const [likeCount, setLikeCount] = useState(0);
   const [likedByMe, setLikedByMe] = useState(false);
   const [likeLoading, setLikeLoading] = useState(false);
+  const [bookmarkedByMe, setBookmarkedByMe] = useState(false);
+  const [bookmarkLoading, setBookmarkLoading] = useState(false);
   const [pinLoading, setPinLoading] = useState(false);
   const [adjacent, setAdjacent] = useState({ prev: null, next: null });
 
@@ -152,6 +154,7 @@ export default function PostDetailPage() {
       setPost(data);
       setLikeCount(data.likeCount ?? 0);
       setLikedByMe(data.likedByMe ?? false);
+      setBookmarkedByMe(data.bookmarkedByMe ?? false);
     } else setErrorMsg('게시글을 불러올 수 없습니다.');
     setLoading(false);
   };
@@ -241,6 +244,14 @@ export default function PostDetailPage() {
     setLikeLoading(false);
   };
 
+  const handleToggleBookmark = async () => {
+    if (!isLoggedIn) { navigate('/login'); return; }
+    setBookmarkLoading(true);
+    const res = await authFetch(`/api/users/me/bookmarks/${id}`, { method: 'POST' });
+    if (res.ok) { const d = await res.json(); setBookmarkedByMe(d.bookmarked); }
+    setBookmarkLoading(false);
+  };
+
   const handleDelete = async () => {
     if (!window.confirm('이 게시글을 삭제하시겠습니까?\n삭제된 글은 관리자 페이지에서 복구할 수 있습니다.')) return;
     const res = await authFetch(`/api/posts/${id}`, { method: 'DELETE' });
@@ -320,14 +331,21 @@ export default function PostDetailPage() {
           </div>
           <div className="pt-6 text-gray-700 leading-relaxed whitespace-pre-wrap">{post.content}</div>
 
-          {/* 좋아요 */}
-          <div className="flex justify-center mt-8 pt-6 border-t border-gray-100">
+          {/* 좋아요 + 북마크 */}
+          <div className="flex justify-center items-center gap-3 mt-8 pt-6 border-t border-gray-100">
             <button onClick={handleToggleLike} disabled={likeLoading}
               className={`flex items-center gap-2 px-6 py-2.5 rounded-full text-sm font-semibold transition-all ${
                 likedByMe ? 'bg-red-500 text-white hover:bg-red-600 shadow-md' : 'bg-gray-100 text-gray-500 hover:bg-red-50 hover:text-red-400'
               }`}>
               <span className="text-base">{likedByMe ? '❤️' : '🤍'}</span>
               <span>{likeCount}</span>
+            </button>
+            <button onClick={handleToggleBookmark} disabled={bookmarkLoading}
+              className={`flex items-center gap-2 px-6 py-2.5 rounded-full text-sm font-semibold transition-all ${
+                bookmarkedByMe ? 'bg-amber-400 text-white hover:bg-amber-500 shadow-md' : 'bg-gray-100 text-gray-500 hover:bg-amber-50 hover:text-amber-500'
+              }`}>
+              <span className="text-base">{bookmarkedByMe ? '🔖' : '🔖'}</span>
+              <span>{bookmarkedByMe ? '북마크 해제' : '북마크'}</span>
             </button>
           </div>
 

@@ -1,16 +1,33 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { authFetch, logout } from '../utils/authFetch';
 import NotificationBell from '../components/NotificationBell';
 
 const TABS = [
-  { key: 'info', label: '⚙️ 내 정보' },
-  { key: 'posts', label: '📝 내 글' },
-  { key: 'comments', label: '💬 내 댓글' },
+  { key: 'info',      label: '⚙️ 내 정보' },
+  { key: 'posts',     label: '📝 내 글' },
+  { key: 'comments',  label: '💬 내 댓글' },
+  { key: 'bookmarks', label: '🔖 북마크' },
 ];
+
+const Pagination = ({ page, totalPages, onPageChange }) => (
+  <div className="flex justify-center gap-1 mt-4 pb-4">
+    <button onClick={() => onPageChange(page - 1)} disabled={page === 0}
+      className="px-3 py-1.5 rounded-lg text-sm text-gray-500 hover:bg-gray-100 disabled:text-gray-300 disabled:cursor-not-allowed">‹</button>
+    {Array.from({ length: totalPages }, (_, i) => i).map(n => (
+      <button key={n} onClick={() => onPageChange(n)}
+        className={`px-3 py-1.5 rounded-lg text-sm font-medium ${n === page ? 'bg-blue-500 text-white' : 'text-gray-500 hover:bg-gray-100'}`}>
+        {n + 1}
+      </button>
+    ))}
+    <button onClick={() => onPageChange(page + 1)} disabled={page >= totalPages - 1}
+      className="px-3 py-1.5 rounded-lg text-sm text-gray-500 hover:bg-gray-100 disabled:text-gray-300 disabled:cursor-not-allowed">›</button>
+  </div>
+);
 
 export default function MyPage() {
   const navigate = useNavigate();
+  const fileInputRef = useRef(null);
   const [tab, setTab] = useState('info');
   const [user, setUser] = useState(null);
   const [form, setForm] = useState({ username: '', email: '', currentPassword: '', newPassword: '' });
@@ -19,6 +36,7 @@ export default function MyPage() {
   const [deleteMsg, setDeleteMsg] = useState('');
   const [updateLoading, setUpdateLoading] = useState(false);
   const [deleteLoading, setDeleteLoading] = useState(false);
+  const [profileUploading, setProfileUploading] = useState(false);
 
   // 내 글
   const [myPosts, setMyPosts] = useState([]);
@@ -32,6 +50,12 @@ export default function MyPage() {
   const [myCommentsTotalPages, setMyCommentsTotalPages] = useState(0);
   const [myCommentsLoading, setMyCommentsLoading] = useState(false);
 
+  // 북마크
+  const [bookmarks, setBookmarks] = useState([]);
+  const [bookmarksPage, setBookmarksPage] = useState(0);
+  const [bookmarksTotalPages, setBookmarksTotalPages] = useState(0);
+  const [bookmarksLoading, setBookmarksLoading] = useState(false);
+
   useEffect(() => {
     authFetch('/api/users/me')
       .then(res => res.ok ? res.json() : null)
@@ -44,40 +68,35 @@ export default function MyPage() {
   useEffect(() => {
     if (tab === 'posts') loadMyPosts(0);
     if (tab === 'comments') loadMyComments(0);
+    if (tab === 'bookmarks') loadBookmarks(0);
   }, [tab]);
 
   const loadMyPosts = async (page) => {
     setMyPostsLoading(true);
     const res = await authFetch(`/api/users/me/posts?page=${page}&size=10`);
-    if (res.ok) {
-      const data = await res.json();
-      setMyPosts(data.posts);
-      setMyPostsTotalPages(data.totalPages);
-      setMyPostsPage(page);
-    }
+    if (res.ok) { const d = await res.json(); setMyPosts(d.posts); setMyPostsTotalPages(d.totalPages); setMyPostsPage(page); }
     setMyPostsLoading(false);
   };
 
   const loadMyComments = async (page) => {
     setMyCommentsLoading(true);
     const res = await authFetch(`/api/users/me/comments?page=${page}&size=10`);
-    if (res.ok) {
-      const data = await res.json();
-      setMyComments(data.comments);
-      setMyCommentsTotalPages(data.totalPages);
-      setMyCommentsPage(page);
-    }
+    if (res.ok) { const d = await res.json(); setMyComments(d.comments); setMyCommentsTotalPages(d.totalPages); setMyCommentsPage(page); }
     setMyCommentsLoading(false);
+  };
+
+  const loadBookmarks = async (page) => {
+    setBookmarksLoading(true);
+    const res = await authFetch(`/api/users/me/bookmarks?page=${page}&size=10`);
+    if (res.ok) { const d = await res.json(); setBookmarks(d.posts); setBookmarksTotalPages(d.totalPages); setBookmarksPage(page); }
+    setBookmarksLoading(false);
   };
 
   const handleUpdate = async (e) => {
     e.preventDefault();
     setUpdateLoading(true);
     try {
-      const res = await authFetch('/api/users/me', {
-        method: 'PUT',
-        body: JSON.stringify(form)
-      });
+      const res = await authFetch('/api/users/me', { method: 'PUT', body: JSON.stringify(form) });
       const data = await res.json();
       if (res.ok) {
         localStorage.setItem('accessToken', data.accessToken);
@@ -99,10 +118,7 @@ export default function MyPage() {
     if (!window.confirm('정말로 탈퇴하시겠습니까?')) return;
     setDeleteLoading(true);
     try {
-      const res = await authFetch('/api/users/me', {
-        method: 'DELETE',
-        body: JSON.stringify({ password: deletePassword })
-      });
+      const res = await authFetch('/api/users/me', { method: 'DELETE', body: JSON.stringify({ password: deletePassword }) });
       const data = await res.json();
       if (res.ok) { logout(); }
       else setDeleteMsg(data.message || '탈퇴에 실패했습니다.');
@@ -113,20 +129,34 @@ export default function MyPage() {
     }
   };
 
-  const Pagination = ({ page, totalPages, onPageChange }) => (
-    <div className="flex justify-center gap-1 mt-4 pb-4">
-      <button onClick={() => onPageChange(page - 1)} disabled={page === 0}
-        className="px-3 py-1.5 rounded-lg text-sm text-gray-500 hover:bg-gray-100 disabled:text-gray-300 disabled:cursor-not-allowed">‹</button>
-      {Array.from({ length: totalPages }, (_, i) => i).map(n => (
-        <button key={n} onClick={() => onPageChange(n)}
-          className={`px-3 py-1.5 rounded-lg text-sm font-medium ${n === page ? 'bg-blue-500 text-white' : 'text-gray-500 hover:bg-gray-100'}`}>
-          {n + 1}
-        </button>
-      ))}
-      <button onClick={() => onPageChange(page + 1)} disabled={page >= totalPages - 1}
-        className="px-3 py-1.5 rounded-lg text-sm text-gray-500 hover:bg-gray-100 disabled:text-gray-300 disabled:cursor-not-allowed">›</button>
-    </div>
-  );
+  const handleProfileImageChange = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    setProfileUploading(true);
+    const formData = new FormData();
+    formData.append('image', file);
+    try {
+      const res = await authFetch('/api/users/me/profile-image', { method: 'POST', body: formData });
+      if (res.ok) {
+        const data = await res.json();
+        setUser(prev => ({ ...prev, profileImageUrl: data.profileImageUrl }));
+      } else {
+        const d = await res.json();
+        alert(d.message || '이미지 업로드에 실패했습니다.');
+      }
+    } catch {
+      alert('서버 오류가 발생했습니다.');
+    } finally {
+      setProfileUploading(false);
+      e.target.value = '';
+    }
+  };
+
+  const handleDeleteProfileImage = async () => {
+    if (!window.confirm('프로필 이미지를 삭제하시겠습니까?')) return;
+    const res = await authFetch('/api/users/me/profile-image', { method: 'DELETE' });
+    if (res.ok) setUser(prev => ({ ...prev, profileImageUrl: null }));
+  };
 
   if (!user) return <div className="min-h-screen bg-gray-100 flex items-center justify-center text-gray-400">로딩 중...</div>;
 
@@ -148,13 +178,41 @@ export default function MyPage() {
 
         {/* 프로필 카드 */}
         <div className="bg-white rounded-2xl shadow p-5 mb-4 flex items-center gap-4">
-          <div className="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center text-xl font-bold text-blue-500">
-            {user.username[0]}
+          {/* 프로필 이미지 */}
+          <div className="relative group shrink-0">
+            {user.profileImageUrl ? (
+              <img
+                src={`http://localhost:8080${user.profileImageUrl}`}
+                alt="프로필"
+                className="w-16 h-16 rounded-full object-cover border-2 border-blue-100"
+              />
+            ) : (
+              <div className="w-16 h-16 rounded-full bg-blue-100 flex items-center justify-center text-2xl font-bold text-blue-500">
+                {user.username[0]}
+              </div>
+            )}
+            {/* 호버 시 변경 오버레이 */}
+            <button
+              onClick={() => fileInputRef.current?.click()}
+              disabled={profileUploading}
+              className="absolute inset-0 rounded-full bg-black/40 text-white text-xs font-medium opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+              {profileUploading ? '...' : '변경'}
+            </button>
+            <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleProfileImageChange} />
           </div>
-          <div>
+
+          <div className="flex-1">
             <p className="font-semibold text-gray-700">{user.username}</p>
             <p className="text-sm text-gray-400">{user.email}</p>
+            <p className="text-xs text-gray-300 mt-0.5">{user.role === 'ROLE_ADMIN' ? '👑 관리자' : '일반 회원'}</p>
           </div>
+
+          {user.profileImageUrl && (
+            <button onClick={handleDeleteProfileImage}
+              className="text-xs text-red-400 hover:text-red-600 shrink-0">
+              이미지 삭제
+            </button>
+          )}
         </div>
 
         {/* 탭 */}
@@ -180,10 +238,10 @@ export default function MyPage() {
                 </div>
               ))}
               <p className="text-xs font-semibold text-blue-500 uppercase tracking-wide pt-2">비밀번호 변경 (선택)</p>
-              {[{ label: '현재 비밀번호', name: 'currentPassword', ph: '현재 비밀번호' }, { label: '새 비밀번호', name: 'newPassword', ph: '새 비밀번호' }].map(f => (
+              {[{ label: '현재 비밀번호', name: 'currentPassword' }, { label: '새 비밀번호', name: 'newPassword' }].map(f => (
                 <div key={f.name}>
                   <label className="block text-sm text-gray-600 mb-1">{f.label}</label>
-                  <input type="password" placeholder={f.ph} value={form[f.name]} onChange={e => setForm({ ...form, [f.name]: e.target.value })}
+                  <input type="password" value={form[f.name]} onChange={e => setForm({ ...form, [f.name]: e.target.value })}
                     className="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100" />
                 </div>
               ))}
@@ -200,7 +258,6 @@ export default function MyPage() {
 
             <hr className="my-6 border-gray-200" />
 
-            {/* 회원 탈퇴 */}
             <div className="bg-red-50 border border-red-200 rounded-xl p-4">
               <p className="text-xs text-red-600 mb-3">⚠️ 탈퇴 시 모든 정보가 삭제되며 복구할 수 없습니다.</p>
               <input type="password" placeholder="현재 비밀번호 입력" value={deletePassword}
@@ -225,17 +282,14 @@ export default function MyPage() {
             ) : (
               <div className="divide-y divide-gray-100">
                 {myPosts.map(post => (
-                  <div key={post.id}
-                    className="px-6 py-4 hover:bg-gray-50 cursor-pointer"
+                  <div key={post.id} className="px-6 py-4 hover:bg-gray-50 cursor-pointer"
                     onClick={() => navigate(`/board/${post.id}`)}>
                     <div className="flex items-center gap-2 mb-1">
                       <span className={`shrink-0 px-2 py-0.5 rounded-full text-xs font-medium ${post.category === 'NOTICE' ? 'bg-red-100 text-red-500' : 'bg-blue-100 text-blue-500'}`}>
                         {post.categoryName}
                       </span>
                       <span className="text-sm font-medium text-gray-700 truncate">{post.title}</span>
-                      {post.commentCount > 0 && (
-                        <span className="text-xs text-blue-400 shrink-0">💬 {post.commentCount}</span>
-                      )}
+                      {post.commentCount > 0 && <span className="text-xs text-blue-400 shrink-0">💬 {post.commentCount}</span>}
                     </div>
                     <div className="flex gap-3 text-xs text-gray-400">
                       <span>📅 {new Date(post.createdAt).toLocaleDateString('ko-KR')}</span>
@@ -245,9 +299,7 @@ export default function MyPage() {
                 ))}
               </div>
             )}
-            {myPostsTotalPages > 1 && (
-              <Pagination page={myPostsPage} totalPages={myPostsTotalPages} onPageChange={loadMyPosts} />
-            )}
+            {myPostsTotalPages > 1 && <Pagination page={myPostsPage} totalPages={myPostsTotalPages} onPageChange={loadMyPosts} />}
           </div>
         )}
 
@@ -261,8 +313,7 @@ export default function MyPage() {
             ) : (
               <div className="divide-y divide-gray-100">
                 {myComments.map(comment => (
-                  <div key={comment.id}
-                    className="px-6 py-4 hover:bg-gray-50 cursor-pointer"
+                  <div key={comment.id} className="px-6 py-4 hover:bg-gray-50 cursor-pointer"
                     onClick={() => navigate(`/board/${comment.postId}`)}>
                     <p className="text-sm text-gray-700 mb-1 truncate">{comment.content}</p>
                     <div className="flex gap-3 text-xs text-gray-400">
@@ -273,9 +324,40 @@ export default function MyPage() {
                 ))}
               </div>
             )}
-            {myCommentsTotalPages > 1 && (
-              <Pagination page={myCommentsPage} totalPages={myCommentsTotalPages} onPageChange={loadMyComments} />
+            {myCommentsTotalPages > 1 && <Pagination page={myCommentsPage} totalPages={myCommentsTotalPages} onPageChange={loadMyComments} />}
+          </div>
+        )}
+
+        {/* ── 북마크 탭 ── */}
+        {tab === 'bookmarks' && (
+          <div className="bg-white rounded-2xl shadow overflow-hidden">
+            {bookmarksLoading ? (
+              <div className="text-center py-12 text-gray-400">로딩 중...</div>
+            ) : bookmarks.length === 0 ? (
+              <div className="text-center py-12 text-gray-400">북마크한 게시글이 없습니다.</div>
+            ) : (
+              <div className="divide-y divide-gray-100">
+                {bookmarks.map(post => (
+                  <div key={post.id} className="px-6 py-4 hover:bg-gray-50 cursor-pointer"
+                    onClick={() => navigate(`/board/${post.id}`)}>
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className={`shrink-0 px-2 py-0.5 rounded-full text-xs font-medium ${post.category === 'NOTICE' ? 'bg-red-100 text-red-500' : 'bg-blue-100 text-blue-500'}`}>
+                        {post.categoryName}
+                      </span>
+                      <span className="text-sm font-medium text-gray-700 truncate">{post.title}</span>
+                      {post.commentCount > 0 && <span className="text-xs text-blue-400 shrink-0">💬 {post.commentCount}</span>}
+                    </div>
+                    <div className="flex gap-3 text-xs text-gray-400">
+                      <span>✍️ {post.authorName}</span>
+                      <span>📅 {new Date(post.createdAt).toLocaleDateString('ko-KR')}</span>
+                      <span>👁️ {post.viewCount}</span>
+                      {post.likeCount > 0 && <span>❤️ {post.likeCount}</span>}
+                    </div>
+                  </div>
+                ))}
+              </div>
             )}
+            {bookmarksTotalPages > 1 && <Pagination page={bookmarksPage} totalPages={bookmarksTotalPages} onPageChange={loadBookmarks} />}
           </div>
         )}
 
