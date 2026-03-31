@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { authFetch } from '../utils/authFetch';
+import { authFetch, getTokenPayload } from '../utils/authFetch';
+import UserAvatar from './UserAvatar';
 
 const TYPE_ICON = {
   COMMENT:      '💬',
@@ -21,9 +22,11 @@ function timeAgo(dateStr) {
 
 export default function NotificationBell() {
   const navigate = useNavigate();
+  const payload = getTokenPayload();
   const [open, setOpen] = useState(false);
   const [notifications, setNotifications] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
+  const [myProfile, setMyProfile] = useState(null);
   const dropdownRef = useRef(null);
 
   // 읽지 않은 알림 수 폴링 (30초마다)
@@ -31,6 +34,15 @@ export default function NotificationBell() {
     fetchUnreadCount();
     const interval = setInterval(fetchUnreadCount, 30000);
     return () => clearInterval(interval);
+  }, []);
+
+  // 내 프로필 정보 조회 (최초 1회)
+  useEffect(() => {
+    if (payload) {
+      authFetch('/api/users/me').then(res => res.ok ? res.json() : null).then(data => {
+        if (data) setMyProfile(data);
+      });
+    }
   }, []);
 
   // 드롭다운 외부 클릭 시 닫기
@@ -85,23 +97,40 @@ export default function NotificationBell() {
   const readList = notifications.filter(n => n.read);
 
   return (
-    <div className="relative" ref={dropdownRef}>
-      {/* 벨 아이콘 버튼 */}
-      <button
-        onClick={handleBellClick}
-        className="relative p-2 rounded-full hover:bg-gray-100 transition-colors"
-        title="알림">
-        <span className="text-xl">🔔</span>
-        {unreadCount > 0 && (
-          <span className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center px-1">
-            {unreadCount > 99 ? '99+' : unreadCount}
+    <div className="flex items-center gap-2" ref={dropdownRef}>
+      {/* 프로필 이미지 + 이름 → 마이페이지 */}
+      {payload && (
+        <button
+          onClick={() => navigate('/mypage')}
+          className="flex items-center gap-2 px-2 py-1 rounded-lg hover:bg-gray-100 transition-colors">
+          <UserAvatar
+            profileImageUrl={myProfile?.profileImageUrl}
+            username={myProfile?.username ?? payload?.username}
+            size={7}
+          />
+          <span className="text-sm font-medium text-gray-600 hidden sm:block">
+            {myProfile?.username ?? payload?.username}
           </span>
-        )}
-      </button>
+        </button>
+      )}
 
-      {/* 드롭다운 */}
-      {open && (
-        <div className="absolute right-0 top-11 w-80 bg-white rounded-2xl shadow-xl border border-gray-100 z-50 overflow-hidden">
+      {/* 벨 아이콘 버튼 */}
+      <div className="relative">
+        <button
+          onClick={handleBellClick}
+          className="relative p-2 rounded-full hover:bg-gray-100 transition-colors"
+          title="알림">
+          <span className="text-xl">🔔</span>
+          {unreadCount > 0 && (
+            <span className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center px-1">
+              {unreadCount > 99 ? '99+' : unreadCount}
+            </span>
+          )}
+        </button>
+
+        {/* 드롭다운 */}
+        {open && (
+          <div className="absolute right-0 top-11 w-80 bg-white rounded-2xl shadow-xl border border-gray-100 z-50 overflow-hidden">
           {/* 헤더 */}
           <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
             <span className="font-bold text-gray-700 text-sm">🔔 알림</span>
@@ -167,6 +196,7 @@ export default function NotificationBell() {
           </div>
         </div>
       )}
+      </div>
     </div>
   );
 }

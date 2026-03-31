@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { authFetch, getTokenPayload } from '../utils/authFetch';
 import NotificationBell from '../components/NotificationBell';
+import UserAvatar from '../components/UserAvatar';
 
 // ─── 재귀 댓글 컴포넌트 ──────────────────────────────────────────────────────
 function CommentItem({
@@ -23,6 +24,11 @@ function CommentItem({
         <div className="flex-1">
           <div className="flex items-center gap-2 mb-1 flex-wrap">
             {depth > 0 && <span className="text-blue-400 text-xs">↳</span>}
+            <UserAvatar
+              profileImageUrl={comment.authorProfileImageUrl}
+              username={comment.authorName}
+              size={6}
+            />
             <span className="text-sm font-semibold text-gray-700">{comment.authorName}</span>
             <span className="text-xs text-gray-400">{new Date(comment.createdAt).toLocaleString('ko-KR')}</span>
             {comment.updatedAt !== comment.createdAt && !comment.deleted && (
