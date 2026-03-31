@@ -34,13 +34,9 @@ export default function HomePage() {
           </span>
         </div>
         <div className="space-y-2">
-          <button onClick={() => navigate('/board?category=NOTICE')}
-            className="w-full py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg font-medium transition-colors">
-            📢 공지사항
-          </button>
-          <button onClick={() => navigate('/board?category=FREE')}
+          <button onClick={() => navigate('/board')}
             className="w-full py-2.5 bg-blue-500 hover:bg-blue-600 text-white rounded-lg font-medium transition-colors">
-            💬 자유게시판
+            📋 게시판
           </button>
           {isAdmin() && (
             <button onClick={() => navigate('/admin')}
