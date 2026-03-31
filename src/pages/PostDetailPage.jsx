@@ -306,7 +306,7 @@ export default function PostDetailPage() {
             )}
             {canEdit && (
               <>
-                <button onClick={() => navigate(`/board/${id}/edit?boardCode=${post?.boardCode ?? ''}&returnTo=${returnTo}`)}
+                <button onClick={() => navigate(`/board/${id}/edit?boardCode=${post?.boardCode ?? ''}&returnTo=${encodeURIComponent(returnTo)}`)}
                   className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg text-sm font-medium transition-colors">수정</button>
                 <button onClick={handleDelete}
                   className="px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg text-sm font-medium transition-colors">삭제</button>
@@ -369,7 +369,7 @@ export default function PostDetailPage() {
               <div className="flex flex-col divide-y divide-gray-100 text-sm">
                 {adjacent.prev && (
                   <button
-                    onClick={() => navigate(`/board/${adjacent.prev.id}?scope=${boardScope}&keyword=${encodeURIComponent(boardKeyword)}&sort=${boardSort}&returnTo=${returnTo}`)}
+                    onClick={() => navigate(`/board/${adjacent.prev.id}?scope=${boardScope}&keyword=${encodeURIComponent(boardKeyword)}&sort=${boardSort}&returnTo=${encodeURIComponent(returnTo)}`)}
                     className="flex items-center gap-3 py-2.5 text-left hover:bg-gray-50 rounded-lg px-2 transition-colors group">
                     <span className="text-gray-400 shrink-0">▲ 이전 글</span>
                     <span className="text-gray-600 group-hover:text-blue-500 truncate transition-colors">{adjacent.prev.title}</span>
@@ -377,7 +377,7 @@ export default function PostDetailPage() {
                 )}
                 {adjacent.next && (
                   <button
-                    onClick={() => navigate(`/board/${adjacent.next.id}?scope=${boardScope}&keyword=${encodeURIComponent(boardKeyword)}&sort=${boardSort}&returnTo=${returnTo}`)}
+                    onClick={() => navigate(`/board/${adjacent.next.id}?scope=${boardScope}&keyword=${encodeURIComponent(boardKeyword)}&sort=${boardSort}&returnTo=${encodeURIComponent(returnTo)}`)}
                     className="flex items-center gap-3 py-2.5 text-left hover:bg-gray-50 rounded-lg px-2 transition-colors group">
                     <span className="text-gray-400 shrink-0">▼ 다음 글</span>
                     <span className="text-gray-600 group-hover:text-blue-500 truncate transition-colors">{adjacent.next.title}</span>
