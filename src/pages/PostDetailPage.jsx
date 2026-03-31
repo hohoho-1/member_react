@@ -325,11 +325,11 @@ export default function PostDetailPage() {
                             <span className="text-xs text-gray-400 truncate">{file.originalName} ({(file.fileSize / 1024).toFixed(1)}KB)</span>
                             <a
                               href={`http://localhost:8080${file.downloadUrl}/download`}
-                              download={file.originalName}
                               className="text-xs text-blue-500 hover:text-blue-700 hover:underline shrink-0 ml-2"
                             >
                               ↓ 다운로드
                             </a>
+
                           </div>
                         </div>
                       ))}
@@ -344,8 +344,7 @@ export default function PostDetailPage() {
                     <div className="space-y-2">
                       {docFiles.map(file => (
                         <a key={file.id}
-                          href={`http://localhost:8080${file.downloadUrl}`}
-                          download={file.originalName}
+                          href={`http://localhost:8080${file.downloadUrl}/download`}
                           className="flex items-center gap-2 px-3 py-2 bg-gray-50 hover:bg-gray-100 rounded-lg text-sm text-gray-600 transition-colors">
                           <span>📄</span>
                           <span className="truncate flex-1">{file.originalName}</span>
