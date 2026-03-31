@@ -1,14 +1,18 @@
 // 프로필 이미지가 있으면 이미지, 없으면 이니셜 아바타를 보여주는 공통 컴포넌트
+import { useState } from 'react';
+
 export default function UserAvatar({ profileImageUrl, username, size = 8 }) {
+  const [imgError, setImgError] = useState(false);
   const sizeClass = `w-${size} h-${size}`;
   const textSizeClass = size <= 6 ? 'text-xs' : size <= 8 ? 'text-sm' : 'text-base';
 
-  if (profileImageUrl) {
+  if (profileImageUrl && !imgError) {
     return (
       <img
         src={`http://localhost:8080${profileImageUrl}`}
         alt={username}
         className={`${sizeClass} rounded-full object-cover border border-gray-200 shrink-0`}
+        onError={() => setImgError(true)}
       />
     );
   }

@@ -28,6 +28,7 @@ const Pagination = ({ page, totalPages, onPageChange }) => (
 export default function MyPage() {
   const navigate = useNavigate();
   const fileInputRef = useRef(null);
+  const [imgError, setImgError] = useState(false);
   const [tab, setTab] = useState('info');
   const [user, setUser] = useState(null);
   const [form, setForm] = useState({ username: '', email: '', currentPassword: '', newPassword: '' });
@@ -140,6 +141,7 @@ export default function MyPage() {
       if (res.ok) {
         const data = await res.json();
         setUser(prev => ({ ...prev, profileImageUrl: data.profileImageUrl }));
+        setImgError(false);
       } else {
         const d = await res.json();
         alert(d.message || '이미지 업로드에 실패했습니다.');
@@ -180,11 +182,12 @@ export default function MyPage() {
         <div className="bg-white rounded-2xl shadow p-5 mb-4 flex items-center gap-4">
           {/* 프로필 이미지 */}
           <div className="relative group shrink-0">
-            {user.profileImageUrl ? (
+            {user.profileImageUrl && !imgError ? (
               <img
                 src={`http://localhost:8080${user.profileImageUrl}`}
                 alt="프로필"
                 className="w-16 h-16 rounded-full object-cover border-2 border-blue-100"
+                onError={() => setImgError(true)}
               />
             ) : (
               <div className="w-16 h-16 rounded-full bg-blue-100 flex items-center justify-center text-2xl font-bold text-blue-500">
