@@ -37,11 +37,17 @@ export default function Layout({ children }) {
               🏠 홈
             </button>
             <nav className="flex items-center gap-1">
-              <Link to="/board"
+              <Link to="/community"
                 className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
-                  isActive('/board') ? 'bg-blue-500 text-white' : 'text-gray-600 hover:bg-gray-100'
+                  isActive('/community') ? 'bg-blue-500 text-white' : 'text-gray-600 hover:bg-gray-100'
                 }`}>
-                📋 게시판
+                💬 커뮤니티
+              </Link>
+              <Link to="/support"
+                className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+                  isActive('/support') ? 'bg-green-500 text-white' : 'text-gray-600 hover:bg-gray-100'
+                }`}>
+                🎧 고객센터
               </Link>
               {isLoggedIn && (
                 <Link to="/mypage"

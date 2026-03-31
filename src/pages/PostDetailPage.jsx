@@ -116,9 +116,11 @@ export default function PostDetailPage() {
   const [searchParams] = useSearchParams();
 
   // 게시판에서 넘어온 필터 조건 (없으면 기본값)
-  const boardCategory = searchParams.get('category') ?? 'ALL';
+  // scope: boardCode or GROUP_xxx, returnTo: 돌아갈 페이지 경로
+  const boardScope    = searchParams.get('scope') ?? searchParams.get('category') ?? 'ALL';
   const boardKeyword  = searchParams.get('keyword') ?? '';
   const boardSort     = searchParams.get('sort') ?? 'latest';
+  const returnTo      = searchParams.get('returnTo') ?? '/community';
 
   const [post, setPost] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -149,7 +151,7 @@ export default function PostDetailPage() {
   const canEdit = isAuthor || isAdmin;
 
   useEffect(() => { loadPost(); loadComments(); loadFiles(); }, [id]);
-  useEffect(() => { loadAdjacent(); }, [id, boardCategory, boardKeyword, boardSort]);
+  useEffect(() => { loadAdjacent(); }, [id, boardScope, boardKeyword, boardSort]);
 
   const loadPost = async () => {
     setLoading(true);
@@ -176,7 +178,7 @@ export default function PostDetailPage() {
 
   const loadAdjacent = async () => {
     const params = new URLSearchParams({
-      category: boardCategory,
+      scope: boardScope,
       keyword: boardKeyword,
       sort: boardSort,
     });
@@ -260,7 +262,7 @@ export default function PostDetailPage() {
   const handleDelete = async () => {
     if (!window.confirm('이 게시글을 삭제하시겠습니까?\n삭제된 글은 관리자 페이지에서 복구할 수 있습니다.')) return;
     const res = await authFetch(`/api/posts/${id}`, { method: 'DELETE' });
-    if (res.ok) navigate('/board');
+    if (res.ok) navigate(returnTo);
     else { const d = await res.json(); setErrorMsg(d.message || '삭제에 실패했습니다.'); }
   };
 
@@ -287,12 +289,12 @@ export default function PostDetailPage() {
       <div className="max-w-3xl mx-auto">
         {/* 상단 버튼 영역 */}
         <div className="flex justify-between items-center mb-6">
-          <button onClick={() => navigate(`/board?category=${boardCategory}&keyword=${encodeURIComponent(boardKeyword)}&sort=${boardSort}`)}
+          <button onClick={() => navigate(`${returnTo}?scope=${boardScope}&keyword=${encodeURIComponent(boardKeyword)}&sort=${boardSort}`)}
             className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-600 rounded-lg text-sm transition-colors">
             ← 목록으로
           </button>
           <div className="flex items-center gap-2">
-            {isAdmin && post.category === 'NOTICE' && (
+            {isAdmin && post.board?.adminOnly && (
               <button onClick={handleTogglePin} disabled={pinLoading}
                 className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
                   post.pinned ? 'bg-amber-400 hover:bg-amber-500 text-white' : 'bg-gray-100 hover:bg-amber-100 text-gray-500 hover:text-amber-600'
@@ -314,8 +316,15 @@ export default function PostDetailPage() {
         {/* 게시글 본문 */}
         <div className="bg-white rounded-2xl shadow p-8">
           <div className="mb-6">
-            <span className={`px-2 py-1 rounded-full text-xs font-medium mr-2 ${post.category === 'NOTICE' ? 'bg-red-100 text-red-600' : 'bg-blue-100 text-blue-600'}`}>
-              {post.categoryName}
+            <span className={`px-2 py-1 rounded-full text-xs font-medium mr-2 ${
+              post.boardCode === 'NOTICE' ? 'bg-red-100 text-red-600' :
+              post.boardCode === 'GALLERY' ? 'bg-purple-100 text-purple-600' :
+              post.boardCode === 'QNA' ? 'bg-amber-100 text-amber-700' :
+              post.boardCode === 'FAQ' ? 'bg-green-100 text-green-700' :
+              post.boardCode === 'SUGGESTION' ? 'bg-teal-100 text-teal-700' :
+              'bg-blue-100 text-blue-600'
+            }`}>
+              {post.boardName}
             </span>
             <h1 className="text-2xl font-bold text-gray-800 mt-3">{post.title}</h1>
           </div>
@@ -358,7 +367,7 @@ export default function PostDetailPage() {
               <div className="flex flex-col divide-y divide-gray-100 text-sm">
                 {adjacent.prev && (
                   <button
-                    onClick={() => navigate(`/board/${adjacent.prev.id}?category=${boardCategory}&keyword=${encodeURIComponent(boardKeyword)}&sort=${boardSort}`)}
+                    onClick={() => navigate(`/board/${adjacent.prev.id}?scope=${boardScope}&keyword=${encodeURIComponent(boardKeyword)}&sort=${boardSort}&returnTo=${returnTo}`)}
                     className="flex items-center gap-3 py-2.5 text-left hover:bg-gray-50 rounded-lg px-2 transition-colors group">
                     <span className="text-gray-400 shrink-0">▲ 이전 글</span>
                     <span className="text-gray-600 group-hover:text-blue-500 truncate transition-colors">{adjacent.prev.title}</span>
@@ -366,7 +375,7 @@ export default function PostDetailPage() {
                 )}
                 {adjacent.next && (
                   <button
-                    onClick={() => navigate(`/board/${adjacent.next.id}?category=${boardCategory}&keyword=${encodeURIComponent(boardKeyword)}&sort=${boardSort}`)}
+                    onClick={() => navigate(`/board/${adjacent.next.id}?scope=${boardScope}&keyword=${encodeURIComponent(boardKeyword)}&sort=${boardSort}&returnTo=${returnTo}`)}
                     className="flex items-center gap-3 py-2.5 text-left hover:bg-gray-50 rounded-lg px-2 transition-colors group">
                     <span className="text-gray-400 shrink-0">▼ 다음 글</span>
                     <span className="text-gray-600 group-hover:text-blue-500 truncate transition-colors">{adjacent.next.title}</span>

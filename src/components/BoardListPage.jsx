@@ -1,22 +1,24 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { authFetch, getTokenPayload } from '../utils/authFetch';
 
 const PAGE_SIZE = 10;
 
-const CATEGORY_TABS = [
-  { value: 'ALL',    label: '전체' },
-  { value: 'NOTICE', label: '📢 공지사항' },
-  { value: 'FREE',   label: '💬 자유게시판' },
-];
-
-export default function BoardPage() {
+/**
+ * 게시판 목록 공통 컴포넌트
+ * @param {string}   groupKey      - "COMMUNITY" | "SUPPORT"
+ * @param {string}   groupLabel    - 헤더에 표시할 이름 (예: "커뮤니티")
+ * @param {string}   groupEmoji    - 헤더 이모지
+ * @param {Array}    boards        - 해당 그룹 게시판 목록 [{code, name, adminOnly, boardType}]
+ * @param {string}   basePath      - 이 페이지의 경로 (예: "/community")
+ */
+export default function BoardListPage({ groupKey, groupLabel, groupEmoji, boards, basePath }) {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
 
-  const category = searchParams.get('category') ?? 'ALL';
-  const keyword  = searchParams.get('keyword') ?? '';
-  const sort     = searchParams.get('sort') ?? 'latest';
+  const scope     = searchParams.get('scope') ?? boards[0]?.code ?? 'ALL';
+  const keyword   = searchParams.get('keyword') ?? '';
+  const sort      = searchParams.get('sort') ?? 'latest';
   const currentPage = Math.max(0, parseInt(searchParams.get('page') ?? '1') - 1);
 
   const [posts, setPosts] = useState([]);
@@ -28,15 +30,17 @@ export default function BoardPage() {
   const isLoggedIn = !!payload;
   const isAdmin = payload?.role === 'ROLE_ADMIN';
 
-  useEffect(() => {
-    loadPosts(category, keyword, currentPage);
-  }, [searchParams.toString()]);
+  // 현재 선택된 게시판 정보
+  const currentBoard = boards.find(b => b.code === scope) ?? null;
+  // 글쓰기 가능 여부: adminOnly면 관리자만, 그 외는 로그인 유저
+  const canWrite = isLoggedIn && (currentBoard ? (!currentBoard.adminOnly || isAdmin) : false);
 
-  const loadPosts = async (cat, kw, page) => {
+  const loadPosts = useCallback(async () => {
     setLoading(true);
-    const res = await authFetch(
-      `/api/posts?category=${cat}&keyword=${encodeURIComponent(kw)}&page=${page}&size=${PAGE_SIZE}&sort=${sort}`
-    );
+    const params = new URLSearchParams({
+      scope, keyword, sort, page: String(currentPage), size: String(PAGE_SIZE),
+    });
+    const res = await authFetch(`/api/posts?${params}`);
     if (res.ok) {
       const data = await res.json();
       setPosts(data.posts);
@@ -44,54 +48,68 @@ export default function BoardPage() {
       setTotalElements(data.totalElements);
     }
     setLoading(false);
+  }, [scope, keyword, sort, currentPage]);
+
+  useEffect(() => { loadPosts(); }, [loadPosts]);
+
+  const setParam = (updates) => {
+    const next = { scope, sort };
+    if (keyword) next.keyword = keyword;
+    setSearchParams({ ...next, ...updates });
   };
 
-  const switchCategory = (cat) => {
-    setSearchParams({ category: cat, sort });
-  };
-
-  const switchSort = (s) => {
-    setSearchParams({ category, sort: s });
-  };
-
-  const goToPage = (page) => {
-    const params = { category, sort };
-    if (page + 1 > 1) params.page = String(page + 1);
+  const switchScope = (s) => setSearchParams({ scope: s, sort });
+  const switchSort  = (s) => setParam({ sort: s, page: undefined });
+  const goToPage    = (p) => {
+    const params = { scope, sort };
     if (keyword) params.keyword = keyword;
+    if (p > 0) params.page = String(p + 1);
     setSearchParams(params);
   };
-
   const handleKeywordChange = (e) => {
     const kw = e.target.value;
-    const params = { category, sort };
+    const params = { scope, sort };
     if (kw) params.keyword = kw;
     setSearchParams(params);
   };
 
-  const canWrite = isLoggedIn;
+  // 뱃지 색상
+  const getBadgeColor = (code) => {
+    const map = {
+      NOTICE:     'bg-red-100 text-red-600',
+      FREE:       'bg-blue-100 text-blue-600',
+      GALLERY:    'bg-purple-100 text-purple-600',
+      QNA:        'bg-amber-100 text-amber-700',
+      FAQ:        'bg-green-100 text-green-700',
+      SUGGESTION: 'bg-teal-100 text-teal-700',
+    };
+    return map[code] ?? 'bg-gray-100 text-gray-600';
+  };
 
   return (
     <div className="bg-gray-100 p-6">
       <div className="max-w-4xl mx-auto">
         {/* 헤더 */}
         <div className="flex justify-between items-center mb-6">
-          <h2 className="text-2xl font-bold text-gray-700">📋 게시판</h2>
+          <h2 className="text-2xl font-bold text-gray-700">{groupEmoji} {groupLabel}</h2>
           {canWrite && (
-            <button onClick={() => navigate('/board/write')}
+            <button
+              onClick={() => navigate(`/board/write?boardCode=${scope}&returnTo=${basePath}`)}
               className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg text-sm font-medium transition-colors">
               ✏️ 글쓰기
             </button>
           )}
         </div>
 
-        {/* 카테고리 탭 */}
+        {/* 게시판 탭 */}
         <div className="flex mb-4 bg-white rounded-2xl shadow overflow-hidden">
-          {CATEGORY_TABS.map(tab => (
-            <button key={tab.value} onClick={() => switchCategory(tab.value)}
+          {boards.map(board => (
+            <button key={board.code} onClick={() => switchScope(board.code)}
               className={`flex-1 py-3 text-sm font-semibold transition-colors ${
-                category === tab.value ? 'bg-blue-500 text-white' : 'text-gray-500 hover:bg-gray-50'
+                scope === board.code ? 'bg-blue-500 text-white' : 'text-gray-500 hover:bg-gray-50'
               }`}>
-              {tab.label}
+              {board.name}
+              {board.adminOnly && <span className="ml-1 text-[10px] opacity-70">(공지)</span>}
             </button>
           ))}
         </div>
@@ -102,9 +120,10 @@ export default function BoardPage() {
             <div className="flex items-center gap-3">
               <span className="font-semibold text-gray-700">
                 총 {totalElements}개
-                <span className="ml-2 text-sm text-gray-400">({currentPage + 1} / {totalPages || 1} 페이지)</span>
+                <span className="ml-2 text-sm text-gray-400">
+                  ({currentPage + 1} / {totalPages || 1} 페이지)
+                </span>
               </span>
-              {/* 정렬 버튼 */}
               <div className="flex gap-1">
                 {[
                   { value: 'latest',   label: '최신순' },
@@ -138,7 +157,7 @@ export default function BoardPage() {
               <table className="w-full">
                 <thead className="bg-gray-50">
                   <tr>
-                    {['번호', '카테고리', '제목', '작성자', '날짜', '조회', '💬', '❤️'].map(h => (
+                    {['번호', '게시판', '제목', '작성자', '날짜', '조회', '💬', '❤️'].map(h => (
                       <th key={h} className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">{h}</th>
                     ))}
                   </tr>
@@ -146,13 +165,12 @@ export default function BoardPage() {
                 <tbody>
                   {posts.map((post, index) => {
                     const prevPost = posts[index - 1];
-                    const isFirstUnpinned = !post.pinned &&
-                      (index === 0 || prevPost?.pinned === true);
+                    const isFirstUnpinned = !post.pinned && (index === 0 || prevPost?.pinned === true);
                     const isPinned = post.pinned;
 
                     return (
                       <>
-                        {isFirstUnpinned && category === 'ALL' && index > 0 && (
+                        {isFirstUnpinned && index > 0 && (
                           <tr key={`divider-${post.id}`}>
                             <td colSpan={8}>
                               <div className="border-t-2 border-dashed border-gray-200 mx-4 my-0.5" />
@@ -163,18 +181,16 @@ export default function BoardPage() {
                           className={`border-t border-gray-50 hover:bg-gray-50 cursor-pointer transition-colors ${
                             isPinned ? 'bg-amber-50 hover:bg-amber-100' : ''
                           }`}
-                          onClick={() => navigate(`/board/${post.id}?category=${category}&keyword=${encodeURIComponent(keyword)}&sort=${sort}`)}>
+                          onClick={() => navigate(
+                            `/board/${post.id}?scope=${scope}&keyword=${encodeURIComponent(keyword)}&sort=${sort}&returnTo=${basePath}`
+                          )}>
                           <td className="px-4 py-3 text-sm text-gray-400">
                             {isPinned
                               ? <span className="text-amber-500 font-bold">📌</span>
                               : post.id}
                           </td>
                           <td className="px-4 py-3">
-                            <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                              post.boardCode === 'NOTICE'
-                                ? 'bg-red-100 text-red-600'
-                                : 'bg-blue-100 text-blue-600'
-                            }`}>
+                            <span className={`px-2 py-1 rounded-full text-xs font-medium ${getBadgeColor(post.boardCode)}`}>
                               {post.boardName}
                             </span>
                           </td>
@@ -203,7 +219,9 @@ export default function BoardPage() {
               {/* 페이지네이션 */}
               <div className="flex justify-center items-center gap-1 px-6 py-4 border-t border-gray-100">
                 <button onClick={() => goToPage(currentPage - 1)} disabled={currentPage === 0}
-                  className="px-3 py-1.5 rounded-lg text-sm font-medium transition-colors disabled:text-gray-300 disabled:cursor-not-allowed text-gray-500 hover:bg-gray-100">‹</button>
+                  className="px-3 py-1.5 rounded-lg text-sm font-medium transition-colors disabled:text-gray-300 disabled:cursor-not-allowed text-gray-500 hover:bg-gray-100">
+                  ‹
+                </button>
                 {Array.from({ length: totalPages }, (_, i) => i).map(num => (
                   <button key={num} onClick={() => goToPage(num)}
                     className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
@@ -213,7 +231,9 @@ export default function BoardPage() {
                   </button>
                 ))}
                 <button onClick={() => goToPage(currentPage + 1)} disabled={currentPage >= totalPages - 1}
-                  className="px-3 py-1.5 rounded-lg text-sm font-medium transition-colors disabled:text-gray-300 disabled:cursor-not-allowed text-gray-500 hover:bg-gray-100">›</button>
+                  className="px-3 py-1.5 rounded-lg text-sm font-medium transition-colors disabled:text-gray-300 disabled:cursor-not-allowed text-gray-500 hover:bg-gray-100">
+                  ›
+                </button>
               </div>
             </>
           )}

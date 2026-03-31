@@ -9,6 +9,18 @@ const TABS = [
   { key: 'bookmarks', label: '🔖 북마크' },
 ];
 
+// 게시판 코드별 뱃지 색상
+const getBadgeClass = (code) => {
+  const map = {
+    NOTICE:     'bg-red-100 text-red-500',
+    FAQ:        'bg-green-100 text-green-600',
+    QNA:        'bg-amber-100 text-amber-600',
+    SUGGESTION: 'bg-teal-100 text-teal-600',
+    GALLERY:    'bg-purple-100 text-purple-500',
+  };
+  return map[code] ?? 'bg-blue-100 text-blue-500';
+};
+
 const Pagination = ({ page, totalPages, onPageChange }) => (
   <div className="flex justify-center gap-1 mt-4 pb-4">
     <button onClick={() => onPageChange(page - 1)} disabled={page === 0}
@@ -38,19 +50,16 @@ export default function MyPage() {
   const [deleteLoading, setDeleteLoading] = useState(false);
   const [profileUploading, setProfileUploading] = useState(false);
 
-  // 내 글
   const [myPosts, setMyPosts] = useState([]);
   const [myPostsPage, setMyPostsPage] = useState(0);
   const [myPostsTotalPages, setMyPostsTotalPages] = useState(0);
   const [myPostsLoading, setMyPostsLoading] = useState(false);
 
-  // 내 댓글
   const [myComments, setMyComments] = useState([]);
   const [myCommentsPage, setMyCommentsPage] = useState(0);
   const [myCommentsTotalPages, setMyCommentsTotalPages] = useState(0);
   const [myCommentsLoading, setMyCommentsLoading] = useState(false);
 
-  // 북마크
   const [bookmarks, setBookmarks] = useState([]);
   const [bookmarksPage, setBookmarksPage] = useState(0);
   const [bookmarksTotalPages, setBookmarksTotalPages] = useState(0);
@@ -66,8 +75,8 @@ export default function MyPage() {
   }, [navigate]);
 
   useEffect(() => {
-    if (tab === 'posts') loadMyPosts(0);
-    if (tab === 'comments') loadMyComments(0);
+    if (tab === 'posts')     loadMyPosts(0);
+    if (tab === 'comments')  loadMyComments(0);
     if (tab === 'bookmarks') loadBookmarks(0);
   }, [tab]);
 
@@ -165,12 +174,10 @@ export default function MyPage() {
     <div className="bg-gray-100 py-8 px-4">
       <div className="max-w-2xl mx-auto">
 
-        {/* 헤더 */}
         <h2 className="text-2xl font-bold text-gray-700 mb-6">⚙️ 마이페이지</h2>
 
         {/* 프로필 카드 */}
         <div className="bg-white rounded-2xl shadow p-5 mb-4 flex items-center gap-4">
-          {/* 프로필 이미지 */}
           <div className="relative group shrink-0">
             {user.profileImageUrl && !imgError ? (
               <img
@@ -184,7 +191,6 @@ export default function MyPage() {
                 {user.username[0]}
               </div>
             )}
-            {/* 호버 시 변경 오버레이 */}
             <button
               onClick={() => fileInputRef.current?.click()}
               disabled={profileUploading}
@@ -223,18 +229,26 @@ export default function MyPage() {
           <div className="bg-white rounded-2xl shadow p-8">
             <form onSubmit={handleUpdate} className="space-y-3">
               <p className="text-xs font-semibold text-blue-500 uppercase tracking-wide">회원정보 수정</p>
-              {[{ label: '이름', name: 'username', type: 'text' }, { label: '이메일', name: 'email', type: 'email' }].map(f => (
+              {[
+                { label: '이름', name: 'username', type: 'text' },
+                { label: '이메일', name: 'email', type: 'email' },
+              ].map(f => (
                 <div key={f.name}>
                   <label className="block text-sm text-gray-600 mb-1">{f.label}</label>
-                  <input type={f.type} value={form[f.name]} onChange={e => setForm({ ...form, [f.name]: e.target.value })}
+                  <input type={f.type} value={form[f.name]}
+                    onChange={e => setForm({ ...form, [f.name]: e.target.value })}
                     className="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100" />
                 </div>
               ))}
               <p className="text-xs font-semibold text-blue-500 uppercase tracking-wide pt-2">비밀번호 변경 (선택)</p>
-              {[{ label: '현재 비밀번호', name: 'currentPassword' }, { label: '새 비밀번호', name: 'newPassword' }].map(f => (
+              {[
+                { label: '현재 비밀번호', name: 'currentPassword' },
+                { label: '새 비밀번호', name: 'newPassword' },
+              ].map(f => (
                 <div key={f.name}>
                   <label className="block text-sm text-gray-600 mb-1">{f.label}</label>
-                  <input type="password" value={form[f.name]} onChange={e => setForm({ ...form, [f.name]: e.target.value })}
+                  <input type="password" value={form[f.name]}
+                    onChange={e => setForm({ ...form, [f.name]: e.target.value })}
                     className="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100" />
                 </div>
               ))}
@@ -276,10 +290,10 @@ export default function MyPage() {
               <div className="divide-y divide-gray-100">
                 {myPosts.map(post => (
                   <div key={post.id} className="px-6 py-4 hover:bg-gray-50 cursor-pointer"
-                    onClick={() => navigate(`/board/${post.id}`)}>
+                    onClick={() => navigate(`/board/${post.id}?returnTo=/mypage`)}>
                     <div className="flex items-center gap-2 mb-1">
-                      <span className={`shrink-0 px-2 py-0.5 rounded-full text-xs font-medium ${post.category === 'NOTICE' ? 'bg-red-100 text-red-500' : 'bg-blue-100 text-blue-500'}`}>
-                        {post.categoryName}
+                      <span className={`shrink-0 px-2 py-0.5 rounded-full text-xs font-medium ${getBadgeClass(post.boardCode)}`}>
+                        {post.boardName}
                       </span>
                       <span className="text-sm font-medium text-gray-700 truncate">{post.title}</span>
                       {post.commentCount > 0 && <span className="text-xs text-blue-400 shrink-0">💬 {post.commentCount}</span>}
@@ -332,10 +346,10 @@ export default function MyPage() {
               <div className="divide-y divide-gray-100">
                 {bookmarks.map(post => (
                   <div key={post.id} className="px-6 py-4 hover:bg-gray-50 cursor-pointer"
-                    onClick={() => navigate(`/board/${post.id}`)}>
+                    onClick={() => navigate(`/board/${post.id}?returnTo=/mypage`)}>
                     <div className="flex items-center gap-2 mb-1">
-                      <span className={`shrink-0 px-2 py-0.5 rounded-full text-xs font-medium ${post.category === 'NOTICE' ? 'bg-red-100 text-red-500' : 'bg-blue-100 text-blue-500'}`}>
-                        {post.categoryName}
+                      <span className={`shrink-0 px-2 py-0.5 rounded-full text-xs font-medium ${getBadgeClass(post.boardCode)}`}>
+                        {post.boardName}
                       </span>
                       <span className="text-sm font-medium text-gray-700 truncate">{post.title}</span>
                       {post.commentCount > 0 && <span className="text-xs text-blue-400 shrink-0">💬 {post.commentCount}</span>}

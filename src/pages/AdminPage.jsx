@@ -17,9 +17,14 @@ function DeletedPostModal({ post, onClose, onRestore, onPermanentDelete }) {
 
         <div className="flex items-center gap-2 mb-4">
           <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-            post.category === 'NOTICE' ? 'bg-red-100 text-red-500' : 'bg-blue-100 text-blue-500'
+            post.boardCode === 'NOTICE' ? 'bg-red-100 text-red-500' :
+            post.boardCode === 'FAQ' ? 'bg-green-100 text-green-600' :
+            post.boardCode === 'QNA' ? 'bg-amber-100 text-amber-600' :
+            post.boardCode === 'SUGGESTION' ? 'bg-teal-100 text-teal-600' :
+            post.boardCode === 'GALLERY' ? 'bg-purple-100 text-purple-500' :
+            'bg-blue-100 text-blue-500'
           }`}>
-            {post.categoryName}
+            {post.boardName}
           </span>
           <span className="px-2 py-1 rounded-full text-xs font-medium bg-orange-100 text-orange-500">삭제됨</span>
         </div>
@@ -640,9 +645,14 @@ export default function AdminPage() {
                         <td className="px-4 py-3 text-sm text-gray-400">{post.id}</td>
                         <td className="px-4 py-3">
                           <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                            post.category === 'NOTICE' ? 'bg-red-100 text-red-500' : 'bg-blue-100 text-blue-500'
+                            post.boardCode === 'NOTICE' ? 'bg-red-100 text-red-500' :
+                            post.boardCode === 'FAQ' ? 'bg-green-100 text-green-600' :
+                            post.boardCode === 'QNA' ? 'bg-amber-100 text-amber-600' :
+                            post.boardCode === 'GALLERY' ? 'bg-purple-100 text-purple-500' :
+                            post.boardCode === 'SUGGESTION' ? 'bg-teal-100 text-teal-600' :
+                            'bg-blue-100 text-blue-500'
                           }`}>
-                            {post.categoryName}
+                            {post.boardName ?? post.boardCode ?? '-'}
                           </span>
                         </td>
                         <td className="px-4 py-3 text-sm text-gray-500 max-w-[180px] truncate">{post.title}</td>
