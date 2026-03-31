@@ -94,7 +94,7 @@ export default function BoardListPage({ groupKey, groupLabel, groupEmoji, boards
           <h2 className="text-2xl font-bold text-gray-700">{groupEmoji} {groupLabel}</h2>
           {canWrite && (
             <button
-              onClick={() => navigate(`/board/write?boardCode=${scope}&returnTo=${encodeURIComponent(`${basePath}?scope=${scope}`)}`)}>
+              onClick={() => navigate(`/board/write?boardCode=${scope}&returnTo=${encodeURIComponent(`${basePath}?scope=${scope}`)}`)}
               className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg text-sm font-medium transition-colors">
               ✏️ 글쓰기
             </button>
