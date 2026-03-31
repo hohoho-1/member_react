@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { authFetch, getTokenPayload } from '../utils/authFetch';
-import NotificationBell from '../components/NotificationBell';
 import UserAvatar from '../components/UserAvatar';
 
 // ─── 재귀 댓글 컴포넌트 ──────────────────────────────────────────────────────
@@ -284,9 +283,8 @@ export default function PostDetailPage() {
   );
 
   return (
-    <div className="min-h-screen bg-gray-100 p-10">
+    <div className="bg-gray-100 p-6">
       <div className="max-w-3xl mx-auto">
-
         {/* 상단 버튼 영역 */}
         <div className="flex justify-between items-center mb-6">
           <button onClick={() => navigate(`/board?category=${boardCategory}&keyword=${encodeURIComponent(boardKeyword)}&sort=${boardSort}`)}
@@ -294,7 +292,6 @@ export default function PostDetailPage() {
             ← 목록으로
           </button>
           <div className="flex items-center gap-2">
-            {isLoggedIn && <NotificationBell />}
             {isAdmin && post.category === 'NOTICE' && (
               <button onClick={handleTogglePin} disabled={pinLoading}
                 className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${

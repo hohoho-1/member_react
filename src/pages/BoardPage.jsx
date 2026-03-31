@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { authFetch, getTokenPayload } from '../utils/authFetch';
-import NotificationBell from '../components/NotificationBell';
 
 const PAGE_SIZE = 10;
 
@@ -72,24 +71,17 @@ export default function BoardPage() {
   const canWrite = isLoggedIn;
 
   return (
-    <div className="min-h-screen bg-gray-100 p-10">
+    <div className="bg-gray-100 p-6">
       <div className="max-w-4xl mx-auto">
         {/* 헤더 */}
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-2xl font-bold text-gray-700">📋 게시판</h2>
-          <div className="flex gap-2 items-center">
-            {isLoggedIn && <NotificationBell />}
-            {canWrite && (
-              <button onClick={() => navigate('/board/write')}
-                className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg text-sm font-medium transition-colors">
-                ✏️ 글쓰기
-              </button>
-            )}
-            <button onClick={() => navigate('/home')}
-              className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-600 rounded-lg text-sm transition-colors">
-              ← 홈으로
+          {canWrite && (
+            <button onClick={() => navigate('/board/write')}
+              className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg text-sm font-medium transition-colors">
+              ✏️ 글쓰기
             </button>
-          </div>
+          )}
         </div>
 
         {/* 카테고리 탭 */}

@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { authFetch, logout } from '../utils/authFetch';
-import NotificationBell from '../components/NotificationBell';
 
 const TABS = [
   { key: 'info',      label: '⚙️ 내 정보' },
@@ -163,20 +162,11 @@ export default function MyPage() {
   if (!user) return <div className="min-h-screen bg-gray-100 flex items-center justify-center text-gray-400">로딩 중...</div>;
 
   return (
-    <div className="min-h-screen bg-gray-100 py-10 px-4">
+    <div className="bg-gray-100 py-8 px-4">
       <div className="max-w-2xl mx-auto">
 
         {/* 헤더 */}
-        <div className="flex justify-between items-center mb-6">
-          <h2 className="text-2xl font-bold text-gray-700">⚙️ 마이페이지</h2>
-          <div className="flex items-center gap-2">
-            <NotificationBell showProfile={false} />
-            <button onClick={() => navigate('/home')}
-              className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-600 rounded-lg text-sm transition-colors">
-              ← 홈으로
-            </button>
-          </div>
-        </div>
+        <h2 className="text-2xl font-bold text-gray-700 mb-6">⚙️ 마이페이지</h2>
 
         {/* 프로필 카드 */}
         <div className="bg-white rounded-2xl shadow p-5 mb-4 flex items-center gap-4">
