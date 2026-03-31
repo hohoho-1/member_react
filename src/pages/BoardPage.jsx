@@ -171,7 +171,7 @@ export default function BoardPage() {
                           className={`border-t border-gray-50 hover:bg-gray-50 cursor-pointer transition-colors ${
                             isPinned ? 'bg-amber-50 hover:bg-amber-100' : ''
                           }`}
-                          onClick={() => navigate(`/board/${post.id}`)}>
+                          onClick={() => navigate(`/board/${post.id}?category=${category}&keyword=${encodeURIComponent(keyword)}&sort=${sort}`)}>
                           <td className="px-4 py-3 text-sm text-gray-400">
                             {isPinned
                               ? <span className="text-amber-500 font-bold">📌</span>

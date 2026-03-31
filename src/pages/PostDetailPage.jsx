@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { authFetch, getTokenPayload } from '../utils/authFetch';
 import NotificationBell from '../components/NotificationBell';
 
@@ -108,6 +108,12 @@ function countAllComments(comments) {
 export default function PostDetailPage() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+
+  // 게시판에서 넘어온 필터 조건 (없으면 기본값)
+  const boardCategory = searchParams.get('category') ?? 'ALL';
+  const boardKeyword  = searchParams.get('keyword') ?? '';
+  const boardSort     = searchParams.get('sort') ?? 'latest';
 
   const [post, setPost] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -127,6 +133,7 @@ export default function PostDetailPage() {
   const [likedByMe, setLikedByMe] = useState(false);
   const [likeLoading, setLikeLoading] = useState(false);
   const [pinLoading, setPinLoading] = useState(false);
+  const [adjacent, setAdjacent] = useState({ prev: null, next: null });
 
   const payload = getTokenPayload();
   const isLoggedIn = !!payload;
@@ -134,7 +141,7 @@ export default function PostDetailPage() {
   const isAuthor = post && payload && post.authorId === payload.userId;
   const canEdit = isAuthor || isAdmin;
 
-  useEffect(() => { loadPost(); loadComments(); loadFiles(); }, [id]);
+  useEffect(() => { loadPost(); loadComments(); loadFiles(); loadAdjacent(); }, [id]);
 
   const loadPost = async () => {
     setLoading(true);
@@ -156,6 +163,16 @@ export default function PostDetailPage() {
   const loadFiles = async () => {
     const res = await authFetch(`/api/posts/${id}/files`);
     if (res.ok) setFiles(await res.json());
+  };
+
+  const loadAdjacent = async () => {
+    const params = new URLSearchParams({
+      category: boardCategory,
+      keyword: boardKeyword,
+      sort: boardSort,
+    });
+    const res = await authFetch(`/api/posts/${id}/adjacent?${params}`);
+    if (res.ok) setAdjacent(await res.json());
   };
 
   const handleSubmitComment = async () => {
@@ -251,7 +268,7 @@ export default function PostDetailPage() {
 
         {/* 상단 버튼 영역 */}
         <div className="flex justify-between items-center mb-6">
-          <button onClick={() => navigate('/board')}
+          <button onClick={() => navigate(`/board?category=${boardCategory}&keyword=${encodeURIComponent(boardKeyword)}&sort=${boardSort}`)}
             className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-600 rounded-lg text-sm transition-colors">
             ← 목록으로
           </button>
@@ -302,6 +319,30 @@ export default function PostDetailPage() {
               <span>{likeCount}</span>
             </button>
           </div>
+
+          {/* 이전/다음 글 */}
+          {(adjacent.prev || adjacent.next) && (
+            <div className="mt-6 pt-5 border-t border-gray-100">
+              <div className="flex flex-col divide-y divide-gray-100 text-sm">
+                {adjacent.prev && (
+                  <button
+                    onClick={() => navigate(`/board/${adjacent.prev.id}?category=${boardCategory}&keyword=${encodeURIComponent(boardKeyword)}&sort=${boardSort}`)}
+                    className="flex items-center gap-3 py-2.5 text-left hover:bg-gray-50 rounded-lg px-2 transition-colors group">
+                    <span className="text-gray-400 shrink-0">▲ 이전 글</span>
+                    <span className="text-gray-600 group-hover:text-blue-500 truncate transition-colors">{adjacent.prev.title}</span>
+                  </button>
+                )}
+                {adjacent.next && (
+                  <button
+                    onClick={() => navigate(`/board/${adjacent.next.id}?category=${boardCategory}&keyword=${encodeURIComponent(boardKeyword)}&sort=${boardSort}`)}
+                    className="flex items-center gap-3 py-2.5 text-left hover:bg-gray-50 rounded-lg px-2 transition-colors group">
+                    <span className="text-gray-400 shrink-0">▼ 다음 글</span>
+                    <span className="text-gray-600 group-hover:text-blue-500 truncate transition-colors">{adjacent.next.title}</span>
+                  </button>
+                )}
+              </div>
+            </div>
+          )}
 
           {/* 첨부 파일 - 이미지 인라인 표시 */}
           {files.length > 0 && (() => {
