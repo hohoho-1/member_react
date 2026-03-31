@@ -308,7 +308,14 @@ export default function PostDetailPage() {
           <div className="flex items-center gap-4 text-sm text-gray-400 pb-6 border-b border-gray-100">
             <span>✍️ {post.authorName}</span>
             <span>📅 {new Date(post.createdAt).toLocaleString('ko-KR')}</span>
-            {post.updatedAt !== post.createdAt && <span>✏️ 수정됨 {new Date(post.updatedAt).toLocaleString('ko-KR')}</span>}
+            {post.updatedAt !== post.createdAt && (
+              <span>
+                ✏️ 수정됨 {new Date(post.updatedAt).toLocaleString('ko-KR')}
+                {post.lastModifiedBy && post.lastModifiedById !== post.authorId && (
+                  <span className="ml-1 text-orange-400">(수정자: {post.lastModifiedBy})</span>
+                )}
+              </span>
+            )}
             <span>👁️ {post.viewCount}</span>
           </div>
           <div className="pt-6 text-gray-700 leading-relaxed whitespace-pre-wrap">{post.content}</div>
