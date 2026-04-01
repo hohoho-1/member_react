@@ -5,7 +5,7 @@ import { authFetch, getTokenPayload } from '../utils/authFetch';
 const PAGE_SIZE = 10;
 
 // ─── FAQ 아코디언 아이템 ──────────────────────────────────────────────────────
-function FaqItem({ post, onClickDetail }) {
+function FaqItem({ post }) {
   const [open, setOpen] = useState(false);
   const isNew = (Date.now() - new Date(post.createdAt).getTime()) < 24 * 60 * 60 * 1000;
 
@@ -31,14 +31,7 @@ function FaqItem({ post, onClickDetail }) {
         <div className="bg-white border-t border-green-100">
           <div className="flex items-start gap-3 px-5 py-4">
             <span className="shrink-0 mt-0.5 w-6 h-6 rounded-full bg-gray-200 text-gray-500 text-xs font-bold flex items-center justify-center">A</span>
-            <div className="flex-1">
-              <p className="text-sm text-gray-600 whitespace-pre-wrap leading-relaxed">{post.content}</p>
-              <button
-                onClick={() => onClickDetail(post.id)}
-                className="mt-3 text-xs text-green-600 hover:underline">
-                상세 보기 →
-              </button>
-            </div>
+            <p className="text-sm text-gray-600 whitespace-pre-wrap leading-relaxed">{post.content}</p>
           </div>
         </div>
       )}
@@ -202,7 +195,7 @@ export default function BoardListPage({ groupKey, groupLabel, groupEmoji, boards
             ) : (
               <div className="p-5 space-y-3">
                 {posts.map(post => (
-                  <FaqItem key={post.id} post={post} onClickDetail={goToDetail} />
+                  <FaqItem key={post.id} post={post} />
                 ))}
               </div>
             )}
