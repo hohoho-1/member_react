@@ -247,6 +247,8 @@ export default function PostDetailPage() {
   const isQnA        = post?.boardCode === 'QNA';
   const isFAQ        = post?.boardCode === 'FAQ';
   const isSuggestion = post?.boardCode === 'SUGGESTION';
+  const allowComment    = post?.boardAllowComment ?? true;
+  const allowAttachment = post?.boardAllowAttachment ?? true;
 
   useEffect(() => { loadPost(); loadComments(); loadFiles(); }, [id]);
   useEffect(() => { loadAdjacent(); }, [id, boardScope, boardKeyword, boardSort]);
@@ -569,7 +571,7 @@ export default function PostDetailPage() {
           )}
 
           {/* 첨부 파일 */}
-          {files.length > 0 && (() => {
+          {allowAttachment && files.length > 0 && (() => {
             const imageFiles = files.filter(f => f.image);
             const docFiles   = files.filter(f => !f.image);
             return (
@@ -691,8 +693,8 @@ export default function PostDetailPage() {
           </div>
         )}
 
-        {/* ── 댓글 영역 (FAQ 제외) ────────────────────────────────────────── */}
-        {!isFAQ && (
+        {/* ── 댓글 영역 (FAQ 제외, allowComment인 경우만) ────────────────────────────────────── */}
+        {!isFAQ && allowComment && (
           <div className="bg-white rounded-2xl shadow p-8 mt-4">
             <h2 className="text-base font-bold text-gray-700 mb-5">
               💬 댓글 <span className="text-blue-500">{countAllComments(comments)}</span>
