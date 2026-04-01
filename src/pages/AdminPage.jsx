@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { authFetch, isAdmin, getTokenPayload } from '../utils/authFetch';
 
@@ -338,6 +338,8 @@ export default function AdminPage() {
   const currentPage = Math.max(0, parseInt(searchParams.get('page') ?? '1') - 1);
   const keyword = searchParams.get('keyword') ?? '';
   const currentUserId = getTokenPayload()?.userId;
+  const [keywordInput, setKeywordInput] = useState(keyword);
+  const isComposingMember = useRef(false);
 
   useEffect(() => {
     if (!isAdmin()) { navigate('/forbidden'); return; }
@@ -472,6 +474,8 @@ export default function AdminPage() {
 
   const handleKeywordChange = (e) => {
     const kw = e.target.value;
+    setKeywordInput(kw);
+    if (isComposingMember.current) return;
     const params = { tab };
     if (kw) params.keyword = kw;
     setSearchParams(params);
@@ -1051,7 +1055,15 @@ export default function AdminPage() {
                 <span className="ml-2 text-sm text-gray-400">({currentPage + 1} / {totalPages || 1} 페이지)</span>
               </span>
               <input type="text" placeholder="🔍 이름 또는 이메일 검색"
-                value={keyword} onChange={handleKeywordChange}
+                value={keywordInput} onChange={handleKeywordChange}
+                onCompositionStart={() => { isComposingMember.current = true; }}
+                onCompositionEnd={(e) => {
+                  isComposingMember.current = false;
+                  const kw = e.target.value;
+                  const params = { tab };
+                  if (kw) params.keyword = kw;
+                  setSearchParams(params);
+                }}
                 className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-blue-400 w-48"
               />
             </div>

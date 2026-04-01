@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { authFetch, getTokenPayload } from '../utils/authFetch';
 
@@ -103,8 +103,13 @@ export default function BoardListPage({ groupKey, groupLabel, groupEmoji, boards
     if (p > 0) params.page = String(p + 1);
     setSearchParams(params);
   };
+  const [keywordInput, setKeywordInput] = useState(keyword);
+  const isComposing = useRef(false);
+
   const handleKeywordChange = (e) => {
     const kw = e.target.value;
+    setKeywordInput(kw);
+    if (isComposing.current) return; // 한글 조합 중이면 검색 보류
     const params = { scope, sort };
     if (kw) params.keyword = kw;
     setSearchParams(params);
@@ -183,7 +188,15 @@ export default function BoardListPage({ groupKey, groupLabel, groupEmoji, boards
                 총 {totalElements}개 FAQ
               </span>
               <input type="text" placeholder="🔍 FAQ 검색"
-                value={keyword} onChange={handleKeywordChange}
+                value={keywordInput} onChange={handleKeywordChange}
+                onCompositionStart={() => { isComposing.current = true; }}
+                onCompositionEnd={(e) => {
+                  isComposing.current = false;
+                  const kw = e.target.value;
+                  const params = { scope, sort };
+                  if (kw) params.keyword = kw;
+                  setSearchParams(params);
+                }}
                 className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-green-400 w-48"
               />
             </div>
@@ -233,7 +246,15 @@ export default function BoardListPage({ groupKey, groupLabel, groupEmoji, boards
                 </div>
               </div>
               <input type="text" placeholder="🔍 제목 또는 작성자 검색"
-                value={keyword} onChange={handleKeywordChange}
+                value={keywordInput} onChange={handleKeywordChange}
+                onCompositionStart={() => { isComposing.current = true; }}
+                onCompositionEnd={(e) => {
+                  isComposing.current = false;
+                  const kw = e.target.value;
+                  const params = { scope, sort };
+                  if (kw) params.keyword = kw;
+                  setSearchParams(params);
+                }}
                 className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-blue-400 w-52"
               />
             </div>
