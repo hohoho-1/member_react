@@ -463,7 +463,7 @@ export default function PostDetailPage() {
             ← 목록으로
           </button>
           <div className="flex items-center gap-2">
-            {isAdmin && post.board?.adminOnly && (
+            {isAdmin && post.boardAdminOnly && (
               <button onClick={handleTogglePin} disabled={pinLoading}
                 className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
                   post.pinned ? 'bg-amber-400 hover:bg-amber-500 text-white' : 'bg-gray-100 hover:bg-amber-100 text-gray-500 hover:text-amber-600'
