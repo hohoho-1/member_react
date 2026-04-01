@@ -143,8 +143,143 @@ function DeletedUserModal({ user, onClose, onRestore, onPermanentDelete }) {
 const PAGE_SIZE = 5;
 const LOG_PAGE_SIZE = 15;
 
-const BOARD_TYPE_LABELS = { NORMAL: '일반', GALLERY: '갤러리', QNA: '질문/답변' };
+const BOARD_TYPE_LABELS = { NORMAL: '일반형', GALLERY: '이미지형', QNA: '질문답변형' };
 const BOARD_GROUP_LABELS = { COMMUNITY: '커뮤니티', SUPPORT: '고객센터' };
+
+const BOARD_FORM_DEFAULT = {
+  code: '', name: '', boardGroup: 'COMMUNITY', boardType: 'NORMAL',
+  adminOnly: false, allowComment: true, allowAttachment: true,
+  sortOrder: 0, active: true,
+};
+
+// ── 게시판 생성/수정 모달 ──────────────────────────────────────────────────
+function BoardFormModal({ board, onClose, onSave }) {
+  const isEdit = !!board?.code;
+  const [form, setForm] = useState(
+    isEdit ? {
+      code: board.code, name: board.name,
+      boardGroup: board.boardGroup, boardType: board.boardType,
+      adminOnly: board.adminOnly, allowComment: board.allowComment,
+      allowAttachment: board.allowAttachment, sortOrder: board.sortOrder,
+      active: board.active,
+    } : { ...BOARD_FORM_DEFAULT }
+  );
+  const [error, setError] = useState('');
+
+  const set = (key, val) => setForm(prev => ({ ...prev, [key]: val }));
+
+  const handleSubmit = async () => {
+    if (!form.name.trim()) { setError('게시판 이름을 입력하세요.'); return; }
+    if (!isEdit && !form.code.trim()) { setError('게시판 코드를 입력하세요.'); return; }
+    setError('');
+    await onSave(form, isEdit);
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50" onClick={onClose}>
+      <div className="bg-white rounded-2xl shadow-xl w-[500px] max-h-[90vh] overflow-y-auto p-8"
+        onClick={e => e.stopPropagation()}>
+        <div className="flex justify-between items-center mb-6">
+          <h3 className="text-lg font-bold text-gray-700">
+            {isEdit ? '📝 게시판 수정' : '➕ 게시판 생성'}
+          </h3>
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 text-xl font-bold">×</button>
+        </div>
+
+        <div className="space-y-4">
+          {/* 코드 (생성 시만) */}
+          {!isEdit && (
+            <div>
+              <label className="block text-xs font-semibold text-gray-500 mb-1">게시판 코드 <span className="text-red-400">*</span></label>
+              <input value={form.code} onChange={e => set('code', e.target.value.toUpperCase().replace(/[^A-Z0-9_]/g, ''))}
+                placeholder="영문 대문자/숫자/언더바 (예: FREE, MY_BOARD)"
+                className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-indigo-400 font-mono" />
+              <p className="text-xs text-gray-400 mt-1">영문 대문자·숫자·언더바만 사용 가능, 생성 후 변경 불가</p>
+            </div>
+          )}
+
+          {/* 이름 */}
+          <div>
+            <label className="block text-xs font-semibold text-gray-500 mb-1">게시판 이름 <span className="text-red-400">*</span></label>
+            <input value={form.name} onChange={e => set('name', e.target.value)}
+              placeholder="예: 자유게시판, 공지사항"
+              className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-indigo-400" />
+          </div>
+
+          {/* 그룹 + 유형 */}
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-xs font-semibold text-gray-500 mb-1">메뉴 그룹</label>
+              <select value={form.boardGroup} onChange={e => set('boardGroup', e.target.value)}
+                className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-indigo-400">
+                <option value="COMMUNITY">커뮤니티</option>
+                <option value="SUPPORT">고객센터</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-gray-500 mb-1">게시판 유형</label>
+              <select value={form.boardType} onChange={e => set('boardType', e.target.value)}
+                className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-indigo-400">
+                <option value="NORMAL">일반형</option>
+                <option value="GALLERY">이미지형</option>
+                <option value="QNA">질문답변형</option>
+              </select>
+            </div>
+          </div>
+
+          {/* 표시 순서 */}
+          <div>
+            <label className="block text-xs font-semibold text-gray-500 mb-1">표시 순서</label>
+            <input type="number" value={form.sortOrder} onChange={e => set('sortOrder', parseInt(e.target.value) || 0)}
+              className="w-24 px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-indigo-400 text-center" />
+            <p className="text-xs text-gray-400 mt-1">숫자가 작을수록 탭에서 앞쪽에 표시됩니다</p>
+          </div>
+
+          {/* 옵션 체크박스들 */}
+          <div className="bg-gray-50 rounded-xl p-4 space-y-3">
+            <p className="text-xs font-semibold text-gray-500 mb-2">옵션 설정</p>
+            {[
+              { key: 'adminOnly',       label: '관리자만 글쓰기 가능', desc: '공지사항·FAQ 등 관리자 전용 게시판' },
+              { key: 'allowComment',    label: '댓글 허용',           desc: '사용자 댓글 작성 가능 여부' },
+              { key: 'allowAttachment', label: '파일 첨부 허용',       desc: '이미지·파일 업로드 가능 여부' },
+              { key: 'active',          label: '즉시 활성화',          desc: '비활성이면 사용자 화면에서 숨김' },
+            ].map(({ key, label, desc }) => (
+              <label key={key} className="flex items-start gap-3 cursor-pointer group">
+                <input type="checkbox" checked={form[key]} onChange={e => set(key, e.target.checked)}
+                  className="mt-0.5 w-4 h-4 accent-indigo-500 cursor-pointer" />
+                <div>
+                  <span className="text-sm font-medium text-gray-700 group-hover:text-indigo-600 transition-colors">{label}</span>
+                  <p className="text-xs text-gray-400">{desc}</p>
+                </div>
+              </label>
+            ))}
+          </div>
+
+          {/* 유형 안내 */}
+          <div className="bg-indigo-50 rounded-xl p-4 text-xs text-indigo-700 space-y-1">
+            <p className="font-semibold mb-1">📌 게시판 유형 안내</p>
+            <p>• <strong>일반형</strong> — 텍스트 중심 게시판 (자유게시판, 공지사항, FAQ, 건의사항)</p>
+            <p>• <strong>이미지형</strong> — 썸네일 그리드 뷰 (사진갤러리)</p>
+            <p>• <strong>질문답변형</strong> — 관리자 답변 기능 포함 (QnA, 건의사항)</p>
+          </div>
+
+          {error && <p className="text-sm text-red-500">⚠️ {error}</p>}
+
+          <div className="flex gap-3 pt-2">
+            <button onClick={onClose}
+              className="flex-1 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-600 rounded-xl text-sm font-medium transition-colors">
+              취소
+            </button>
+            <button onClick={handleSubmit}
+              className="flex-1 py-2.5 bg-indigo-500 hover:bg-indigo-600 text-white rounded-xl text-sm font-medium transition-colors">
+              {isEdit ? '수정 완료' : '게시판 생성'}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 const ACTION_LABELS = {
   LOGIN:       { label: '로그인',   color: 'bg-blue-100 text-blue-700' },
@@ -190,6 +325,7 @@ export default function AdminPage() {
   const [boards, setBoards] = useState([]);
   const [boardLoading, setBoardLoading] = useState(false);
   const [editingSortOrder, setEditingSortOrder] = useState({});
+  const [boardFormTarget, setBoardFormTarget] = useState(null); // null=닫힘, {}=생성, board=수정
 
   // 알림 상태
   const [errorMsg, setErrorMsg] = useState('');
@@ -422,6 +558,42 @@ export default function AdminPage() {
     } else showError('순서 변경에 실패했습니다.');
   };
 
+  const handleSaveBoard = async (form, isEdit) => {
+    const url    = isEdit ? `/api/boards/${form.code}` : '/api/boards';
+    const method = isEdit ? 'PUT' : 'POST';
+    const res = await authFetch(url, {
+      method, headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(form),
+    });
+    if (res.ok) {
+      const saved = await res.json();
+      if (isEdit) {
+        setBoards(prev => prev.map(b => b.code === saved.code ? saved : b));
+        showSuccess(`'${saved.name}' 게시판이 수정되었습니다.`);
+      } else {
+        setBoards(prev => [...prev, saved].sort((a, b) => a.sortOrder - b.sortOrder));
+        setEditingSortOrder(prev => ({ ...prev, [saved.code]: saved.sortOrder }));
+        showSuccess(`'${saved.name}' 게시판이 생성되었습니다.`);
+      }
+      setBoardFormTarget(null);
+    } else {
+      const data = await res.json().catch(() => ({}));
+      showError(data.message || (isEdit ? '수정에 실패했습니다.' : '생성에 실패했습니다.'));
+    }
+  };
+
+  const handleDeleteBoard = async (code, name) => {
+    if (!window.confirm(`'${name}' 게시판을 삭제하시겠습니까?\n⚠️ 게시글이 남아있는 경우 삭제되지 않을 수 있습니다.`)) return;
+    const res = await authFetch(`/api/boards/${code}`, { method: 'DELETE' });
+    if (res.ok) {
+      setBoards(prev => prev.filter(b => b.code !== code));
+      showSuccess(`'${name}' 게시판이 삭제되었습니다.`);
+    } else {
+      const data = await res.json().catch(() => ({}));
+      showError(data.message || '삭제에 실패했습니다.');
+    }
+  };
+
   const pageNumbers = Array.from({ length: totalPages }, (_, i) => i);
 
   return (
@@ -438,6 +610,13 @@ export default function AdminPage() {
         onRestore={handleRestorePost}
         onPermanentDelete={handlePermanentDeletePost}
       />
+      {boardFormTarget !== null && (
+        <BoardFormModal
+          board={boardFormTarget}
+          onClose={() => setBoardFormTarget(null)}
+          onSave={handleSaveBoard}
+        />
+      )}
       <div className="max-w-4xl mx-auto">
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-2xl font-bold text-gray-700">🛠️ 관리자 페이지</h2>
@@ -755,10 +934,16 @@ export default function AdminPage() {
                 게시판 목록
                 <span className="ml-2 text-sm text-gray-400">({boards.length}개)</span>
               </span>
-              <button onClick={loadBoards}
-                className="px-3 py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-600 rounded-lg text-sm transition-colors">
-                새로고침
-              </button>
+              <div className="flex gap-2">
+                <button onClick={loadBoards}
+                  className="px-3 py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-600 rounded-lg text-sm transition-colors">
+                  새로고침
+                </button>
+                <button onClick={() => setBoardFormTarget({})}
+                  className="px-3 py-1.5 bg-indigo-500 hover:bg-indigo-600 text-white rounded-lg text-sm font-medium transition-colors">
+                  ➕ 게시판 추가
+                </button>
+              </div>
             </div>
 
             {boardLoading ? (
@@ -769,7 +954,7 @@ export default function AdminPage() {
               <div className="divide-y divide-gray-50">
                 {boards.map(board => (
                   <div key={board.code}
-                    className={`flex items-center gap-4 px-6 py-4 transition-colors ${board.active ? 'bg-white hover:bg-gray-50' : 'bg-gray-50 opacity-60'}`}>
+                    className={`flex items-center gap-4 px-6 py-4 transition-colors ${board.active ? 'bg-white hover:bg-gray-50' : 'bg-gray-50'}`}>
 
                     {/* 게시판 정보 */}
                     <div className="flex-1 min-w-0">
@@ -784,7 +969,7 @@ export default function AdminPage() {
                           <span className="px-2 py-0.5 bg-gray-200 text-gray-500 text-xs rounded-full">비활성</span>
                         )}
                       </div>
-                      <div className="flex items-center gap-3 mt-1 flex-wrap">
+                      <div className="flex items-center gap-2 mt-1 flex-wrap">
                         <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
                           board.boardGroup === 'COMMUNITY' ? 'bg-blue-100 text-blue-600' : 'bg-purple-100 text-purple-600'
                         }`}>
@@ -800,29 +985,30 @@ export default function AdminPage() {
                         {board.adminOnly && (
                           <span className="text-xs px-2 py-0.5 rounded-full bg-red-100 text-red-500 font-medium">관리자 전용</span>
                         )}
+                        {!board.allowComment && (
+                          <span className="text-xs px-2 py-0.5 rounded-full bg-gray-100 text-gray-400">댓글 비허용</span>
+                        )}
                       </div>
                     </div>
 
                     {/* 순서 편집 */}
-                    <div className="flex items-center gap-2 shrink-0">
+                    <div className="flex items-center gap-1.5 shrink-0">
                       <span className="text-xs text-gray-400">순서</span>
                       <input
                         type="number"
                         value={editingSortOrder[board.code] ?? board.sortOrder}
                         onChange={e => setEditingSortOrder(prev => ({ ...prev, [board.code]: e.target.value }))}
                         onKeyDown={e => { if (e.key === 'Enter') handleUpdateSortOrder(board.code); }}
-                        className="w-16 px-2 py-1 border border-gray-200 rounded-lg text-sm text-center focus:outline-none focus:border-indigo-400"
+                        className="w-14 px-2 py-1 border border-gray-200 rounded-lg text-sm text-center focus:outline-none focus:border-indigo-400"
                       />
-                      <button
-                        onClick={() => handleUpdateSortOrder(board.code)}
+                      <button onClick={() => handleUpdateSortOrder(board.code)}
                         className="px-2 py-1 bg-indigo-50 hover:bg-indigo-100 text-indigo-600 rounded-lg text-xs font-medium transition-colors">
                         적용
                       </button>
                     </div>
 
                     {/* 활성/비활성 토글 */}
-                    <button
-                      onClick={() => handleToggleBoardActive(board.code)}
+                    <button onClick={() => handleToggleBoardActive(board.code)}
                       className={`shrink-0 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
                         board.active
                           ? 'bg-green-50 hover:bg-green-100 text-green-600'
@@ -830,6 +1016,18 @@ export default function AdminPage() {
                       }`}>
                       {board.active ? '✅ 활성' : '⛔ 비활성'}
                     </button>
+
+                    {/* 수정 / 삭제 */}
+                    <div className="flex gap-1 shrink-0">
+                      <button onClick={() => setBoardFormTarget(board)}
+                        className="px-2 py-1.5 bg-blue-50 hover:bg-blue-100 text-blue-600 rounded-lg text-xs font-medium transition-colors">
+                        수정
+                      </button>
+                      <button onClick={() => handleDeleteBoard(board.code, board.name)}
+                        className="px-2 py-1.5 bg-red-50 hover:bg-red-100 text-red-500 rounded-lg text-xs font-medium transition-colors">
+                        삭제
+                      </button>
+                    </div>
                   </div>
                 ))}
               </div>
@@ -838,7 +1036,7 @@ export default function AdminPage() {
             {/* 안내 */}
             <div className="px-6 py-3 bg-gray-50 border-t border-gray-100">
               <p className="text-xs text-gray-400">
-                💡 순서 숫자가 작을수록 상단에 표시됩니다. 변경 후 <strong>적용</strong> 버튼을 누르거나 Enter를 입력하세요.
+                💡 순서 숫자가 작을수록 사용자 화면 탭에서 앞쪽에 표시됩니다. &nbsp;|&nbsp; 비활성 게시판은 사용자 화면에서 숨겨집니다.
               </p>
             </div>
           </div>
