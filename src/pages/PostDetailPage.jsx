@@ -23,11 +23,7 @@ function CommentItem({
         <div className="flex-1">
           <div className="flex items-center gap-2 mb-1 flex-wrap">
             {depth > 0 && <span className="text-blue-400 text-xs">↳</span>}
-            <UserAvatar
-              profileImageUrl={comment.authorProfileImageUrl}
-              username={comment.authorName}
-              size={6}
-            />
+            <UserAvatar profileImageUrl={comment.authorProfileImageUrl} username={comment.authorName} size={6} />
             <span className="text-sm font-semibold text-gray-700">{comment.authorName}</span>
             <span className="text-xs text-gray-400">{new Date(comment.createdAt).toLocaleString('ko-KR')}</span>
             {comment.updatedAt !== comment.createdAt && !comment.deleted && (
@@ -109,10 +105,55 @@ function countAllComments(comments) {
   return count;
 }
 
+// ─── FAQ 아코디언 컴포넌트 ──────────────────────────────────────────────────
+function FaqAccordion({ title, content }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <div className={`border rounded-xl overflow-hidden transition-all ${open ? 'border-green-300 shadow-sm' : 'border-gray-200'}`}>
+      <button
+        onClick={() => setOpen(v => !v)}
+        className={`w-full flex items-start justify-between gap-3 px-5 py-4 text-left transition-colors ${open ? 'bg-green-50' : 'bg-white hover:bg-gray-50'}`}
+      >
+        <div className="flex items-start gap-3">
+          <span className="shrink-0 mt-0.5 w-6 h-6 rounded-full bg-green-500 text-white text-xs font-bold flex items-center justify-center">Q</span>
+          <span className="text-sm font-semibold text-gray-700 leading-relaxed">{title}</span>
+        </div>
+        <span className={`shrink-0 text-green-500 text-lg transition-transform duration-200 ${open ? 'rotate-180' : ''}`}>⌄</span>
+      </button>
+      {open && (
+        <div className="px-5 py-4 bg-white border-t border-green-100">
+          <div className="flex items-start gap-3">
+            <span className="shrink-0 mt-0.5 w-6 h-6 rounded-full bg-gray-200 text-gray-500 text-xs font-bold flex items-center justify-center">A</span>
+            <p className="text-sm text-gray-600 whitespace-pre-wrap leading-relaxed">{content}</p>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ─── 답변 아이템 컴포넌트 ────────────────────────────────────────────────────
-function AnswerItem({ answer, isAdmin, onEdit, onDelete }) {
+function AnswerItem({ answer, isAdmin, onEdit, onDelete, colorScheme = 'amber' }) {
   const [isEditing, setIsEditing] = useState(false);
   const [editContent, setEditContent] = useState(answer.content);
+
+  const colors = {
+    amber: {
+      bg: 'bg-amber-50', border: 'border-amber-200',
+      badge: 'bg-amber-500',
+      inputBorder: 'border-amber-300',
+      saveBg: 'bg-amber-500 hover:bg-amber-600',
+      editText: 'text-amber-600', editHover: 'hover:bg-amber-100',
+    },
+    teal: {
+      bg: 'bg-teal-50', border: 'border-teal-200',
+      badge: 'bg-teal-500',
+      inputBorder: 'border-teal-300',
+      saveBg: 'bg-teal-500 hover:bg-teal-600',
+      editText: 'text-teal-600', editHover: 'hover:bg-teal-100',
+    },
+  };
+  const c = colors[colorScheme] ?? colors.amber;
 
   const handleSave = () => {
     if (!editContent.trim()) return;
@@ -121,35 +162,22 @@ function AnswerItem({ answer, isAdmin, onEdit, onDelete }) {
   };
 
   return (
-    <div className="bg-amber-50 border border-amber-200 rounded-xl p-5">
+    <div className={`${c.bg} border ${c.border} rounded-xl p-5`}>
       <div className="flex items-start justify-between gap-2">
         <div className="flex-1">
-          {/* 답변자 정보 */}
           <div className="flex items-center gap-2 mb-3 flex-wrap">
-            <span className="px-2 py-0.5 bg-amber-500 text-white text-xs font-bold rounded-full">관리자 답변</span>
-            <UserAvatar
-              profileImageUrl={answer.authorProfileImageUrl}
-              username={answer.authorName}
-              size={6}
-            />
+            <span className={`px-2 py-0.5 ${c.badge} text-white text-xs font-bold rounded-full`}>관리자 답변</span>
+            <UserAvatar profileImageUrl={answer.authorProfileImageUrl} username={answer.authorName} size={6} />
             <span className="text-sm font-semibold text-gray-700">{answer.authorName}</span>
             <span className="text-xs text-gray-400">{new Date(answer.createdAt).toLocaleString('ko-KR')}</span>
-            {answer.updatedAt !== answer.createdAt && (
-              <span className="text-xs text-gray-400">(수정됨)</span>
-            )}
+            {answer.updatedAt !== answer.createdAt && <span className="text-xs text-gray-400">(수정됨)</span>}
           </div>
-
-          {/* 내용 */}
           {isEditing ? (
             <div className="flex gap-2">
-              <textarea
-                value={editContent}
-                onChange={e => setEditContent(e.target.value)}
-                className="flex-1 px-3 py-2 border border-amber-300 rounded-lg text-sm focus:outline-none resize-none bg-white"
-                rows={4}
-              />
+              <textarea value={editContent} onChange={e => setEditContent(e.target.value)}
+                className={`flex-1 px-3 py-2 border ${c.inputBorder} rounded-lg text-sm focus:outline-none resize-none bg-white`} rows={4} />
               <div className="flex flex-col gap-1 shrink-0">
-                <button onClick={handleSave} className="px-3 py-1 bg-amber-500 hover:bg-amber-600 text-white rounded-lg text-xs font-medium">저장</button>
+                <button onClick={handleSave} className={`px-3 py-1 ${c.saveBg} text-white rounded-lg text-xs font-medium`}>저장</button>
                 <button onClick={() => { setIsEditing(false); setEditContent(answer.content); }}
                   className="px-3 py-1 bg-gray-100 hover:bg-gray-200 text-gray-600 rounded-lg text-xs">취소</button>
               </div>
@@ -158,12 +186,10 @@ function AnswerItem({ answer, isAdmin, onEdit, onDelete }) {
             <p className="text-sm text-gray-700 whitespace-pre-wrap leading-relaxed">{answer.content}</p>
           )}
         </div>
-
-        {/* 관리자 버튼 */}
         {isAdmin && !isEditing && (
           <div className="flex gap-1 shrink-0">
             <button onClick={() => { setIsEditing(true); setEditContent(answer.content); }}
-              className="px-2 py-1 text-xs text-amber-600 hover:bg-amber-100 rounded-lg transition-colors">수정</button>
+              className={`px-2 py-1 text-xs ${c.editText} ${c.editHover} rounded-lg transition-colors`}>수정</button>
             <button onClick={() => onDelete(answer.id)}
               className="px-2 py-1 text-xs text-red-400 hover:bg-red-50 rounded-lg transition-colors">삭제</button>
           </div>
@@ -179,46 +205,48 @@ export default function PostDetailPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
 
-  const boardScope    = searchParams.get('scope') ?? searchParams.get('category') ?? 'ALL';
-  const boardKeyword  = searchParams.get('keyword') ?? '';
-  const boardSort     = searchParams.get('sort') ?? 'latest';
-  const returnTo      = decodeURIComponent(searchParams.get('returnTo') ?? '/community');
+  const boardScope   = searchParams.get('scope') ?? searchParams.get('category') ?? 'ALL';
+  const boardKeyword = searchParams.get('keyword') ?? '';
+  const boardSort    = searchParams.get('sort') ?? 'latest';
+  const returnTo     = decodeURIComponent(searchParams.get('returnTo') ?? '/community');
 
-  const [post, setPost] = useState(null);
+  const [post, setPost]       = useState(null);
   const [loading, setLoading] = useState(true);
   const [errorMsg, setErrorMsg] = useState('');
-  const [files, setFiles] = useState([]);
+  const [files, setFiles]     = useState([]);
 
   // 댓글
-  const [comments, setComments] = useState([]);
-  const [commentInput, setCommentInput] = useState('');
-  const [commentLoading, setCommentLoading] = useState(false);
+  const [comments, setComments]               = useState([]);
+  const [commentInput, setCommentInput]       = useState('');
+  const [commentLoading, setCommentLoading]   = useState(false);
   const [editingCommentId, setEditingCommentId] = useState(null);
-  const [editingContent, setEditingContent] = useState('');
-  const [replyingToId, setReplyingToId] = useState(null);
-  const [replyInput, setReplyInput] = useState('');
-  const [commentError, setCommentError] = useState('');
+  const [editingContent, setEditingContent]   = useState('');
+  const [replyingToId, setReplyingToId]       = useState(null);
+  const [replyInput, setReplyInput]           = useState('');
+  const [commentError, setCommentError]       = useState('');
 
-  // 답변 (QnA 전용)
-  const [answers, setAnswers] = useState([]);
-  const [answerInput, setAnswerInput] = useState('');
+  // 답변 (QnA / SUGGESTION)
+  const [answers, setAnswers]           = useState([]);
+  const [answerInput, setAnswerInput]   = useState('');
   const [answerLoading, setAnswerLoading] = useState(false);
-  const [answerError, setAnswerError] = useState('');
+  const [answerError, setAnswerError]   = useState('');
 
-  const [likeCount, setLikeCount] = useState(0);
-  const [likedByMe, setLikedByMe] = useState(false);
-  const [likeLoading, setLikeLoading] = useState(false);
+  const [likeCount, setLikeCount]         = useState(0);
+  const [likedByMe, setLikedByMe]         = useState(false);
+  const [likeLoading, setLikeLoading]     = useState(false);
   const [bookmarkedByMe, setBookmarkedByMe] = useState(false);
   const [bookmarkLoading, setBookmarkLoading] = useState(false);
-  const [pinLoading, setPinLoading] = useState(false);
-  const [adjacent, setAdjacent] = useState({ prev: null, next: null });
+  const [pinLoading, setPinLoading]       = useState(false);
+  const [adjacent, setAdjacent]           = useState({ prev: null, next: null });
 
-  const payload = getTokenPayload();
+  const payload    = getTokenPayload();
   const isLoggedIn = !!payload;
-  const isAdmin = payload?.role === 'ROLE_ADMIN';
-  const isAuthor = post && payload && post.authorId === payload.userId;
-  const canEdit = isAuthor || isAdmin;
-  const isQnA = post?.boardCode === 'QNA';
+  const isAdmin    = payload?.role === 'ROLE_ADMIN';
+  const isAuthor   = post && payload && post.authorId === payload.userId;
+  const canEdit    = isAuthor || isAdmin;
+  const isQnA        = post?.boardCode === 'QNA';
+  const isFAQ        = post?.boardCode === 'FAQ';
+  const isSuggestion = post?.boardCode === 'SUGGESTION';
 
   useEffect(() => { loadPost(); loadComments(); loadFiles(); }, [id]);
   useEffect(() => { loadAdjacent(); }, [id, boardScope, boardKeyword, boardSort]);
@@ -232,8 +260,7 @@ export default function PostDetailPage() {
       setLikeCount(data.likeCount ?? 0);
       setLikedByMe(data.likedByMe ?? false);
       setBookmarkedByMe(data.bookmarkedByMe ?? false);
-      // QnA면 답변도 로드
-      if (data.boardCode === 'QNA') loadAnswers();
+      if (data.boardCode === 'QNA' || data.boardCode === 'SUGGESTION') loadAnswers();
     } else setErrorMsg('게시글을 불러올 수 없습니다.');
     setLoading(false);
   };
@@ -254,7 +281,7 @@ export default function PostDetailPage() {
     if (res.ok) setAdjacent(await res.json());
   };
 
-  // ── 답변 관련 ──────────────────────────────────────────────────────────────
+  // ── 답변 ──────────────────────────────────────────────────────────────────
   const loadAnswers = async () => {
     const res = await authFetch(`/api/posts/${id}/answers`);
     if (res.ok) setAnswers((await res.json()).answers);
@@ -265,29 +292,19 @@ export default function PostDetailPage() {
     setAnswerLoading(true); setAnswerError('');
     try {
       const res = await authFetch(`/api/posts/${id}/answers`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ content: answerInput.trim() }),
       });
-      if (res.ok) {
-        setAnswerInput('');
-        await loadAnswers();
-      } else {
-        let msg = '답변 작성에 실패했습니다.';
-        try { const d = await res.json(); msg = d.message || msg; } catch (_) {}
-        setAnswerError(msg);
-      }
-    } catch (e) {
-      setAnswerError('네트워크 오류가 발생했습니다.');
-    }
+      if (res.ok) { setAnswerInput(''); await loadAnswers(); }
+      else { const d = await res.json(); setAnswerError(d.message || '답변 작성에 실패했습니다.'); }
+    } catch { setAnswerError('네트워크 오류가 발생했습니다.'); }
     setAnswerLoading(false);
   };
 
   const handleEditAnswer = async (answerId, content) => {
     setAnswerError('');
     const res = await authFetch(`/api/posts/${id}/answers/${answerId}`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
+      method: 'PUT', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ content }),
     });
     if (res.ok) loadAnswers();
@@ -301,7 +318,7 @@ export default function PostDetailPage() {
     else { const d = await res.json(); setAnswerError(d.message || '답변 삭제에 실패했습니다.'); }
   };
 
-  // ── 댓글 관련 ──────────────────────────────────────────────────────────────
+  // ── 댓글 ──────────────────────────────────────────────────────────────────
   const handleSubmitComment = async () => {
     if (!commentInput.trim()) return;
     setCommentLoading(true); setCommentError('');
@@ -397,6 +414,44 @@ export default function PostDetailPage() {
     </div>
   );
 
+  // 답변 섹션 공통 렌더러
+  const renderAnswerSection = (scheme, borderColor, labelColor, labelText, emptyBgColor, inputBorderColor, inputBgColor, btnColor, btnDisabledColor) => (
+    <div className={`bg-white rounded-2xl shadow p-8 mt-4 border-l-4 ${borderColor}`}>
+      <h2 className="text-base font-bold text-gray-700 mb-5">
+        {scheme === 'amber' ? '💡' : '💬'} 답변{' '}
+        <span className={labelColor}>{answers.length}</span>
+      </h2>
+      {answers.length === 0 ? (
+        <p className={`text-sm text-gray-400 text-center py-6 ${emptyBgColor} rounded-xl`}>
+          아직 등록된 답변이 없습니다.
+        </p>
+      ) : (
+        <div className="space-y-4 mb-6">
+          {answers.map(answer => (
+            <AnswerItem key={answer.id} answer={answer} isAdmin={isAdmin}
+              onEdit={handleEditAnswer} onDelete={handleDeleteAnswer} colorScheme={scheme} />
+          ))}
+        </div>
+      )}
+      {answerError && <p className="text-sm text-red-500 mb-3">⚠️ {answerError}</p>}
+      {isAdmin && (
+        <div className={`mt-4 pt-4 border-t ${inputBorderColor.replace('border-', 'border-').replace('-300', '-100')}`}>
+          <p className={`text-xs ${labelColor} font-medium mb-2`}>{labelText}</p>
+          <div className="flex gap-3">
+            <textarea value={answerInput} onChange={e => setAnswerInput(e.target.value)}
+              onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSubmitAnswer(); } }}
+              placeholder="답변을 입력하세요... (Shift+Enter 줄바꿈)"
+              className={`flex-1 px-4 py-3 border ${inputBorderColor} rounded-xl text-sm focus:outline-none resize-none ${inputBgColor}`} rows={3} />
+            <button onClick={handleSubmitAnswer} disabled={answerLoading || !answerInput.trim()}
+              className={`px-5 py-2 ${btnColor} ${btnDisabledColor} text-white rounded-xl text-sm font-medium transition-colors self-end`}>
+              {answerLoading ? '...' : '등록'}
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+
   return (
     <div className="bg-gray-100 p-6">
       <div className="max-w-3xl mx-auto">
@@ -450,7 +505,7 @@ export default function PostDetailPage() {
             )}
             <h1 className="text-2xl font-bold text-gray-800 mt-3">{post.title}</h1>
           </div>
-          <div className="flex items-center gap-4 text-sm text-gray-400 pb-6 border-b border-gray-100">
+          <div className="flex items-center gap-4 text-sm text-gray-400 pb-6 border-b border-gray-100 flex-wrap">
             <span>✍️ {post.authorName}</span>
             <span>📅 {new Date(post.createdAt).toLocaleString('ko-KR')}</span>
             {post.updatedAt !== post.createdAt && (
@@ -463,25 +518,31 @@ export default function PostDetailPage() {
             )}
             <span>👁️ {post.viewCount}</span>
           </div>
-          <div className="pt-6 text-gray-700 leading-relaxed whitespace-pre-wrap">{post.content}</div>
 
-          {/* 좋아요 + 북마크 */}
-          <div className="flex justify-center items-center gap-3 mt-8 pt-6 border-t border-gray-100">
-            <button onClick={handleToggleLike} disabled={likeLoading}
-              className={`flex items-center gap-2 px-6 py-2.5 rounded-full text-sm font-semibold transition-all ${
-                likedByMe ? 'bg-red-500 text-white hover:bg-red-600 shadow-md' : 'bg-gray-100 text-gray-500 hover:bg-red-50 hover:text-red-400'
-              }`}>
-              <span className="text-base">{likedByMe ? '❤️' : '🤍'}</span>
-              <span>{likeCount}</span>
-            </button>
-            <button onClick={handleToggleBookmark} disabled={bookmarkLoading}
-              className={`flex items-center gap-2 px-6 py-2.5 rounded-full text-sm font-semibold transition-all ${
-                bookmarkedByMe ? 'bg-amber-400 text-white hover:bg-amber-500 shadow-md' : 'bg-gray-100 text-gray-500 hover:bg-amber-50 hover:text-amber-500'
-              }`}>
-              <span className="text-base">🔖</span>
-              <span>{bookmarkedByMe ? '북마크 해제' : '북마크'}</span>
-            </button>
-          </div>
+          {/* FAQ는 본문 숨기고 아코디언만 표시 */}
+          {!isFAQ && (
+            <div className="pt-6 text-gray-700 leading-relaxed whitespace-pre-wrap">{post.content}</div>
+          )}
+
+          {/* 좋아요 + 북마크 (FAQ 제외) */}
+          {!isFAQ && (
+            <div className="flex justify-center items-center gap-3 mt-8 pt-6 border-t border-gray-100">
+              <button onClick={handleToggleLike} disabled={likeLoading}
+                className={`flex items-center gap-2 px-6 py-2.5 rounded-full text-sm font-semibold transition-all ${
+                  likedByMe ? 'bg-red-500 text-white hover:bg-red-600 shadow-md' : 'bg-gray-100 text-gray-500 hover:bg-red-50 hover:text-red-400'
+                }`}>
+                <span className="text-base">{likedByMe ? '❤️' : '🤍'}</span>
+                <span>{likeCount}</span>
+              </button>
+              <button onClick={handleToggleBookmark} disabled={bookmarkLoading}
+                className={`flex items-center gap-2 px-6 py-2.5 rounded-full text-sm font-semibold transition-all ${
+                  bookmarkedByMe ? 'bg-amber-400 text-white hover:bg-amber-500 shadow-md' : 'bg-gray-100 text-gray-500 hover:bg-amber-50 hover:text-amber-500'
+                }`}>
+                <span className="text-base">🔖</span>
+                <span>{bookmarkedByMe ? '북마크 해제' : '북마크'}</span>
+              </button>
+            </div>
+          )}
 
           {/* 이전/다음 글 */}
           {(adjacent.prev || adjacent.next) && (
@@ -510,7 +571,7 @@ export default function PostDetailPage() {
           {/* 첨부 파일 */}
           {files.length > 0 && (() => {
             const imageFiles = files.filter(f => f.image);
-            const docFiles = files.filter(f => !f.image);
+            const docFiles   = files.filter(f => !f.image);
             return (
               <div className="mt-6 pt-5 border-t border-gray-100 space-y-4">
                 {imageFiles.length > 0 && (
@@ -519,17 +580,12 @@ export default function PostDetailPage() {
                     <div className="space-y-3">
                       {imageFiles.map(file => (
                         <div key={file.id} className="rounded-xl overflow-hidden border border-gray-100 bg-gray-50">
-                          <img
-                            src={`http://localhost:8080${file.downloadUrl}`}
-                            alt={file.originalName}
-                            className="w-full max-h-[600px] object-contain bg-white"
-                          />
+                          <img src={`http://localhost:8080${file.downloadUrl}`} alt={file.originalName}
+                            className="w-full max-h-[600px] object-contain bg-white" />
                           <div className="flex items-center justify-between px-3 py-2">
                             <span className="text-xs text-gray-400 truncate">{file.originalName} ({(file.fileSize / 1024).toFixed(1)}KB)</span>
                             <a href={`http://localhost:8080${file.downloadUrl}/download`}
-                              className="text-xs text-blue-500 hover:text-blue-700 hover:underline shrink-0 ml-2">
-                              ↓ 다운로드
-                            </a>
+                              className="text-xs text-blue-500 hover:text-blue-700 hover:underline shrink-0 ml-2">↓ 다운로드</a>
                           </div>
                         </div>
                       ))}
@@ -541,8 +597,7 @@ export default function PostDetailPage() {
                     <p className="text-sm font-semibold text-gray-600 mb-3">📎 첨부 파일 ({docFiles.length})</p>
                     <div className="space-y-2">
                       {docFiles.map(file => (
-                        <a key={file.id}
-                          href={`http://localhost:8080${file.downloadUrl}/download`}
+                        <a key={file.id} href={`http://localhost:8080${file.downloadUrl}/download`}
                           className="flex items-center gap-2 px-3 py-2 bg-gray-50 hover:bg-gray-100 rounded-lg text-sm text-gray-600 transition-colors">
                           <span>📄</span>
                           <span className="truncate flex-1">{file.originalName}</span>
@@ -558,49 +613,40 @@ export default function PostDetailPage() {
           })()}
         </div>
 
-        {/* ── QnA 답변 섹션 ─────────────────────────────────────────────────── */}
+        {/* ── FAQ 아코디언 뷰 ─────────────────────────────────────────────── */}
+        {isFAQ && (
+          <div className="bg-white rounded-2xl shadow p-8 mt-4 border-l-4 border-green-400">
+            <h2 className="text-base font-bold text-gray-700 mb-5">❓ FAQ</h2>
+            <FaqAccordion title={post.title} content={post.content} />
+          </div>
+        )}
+
+        {/* ── QnA 답변 섹션 ───────────────────────────────────────────────── */}
         {isQnA && (
           <div className="bg-white rounded-2xl shadow p-8 mt-4 border-l-4 border-amber-400">
             <h2 className="text-base font-bold text-gray-700 mb-5">
               💡 답변 <span className="text-amber-500">{answers.length}</span>
             </h2>
-
             {answers.length === 0 ? (
-              <p className="text-sm text-gray-400 text-center py-6 bg-amber-50 rounded-xl">
-                아직 등록된 답변이 없습니다.
-              </p>
+              <p className="text-sm text-gray-400 text-center py-6 bg-amber-50 rounded-xl">아직 등록된 답변이 없습니다.</p>
             ) : (
               <div className="space-y-4 mb-6">
                 {answers.map(answer => (
-                  <AnswerItem
-                    key={answer.id}
-                    answer={answer}
-                    isAdmin={isAdmin}
-                    onEdit={handleEditAnswer}
-                    onDelete={handleDeleteAnswer}
-                  />
+                  <AnswerItem key={answer.id} answer={answer} isAdmin={isAdmin}
+                    onEdit={handleEditAnswer} onDelete={handleDeleteAnswer} colorScheme="amber" />
                 ))}
               </div>
             )}
-
             {answerError && <p className="text-sm text-red-500 mb-3">⚠️ {answerError}</p>}
-
-            {/* 관리자 답변 작성 폼 */}
             {isAdmin && (
               <div className="mt-4 pt-4 border-t border-amber-100">
                 <p className="text-xs text-amber-600 font-medium mb-2">관리자 답변 작성</p>
                 <div className="flex gap-3">
-                  <textarea
-                    value={answerInput}
-                    onChange={e => setAnswerInput(e.target.value)}
+                  <textarea value={answerInput} onChange={e => setAnswerInput(e.target.value)}
                     onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSubmitAnswer(); } }}
                     placeholder="답변을 입력하세요... (Shift+Enter 줄바꿈)"
-                    className="flex-1 px-4 py-3 border border-amber-200 rounded-xl text-sm focus:outline-none focus:border-amber-400 resize-none bg-amber-50"
-                    rows={3}
-                  />
-                  <button
-                    onClick={handleSubmitAnswer}
-                    disabled={answerLoading || !answerInput.trim()}
+                    className="flex-1 px-4 py-3 border border-amber-200 rounded-xl text-sm focus:outline-none focus:border-amber-400 resize-none bg-amber-50" rows={3} />
+                  <button onClick={handleSubmitAnswer} disabled={answerLoading || !answerInput.trim()}
                     className="px-5 py-2 bg-amber-500 hover:bg-amber-600 disabled:bg-amber-200 text-white rounded-xl text-sm font-medium transition-colors self-end">
                     {answerLoading ? '...' : '등록'}
                   </button>
@@ -610,49 +656,86 @@ export default function PostDetailPage() {
           </div>
         )}
 
-        {/* 댓글 영역 */}
-        <div className="bg-white rounded-2xl shadow p-8 mt-4">
-          <h2 className="text-base font-bold text-gray-700 mb-5">
-            💬 댓글 <span className="text-blue-500">{countAllComments(comments)}</span>
-          </h2>
+        {/* ── 건의사항 답변 섹션 ──────────────────────────────────────────── */}
+        {isSuggestion && (
+          <div className="bg-white rounded-2xl shadow p-8 mt-4 border-l-4 border-teal-400">
+            <h2 className="text-base font-bold text-gray-700 mb-5">
+              💬 답변 <span className="text-teal-500">{answers.length}</span>
+            </h2>
+            {answers.length === 0 ? (
+              <p className="text-sm text-gray-400 text-center py-6 bg-teal-50 rounded-xl">아직 등록된 답변이 없습니다.</p>
+            ) : (
+              <div className="space-y-4 mb-6">
+                {answers.map(answer => (
+                  <AnswerItem key={answer.id} answer={answer} isAdmin={isAdmin}
+                    onEdit={handleEditAnswer} onDelete={handleDeleteAnswer} colorScheme="teal" />
+                ))}
+              </div>
+            )}
+            {answerError && <p className="text-sm text-red-500 mb-3">⚠️ {answerError}</p>}
+            {isAdmin && (
+              <div className="mt-4 pt-4 border-t border-teal-100">
+                <p className="text-xs text-teal-600 font-medium mb-2">관리자 답변 작성</p>
+                <div className="flex gap-3">
+                  <textarea value={answerInput} onChange={e => setAnswerInput(e.target.value)}
+                    onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSubmitAnswer(); } }}
+                    placeholder="답변을 입력하세요... (Shift+Enter 줄바꿈)"
+                    className="flex-1 px-4 py-3 border border-teal-200 rounded-xl text-sm focus:outline-none focus:border-teal-400 resize-none bg-teal-50" rows={3} />
+                  <button onClick={handleSubmitAnswer} disabled={answerLoading || !answerInput.trim()}
+                    className="px-5 py-2 bg-teal-500 hover:bg-teal-600 disabled:bg-teal-200 text-white rounded-xl text-sm font-medium transition-colors self-end">
+                    {answerLoading ? '...' : '등록'}
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
 
-          {comments.length === 0 ? (
-            <p className="text-sm text-gray-400 text-center py-6">첫 번째 댓글을 남겨보세요!</p>
-          ) : (
-            <ul className="divide-y divide-gray-100 mb-6">
-              {comments.map(comment => (
-                <CommentItem key={comment.id} comment={comment} depth={0} postId={id}
-                  payload={payload} isAdmin={isAdmin}
-                  editingCommentId={editingCommentId} editingContent={editingContent}
-                  setEditingCommentId={setEditingCommentId} setEditingContent={setEditingContent}
-                  replyingToId={replyingToId} setReplyingToId={setReplyingToId}
-                  replyInput={replyInput} setReplyInput={setReplyInput}
-                  onEdit={handleEditComment} onDelete={handleDeleteComment}
-                  onReply={handleReply} onLike={handleLikeComment} />
-              ))}
-            </ul>
-          )}
+        {/* ── 댓글 영역 (FAQ 제외) ────────────────────────────────────────── */}
+        {!isFAQ && (
+          <div className="bg-white rounded-2xl shadow p-8 mt-4">
+            <h2 className="text-base font-bold text-gray-700 mb-5">
+              💬 댓글 <span className="text-blue-500">{countAllComments(comments)}</span>
+            </h2>
 
-          {commentError && <p className="text-sm text-red-500 mb-3">⚠️ {commentError}</p>}
+            {comments.length === 0 ? (
+              <p className="text-sm text-gray-400 text-center py-6">첫 번째 댓글을 남겨보세요!</p>
+            ) : (
+              <ul className="divide-y divide-gray-100 mb-6">
+                {comments.map(comment => (
+                  <CommentItem key={comment.id} comment={comment} depth={0} postId={id}
+                    payload={payload} isAdmin={isAdmin}
+                    editingCommentId={editingCommentId} editingContent={editingContent}
+                    setEditingCommentId={setEditingCommentId} setEditingContent={setEditingContent}
+                    replyingToId={replyingToId} setReplyingToId={setReplyingToId}
+                    replyInput={replyInput} setReplyInput={setReplyInput}
+                    onEdit={handleEditComment} onDelete={handleDeleteComment}
+                    onReply={handleReply} onLike={handleLikeComment} />
+                ))}
+              </ul>
+            )}
 
-          {isLoggedIn ? (
-            <div className="flex gap-3 mt-2">
-              <textarea value={commentInput} onChange={e => setCommentInput(e.target.value)}
-                onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSubmitComment(); } }}
-                placeholder="댓글을 입력하세요... (Shift+Enter 줄바꿈)"
-                className="flex-1 px-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-blue-400 resize-none" rows={2} />
-              <button onClick={handleSubmitComment} disabled={commentLoading || !commentInput.trim()}
-                className="px-5 py-2 bg-blue-500 hover:bg-blue-600 disabled:bg-blue-200 text-white rounded-xl text-sm font-medium transition-colors self-end">
-                {commentLoading ? '...' : '등록'}
-              </button>
-            </div>
-          ) : (
-            <p className="text-sm text-gray-400 text-center py-3">
-              댓글을 작성하려면{' '}
-              <button onClick={() => navigate('/login')} className="text-blue-500 hover:underline">로그인</button>이 필요합니다.
-            </p>
-          )}
-        </div>
+            {commentError && <p className="text-sm text-red-500 mb-3">⚠️ {commentError}</p>}
+
+            {isLoggedIn ? (
+              <div className="flex gap-3 mt-2">
+                <textarea value={commentInput} onChange={e => setCommentInput(e.target.value)}
+                  onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSubmitComment(); } }}
+                  placeholder="댓글을 입력하세요... (Shift+Enter 줄바꿈)"
+                  className="flex-1 px-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-blue-400 resize-none" rows={2} />
+                <button onClick={handleSubmitComment} disabled={commentLoading || !commentInput.trim()}
+                  className="px-5 py-2 bg-blue-500 hover:bg-blue-600 disabled:bg-blue-200 text-white rounded-xl text-sm font-medium transition-colors self-end">
+                  {commentLoading ? '...' : '등록'}
+                </button>
+              </div>
+            ) : (
+              <p className="text-sm text-gray-400 text-center py-3">
+                댓글을 작성하려면{' '}
+                <button onClick={() => navigate('/login')} className="text-blue-500 hover:underline">로그인</button>이 필요합니다.
+              </p>
+            )}
+          </div>
+        )}
 
       </div>
     </div>

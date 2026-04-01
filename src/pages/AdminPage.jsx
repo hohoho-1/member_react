@@ -143,6 +143,9 @@ function DeletedUserModal({ user, onClose, onRestore, onPermanentDelete }) {
 const PAGE_SIZE = 5;
 const LOG_PAGE_SIZE = 15;
 
+const BOARD_TYPE_LABELS = { NORMAL: '일반', GALLERY: '갤러리', QNA: '질문/답변' };
+const BOARD_GROUP_LABELS = { COMMUNITY: '커뮤니티', SUPPORT: '고객센터' };
+
 const ACTION_LABELS = {
   LOGIN:       { label: '로그인',   color: 'bg-blue-100 text-blue-700' },
   LOGOUT:      { label: '로그아웃', color: 'bg-gray-100 text-gray-600' },
@@ -155,7 +158,7 @@ export default function AdminPage() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
 
-  // 탭: 'active' | 'deleted' | 'logs' | 'deletedPosts'
+  // 탭: 'active' | 'deleted' | 'logs' | 'deletedPosts' | 'boards'
   const tab = searchParams.get('tab') ?? 'active';
 
   // 회원 목록 상태
@@ -183,6 +186,11 @@ export default function AdminPage() {
   const [deletedPostKeyword, setDeletedPostKeyword] = useState('');
   const [selectedPost, setSelectedPost] = useState(null);
 
+  // 게시판 관리 상태
+  const [boards, setBoards] = useState([]);
+  const [boardLoading, setBoardLoading] = useState(false);
+  const [editingSortOrder, setEditingSortOrder] = useState({});
+
   // 알림 상태
   const [errorMsg, setErrorMsg] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
@@ -203,6 +211,8 @@ export default function AdminPage() {
     } else if (tab === 'deletedPosts') {
       setDeletedPostPage(0); setDeletedPostKeyword('');
       loadDeletedPosts(0, '');
+    } else if (tab === 'boards') {
+      loadBoards();
     } else {
       loadUsers(currentPage, keyword, tab);
     }
@@ -375,6 +385,43 @@ export default function AdminPage() {
   const showError = (msg) => { setErrorMsg(msg); setTimeout(() => setErrorMsg(''), 3000); };
   const showSuccess = (msg) => { setSuccessMsg(msg); setTimeout(() => setSuccessMsg(''), 3000); };
 
+  // ── 게시판 관리 ──────────────────────────────────────────────────────────
+  const loadBoards = async () => {
+    setBoardLoading(true);
+    const res = await authFetch('/api/boards/admin/all');
+    if (res.ok) {
+      const data = await res.json();
+      setBoards(data);
+      const initSortOrder = {};
+      data.forEach(b => { initSortOrder[b.code] = b.sortOrder; });
+      setEditingSortOrder(initSortOrder);
+    }
+    setBoardLoading(false);
+  };
+
+  const handleToggleBoardActive = async (code) => {
+    const res = await authFetch(`/api/boards/${code}/toggle-active`, { method: 'PATCH' });
+    if (res.ok) {
+      const updated = await res.json();
+      setBoards(prev => prev.map(b => b.code === code ? updated : b));
+      showSuccess(`'${updated.name}' 게시판이 ${updated.active ? '활성화' : '비활성화'}되었습니다.`);
+    } else showError('게시판 상태 변경에 실패했습니다.');
+  };
+
+  const handleUpdateSortOrder = async (code) => {
+    const newOrder = parseInt(editingSortOrder[code], 10);
+    if (isNaN(newOrder)) { showError('올바른 숫자를 입력하세요.'); return; }
+    const res = await authFetch(`/api/boards/${code}/sort-order`, {
+      method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ sortOrder: newOrder }),
+    });
+    if (res.ok) {
+      const updated = await res.json();
+      setBoards(prev => [...prev.map(b => b.code === code ? updated : b)].sort((a, b) => a.sortOrder - b.sortOrder));
+      showSuccess(`'${updated.name}' 순서가 변경되었습니다.`);
+    } else showError('순서 변경에 실패했습니다.');
+  };
+
   const pageNumbers = Array.from({ length: totalPages }, (_, i) => i);
 
   return (
@@ -490,8 +537,8 @@ export default function AdminPage() {
           )}
         </div>
 
-        {/* 회원 수 카드 (로그/삭제게시글 탭 제외) */}
-        {tab !== 'logs' && tab !== 'deletedPosts' && (
+        {/* 회원 수 카드 (로그/삭제게시글/게시판관리 탭 제외) */}
+        {tab !== 'logs' && tab !== 'deletedPosts' && tab !== 'boards' && (
           <div className="bg-white rounded-2xl shadow p-6 mb-6 text-center">
             <p className="text-4xl font-bold text-blue-500">{totalElements}</p>
             <p className="text-sm text-gray-400 mt-1">
@@ -517,6 +564,10 @@ export default function AdminPage() {
           <button onClick={() => switchTab('deletedPosts')}
             className={`flex-1 py-3 text-sm font-semibold transition-colors ${tab === 'deletedPosts' ? 'bg-orange-500 text-white' : 'text-gray-500 hover:bg-gray-50'}`}>
             📝 삭제 게시글
+          </button>
+          <button onClick={() => switchTab('boards')}
+            className={`flex-1 py-3 text-sm font-semibold transition-colors ${tab === 'boards' ? 'bg-indigo-500 text-white' : 'text-gray-500 hover:bg-gray-50'}`}>
+            📌 게시판 관리
           </button>
         </div>
 
@@ -696,8 +747,105 @@ export default function AdminPage() {
           </div>
         )}
 
+        {/* ── 게시판 관리 탭 ── */}
+        {tab === 'boards' && (
+          <div className="bg-white rounded-2xl shadow overflow-hidden">
+            <div className="flex justify-between items-center px-6 py-4 border-b border-gray-100">
+              <span className="font-semibold text-gray-700">
+                게시판 목록
+                <span className="ml-2 text-sm text-gray-400">({boards.length}개)</span>
+              </span>
+              <button onClick={loadBoards}
+                className="px-3 py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-600 rounded-lg text-sm transition-colors">
+                새로고침
+              </button>
+            </div>
+
+            {boardLoading ? (
+              <div className="text-center py-10 text-gray-400">로딩 중...</div>
+            ) : boards.length === 0 ? (
+              <div className="text-center py-10 text-gray-400">게시판이 없습니다.</div>
+            ) : (
+              <div className="divide-y divide-gray-50">
+                {boards.map(board => (
+                  <div key={board.code}
+                    className={`flex items-center gap-4 px-6 py-4 transition-colors ${board.active ? 'bg-white hover:bg-gray-50' : 'bg-gray-50 opacity-60'}`}>
+
+                    {/* 게시판 정보 */}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className={`font-semibold text-sm ${board.active ? 'text-gray-800' : 'text-gray-400'}`}>
+                          {board.name}
+                        </span>
+                        <span className="text-xs text-gray-400 font-mono bg-gray-100 px-1.5 py-0.5 rounded">
+                          {board.code}
+                        </span>
+                        {!board.active && (
+                          <span className="px-2 py-0.5 bg-gray-200 text-gray-500 text-xs rounded-full">비활성</span>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-3 mt-1 flex-wrap">
+                        <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
+                          board.boardGroup === 'COMMUNITY' ? 'bg-blue-100 text-blue-600' : 'bg-purple-100 text-purple-600'
+                        }`}>
+                          {BOARD_GROUP_LABELS[board.boardGroup] ?? board.boardGroup}
+                        </span>
+                        <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
+                          board.boardType === 'GALLERY' ? 'bg-pink-100 text-pink-600' :
+                          board.boardType === 'QNA'     ? 'bg-amber-100 text-amber-600' :
+                          'bg-gray-100 text-gray-500'
+                        }`}>
+                          {BOARD_TYPE_LABELS[board.boardType] ?? board.boardType}
+                        </span>
+                        {board.adminOnly && (
+                          <span className="text-xs px-2 py-0.5 rounded-full bg-red-100 text-red-500 font-medium">관리자 전용</span>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* 순서 편집 */}
+                    <div className="flex items-center gap-2 shrink-0">
+                      <span className="text-xs text-gray-400">순서</span>
+                      <input
+                        type="number"
+                        value={editingSortOrder[board.code] ?? board.sortOrder}
+                        onChange={e => setEditingSortOrder(prev => ({ ...prev, [board.code]: e.target.value }))}
+                        onKeyDown={e => { if (e.key === 'Enter') handleUpdateSortOrder(board.code); }}
+                        className="w-16 px-2 py-1 border border-gray-200 rounded-lg text-sm text-center focus:outline-none focus:border-indigo-400"
+                      />
+                      <button
+                        onClick={() => handleUpdateSortOrder(board.code)}
+                        className="px-2 py-1 bg-indigo-50 hover:bg-indigo-100 text-indigo-600 rounded-lg text-xs font-medium transition-colors">
+                        적용
+                      </button>
+                    </div>
+
+                    {/* 활성/비활성 토글 */}
+                    <button
+                      onClick={() => handleToggleBoardActive(board.code)}
+                      className={`shrink-0 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+                        board.active
+                          ? 'bg-green-50 hover:bg-green-100 text-green-600'
+                          : 'bg-gray-100 hover:bg-gray-200 text-gray-500'
+                      }`}>
+                      {board.active ? '✅ 활성' : '⛔ 비활성'}
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* 안내 */}
+            <div className="px-6 py-3 bg-gray-50 border-t border-gray-100">
+              <p className="text-xs text-gray-400">
+                💡 순서 숫자가 작을수록 상단에 표시됩니다. 변경 후 <strong>적용</strong> 버튼을 누르거나 Enter를 입력하세요.
+              </p>
+            </div>
+          </div>
+        )}
+
         {/* ── 활성/탈퇴 회원 탭 ── */}
-        {tab !== 'logs' && tab !== 'deletedPosts' && (
+        {tab !== 'logs' && tab !== 'deletedPosts' && tab !== 'boards' && (
           <div className="bg-white rounded-2xl shadow overflow-hidden">
             <div className="flex justify-between items-center px-6 py-4 border-b border-gray-100">
               <span className="font-semibold text-gray-700">
