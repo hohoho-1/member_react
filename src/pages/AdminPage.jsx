@@ -143,7 +143,7 @@ function DeletedUserModal({ user, onClose, onRestore, onPermanentDelete }) {
 const PAGE_SIZE = 5;
 const LOG_PAGE_SIZE = 15;
 
-const BOARD_TYPE_LABELS = { NORMAL: '일반형', GALLERY: '이미지형', QNA: '질문답변형' };
+const BOARD_TYPE_LABELS = { NORMAL: '일반형', GALLERY: '이미지형', QNA: '질문답변형', FAQ: 'FAQ형' };
 const BOARD_GROUP_LABELS = { COMMUNITY: '커뮤니티', SUPPORT: '고객센터' };
 
 const BOARD_FORM_DEFAULT = {
@@ -223,6 +223,7 @@ function BoardFormModal({ board, onClose, onSave }) {
                 <option value="NORMAL">일반형</option>
                 <option value="GALLERY">이미지형</option>
                 <option value="QNA">질문답변형</option>
+                <option value="FAQ">FAQ형</option>
               </select>
             </div>
           </div>
@@ -258,9 +259,10 @@ function BoardFormModal({ board, onClose, onSave }) {
           {/* 유형 안내 */}
           <div className="bg-indigo-50 rounded-xl p-4 text-xs text-indigo-700 space-y-1">
             <p className="font-semibold mb-1">📌 게시판 유형 안내</p>
-            <p>• <strong>일반형</strong> — 텍스트 중심 게시판 (자유게시판, 공지사항, FAQ, 건의사항)</p>
+            <p>• <strong>일반형</strong> — 텍스트 중심 게시판 (자유게시판, 공지사항, 건의사항)</p>
             <p>• <strong>이미지형</strong> — 썸네일 그리드 뷰 (사진갤러리)</p>
-            <p>• <strong>질문답변형</strong> — 관리자 답변 기능 포함 (QnA, 건의사항)</p>
+            <p>• <strong>질문답변형</strong> — 관리자 답변 기능 포함, 답변완료/대기 표시 (QnA)</p>
+            <p>• <strong>FAQ형</strong> — 목록에서 Q/A 아코디언 펼치기, 상세 페이지 없음 (FAQ)</p>
           </div>
 
           {error && <p className="text-sm text-red-500">⚠️ {error}</p>}
