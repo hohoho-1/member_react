@@ -8,6 +8,7 @@ const TYPE_ICON = {
   REPLY:        '↩️',
   POST_LIKE:    '❤️',
   COMMENT_LIKE: '❤️',
+  ANSWER:       '💡',
 };
 
 function timeAgo(dateStr) {

@@ -109,19 +109,79 @@ function countAllComments(comments) {
   return count;
 }
 
+// ─── 답변 아이템 컴포넌트 ────────────────────────────────────────────────────
+function AnswerItem({ answer, isAdmin, onEdit, onDelete }) {
+  const [isEditing, setIsEditing] = useState(false);
+  const [editContent, setEditContent] = useState(answer.content);
+
+  const handleSave = () => {
+    if (!editContent.trim()) return;
+    onEdit(answer.id, editContent.trim());
+    setIsEditing(false);
+  };
+
+  return (
+    <div className="bg-amber-50 border border-amber-200 rounded-xl p-5">
+      <div className="flex items-start justify-between gap-2">
+        <div className="flex-1">
+          {/* 답변자 정보 */}
+          <div className="flex items-center gap-2 mb-3 flex-wrap">
+            <span className="px-2 py-0.5 bg-amber-500 text-white text-xs font-bold rounded-full">관리자 답변</span>
+            <UserAvatar
+              profileImageUrl={answer.authorProfileImageUrl}
+              username={answer.authorName}
+              size={6}
+            />
+            <span className="text-sm font-semibold text-gray-700">{answer.authorName}</span>
+            <span className="text-xs text-gray-400">{new Date(answer.createdAt).toLocaleString('ko-KR')}</span>
+            {answer.updatedAt !== answer.createdAt && (
+              <span className="text-xs text-gray-400">(수정됨)</span>
+            )}
+          </div>
+
+          {/* 내용 */}
+          {isEditing ? (
+            <div className="flex gap-2">
+              <textarea
+                value={editContent}
+                onChange={e => setEditContent(e.target.value)}
+                className="flex-1 px-3 py-2 border border-amber-300 rounded-lg text-sm focus:outline-none resize-none bg-white"
+                rows={4}
+              />
+              <div className="flex flex-col gap-1 shrink-0">
+                <button onClick={handleSave} className="px-3 py-1 bg-amber-500 hover:bg-amber-600 text-white rounded-lg text-xs font-medium">저장</button>
+                <button onClick={() => { setIsEditing(false); setEditContent(answer.content); }}
+                  className="px-3 py-1 bg-gray-100 hover:bg-gray-200 text-gray-600 rounded-lg text-xs">취소</button>
+              </div>
+            </div>
+          ) : (
+            <p className="text-sm text-gray-700 whitespace-pre-wrap leading-relaxed">{answer.content}</p>
+          )}
+        </div>
+
+        {/* 관리자 버튼 */}
+        {isAdmin && !isEditing && (
+          <div className="flex gap-1 shrink-0">
+            <button onClick={() => { setIsEditing(true); setEditContent(answer.content); }}
+              className="px-2 py-1 text-xs text-amber-600 hover:bg-amber-100 rounded-lg transition-colors">수정</button>
+            <button onClick={() => onDelete(answer.id)}
+              className="px-2 py-1 text-xs text-red-400 hover:bg-red-50 rounded-lg transition-colors">삭제</button>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 // ─── 메인 컴포넌트 ───────────────────────────────────────────────────────────
 export default function PostDetailPage() {
   const { id } = useParams();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
 
-  // 게시판에서 넘어온 필터 조건 (없으면 기본값)
-  // scope: boardCode or GROUP_xxx, returnTo: 돌아갈 페이지 경로
   const boardScope    = searchParams.get('scope') ?? searchParams.get('category') ?? 'ALL';
   const boardKeyword  = searchParams.get('keyword') ?? '';
   const boardSort     = searchParams.get('sort') ?? 'latest';
-  // returnTo: 이미 scope가 포함된 완전한 URL (예: /community?scope=GALLERY)
-  // 직접 이동할 때는 그대로 사용, keyword/sort만 추가
   const returnTo      = decodeURIComponent(searchParams.get('returnTo') ?? '/community');
 
   const [post, setPost] = useState(null);
@@ -129,6 +189,7 @@ export default function PostDetailPage() {
   const [errorMsg, setErrorMsg] = useState('');
   const [files, setFiles] = useState([]);
 
+  // 댓글
   const [comments, setComments] = useState([]);
   const [commentInput, setCommentInput] = useState('');
   const [commentLoading, setCommentLoading] = useState(false);
@@ -137,6 +198,12 @@ export default function PostDetailPage() {
   const [replyingToId, setReplyingToId] = useState(null);
   const [replyInput, setReplyInput] = useState('');
   const [commentError, setCommentError] = useState('');
+
+  // 답변 (QnA 전용)
+  const [answers, setAnswers] = useState([]);
+  const [answerInput, setAnswerInput] = useState('');
+  const [answerLoading, setAnswerLoading] = useState(false);
+  const [answerError, setAnswerError] = useState('');
 
   const [likeCount, setLikeCount] = useState(0);
   const [likedByMe, setLikedByMe] = useState(false);
@@ -151,6 +218,7 @@ export default function PostDetailPage() {
   const isAdmin = payload?.role === 'ROLE_ADMIN';
   const isAuthor = post && payload && post.authorId === payload.userId;
   const canEdit = isAuthor || isAdmin;
+  const isQnA = post?.boardCode === 'QNA';
 
   useEffect(() => { loadPost(); loadComments(); loadFiles(); }, [id]);
   useEffect(() => { loadAdjacent(); }, [id, boardScope, boardKeyword, boardSort]);
@@ -164,6 +232,8 @@ export default function PostDetailPage() {
       setLikeCount(data.likeCount ?? 0);
       setLikedByMe(data.likedByMe ?? false);
       setBookmarkedByMe(data.bookmarkedByMe ?? false);
+      // QnA면 답변도 로드
+      if (data.boardCode === 'QNA') loadAnswers();
     } else setErrorMsg('게시글을 불러올 수 없습니다.');
     setLoading(false);
   };
@@ -179,18 +249,59 @@ export default function PostDetailPage() {
   };
 
   const loadAdjacent = async () => {
-    const params = new URLSearchParams({
-      scope: boardScope,
-      keyword: boardKeyword,
-      sort: boardSort,
-    });
+    const params = new URLSearchParams({ scope: boardScope, keyword: boardKeyword, sort: boardSort });
     const res = await authFetch(`/api/posts/${id}/adjacent?${params}`);
-    if (res.ok) {
-      const data = await res.json();
-      setAdjacent(data);
-    }
+    if (res.ok) setAdjacent(await res.json());
   };
 
+  // ── 답변 관련 ──────────────────────────────────────────────────────────────
+  const loadAnswers = async () => {
+    const res = await authFetch(`/api/posts/${id}/answers`);
+    if (res.ok) setAnswers((await res.json()).answers);
+  };
+
+  const handleSubmitAnswer = async () => {
+    if (!answerInput.trim()) return;
+    setAnswerLoading(true); setAnswerError('');
+    try {
+      const res = await authFetch(`/api/posts/${id}/answers`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ content: answerInput.trim() }),
+      });
+      if (res.ok) {
+        setAnswerInput('');
+        await loadAnswers();
+      } else {
+        let msg = '답변 작성에 실패했습니다.';
+        try { const d = await res.json(); msg = d.message || msg; } catch (_) {}
+        setAnswerError(msg);
+      }
+    } catch (e) {
+      setAnswerError('네트워크 오류가 발생했습니다.');
+    }
+    setAnswerLoading(false);
+  };
+
+  const handleEditAnswer = async (answerId, content) => {
+    setAnswerError('');
+    const res = await authFetch(`/api/posts/${id}/answers/${answerId}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ content }),
+    });
+    if (res.ok) loadAnswers();
+    else { const d = await res.json(); setAnswerError(d.message || '답변 수정에 실패했습니다.'); }
+  };
+
+  const handleDeleteAnswer = async (answerId) => {
+    if (!window.confirm('답변을 삭제하시겠습니까?')) return;
+    const res = await authFetch(`/api/posts/${id}/answers/${answerId}`, { method: 'DELETE' });
+    if (res.ok) loadAnswers();
+    else { const d = await res.json(); setAnswerError(d.message || '답변 삭제에 실패했습니다.'); }
+  };
+
+  // ── 댓글 관련 ──────────────────────────────────────────────────────────────
   const handleSubmitComment = async () => {
     if (!commentInput.trim()) return;
     setCommentLoading(true); setCommentError('');
@@ -289,6 +400,7 @@ export default function PostDetailPage() {
   return (
     <div className="bg-gray-100 p-6">
       <div className="max-w-3xl mx-auto">
+
         {/* 상단 버튼 영역 */}
         <div className="flex justify-between items-center mb-6">
           <button onClick={() => navigate(returnTo)}
@@ -319,15 +431,23 @@ export default function PostDetailPage() {
         <div className="bg-white rounded-2xl shadow p-8">
           <div className="mb-6">
             <span className={`px-2 py-1 rounded-full text-xs font-medium mr-2 ${
-              post.boardCode === 'NOTICE' ? 'bg-red-100 text-red-600' :
-              post.boardCode === 'GALLERY' ? 'bg-purple-100 text-purple-600' :
-              post.boardCode === 'QNA' ? 'bg-amber-100 text-amber-700' :
-              post.boardCode === 'FAQ' ? 'bg-green-100 text-green-700' :
+              post.boardCode === 'NOTICE'     ? 'bg-red-100 text-red-600' :
+              post.boardCode === 'GALLERY'    ? 'bg-purple-100 text-purple-600' :
+              post.boardCode === 'QNA'        ? 'bg-amber-100 text-amber-700' :
+              post.boardCode === 'FAQ'        ? 'bg-green-100 text-green-700' :
               post.boardCode === 'SUGGESTION' ? 'bg-teal-100 text-teal-700' :
               'bg-blue-100 text-blue-600'
             }`}>
               {post.boardName}
             </span>
+            {/* QnA 답변 상태 뱃지 */}
+            {isQnA && (
+              <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                answers.length > 0 ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'
+              }`}>
+                {answers.length > 0 ? `✅ 답변완료 (${answers.length})` : '⏳ 답변대기'}
+              </span>
+            )}
             <h1 className="text-2xl font-bold text-gray-800 mt-3">{post.title}</h1>
           </div>
           <div className="flex items-center gap-4 text-sm text-gray-400 pb-6 border-b border-gray-100">
@@ -358,7 +478,7 @@ export default function PostDetailPage() {
               className={`flex items-center gap-2 px-6 py-2.5 rounded-full text-sm font-semibold transition-all ${
                 bookmarkedByMe ? 'bg-amber-400 text-white hover:bg-amber-500 shadow-md' : 'bg-gray-100 text-gray-500 hover:bg-amber-50 hover:text-amber-500'
               }`}>
-              <span className="text-base">{bookmarkedByMe ? '🔖' : '🔖'}</span>
+              <span className="text-base">🔖</span>
               <span>{bookmarkedByMe ? '북마크 해제' : '북마크'}</span>
             </button>
           </div>
@@ -387,13 +507,12 @@ export default function PostDetailPage() {
             </div>
           )}
 
-          {/* 첨부 파일 - 이미지 인라인 표시 */}
+          {/* 첨부 파일 */}
           {files.length > 0 && (() => {
             const imageFiles = files.filter(f => f.image);
             const docFiles = files.filter(f => !f.image);
             return (
               <div className="mt-6 pt-5 border-t border-gray-100 space-y-4">
-                {/* 이미지 인라인 표시 */}
                 {imageFiles.length > 0 && (
                   <div>
                     <p className="text-sm font-semibold text-gray-600 mb-3">🖼️ 이미지 ({imageFiles.length})</p>
@@ -407,21 +526,16 @@ export default function PostDetailPage() {
                           />
                           <div className="flex items-center justify-between px-3 py-2">
                             <span className="text-xs text-gray-400 truncate">{file.originalName} ({(file.fileSize / 1024).toFixed(1)}KB)</span>
-                            <a
-                              href={`http://localhost:8080${file.downloadUrl}/download`}
-                              className="text-xs text-blue-500 hover:text-blue-700 hover:underline shrink-0 ml-2"
-                            >
+                            <a href={`http://localhost:8080${file.downloadUrl}/download`}
+                              className="text-xs text-blue-500 hover:text-blue-700 hover:underline shrink-0 ml-2">
                               ↓ 다운로드
                             </a>
-
                           </div>
                         </div>
                       ))}
                     </div>
                   </div>
                 )}
-
-                {/* 문서 파일 다운로드 */}
                 {docFiles.length > 0 && (
                   <div>
                     <p className="text-sm font-semibold text-gray-600 mb-3">📎 첨부 파일 ({docFiles.length})</p>
@@ -443,6 +557,58 @@ export default function PostDetailPage() {
             );
           })()}
         </div>
+
+        {/* ── QnA 답변 섹션 ─────────────────────────────────────────────────── */}
+        {isQnA && (
+          <div className="bg-white rounded-2xl shadow p-8 mt-4 border-l-4 border-amber-400">
+            <h2 className="text-base font-bold text-gray-700 mb-5">
+              💡 답변 <span className="text-amber-500">{answers.length}</span>
+            </h2>
+
+            {answers.length === 0 ? (
+              <p className="text-sm text-gray-400 text-center py-6 bg-amber-50 rounded-xl">
+                아직 등록된 답변이 없습니다.
+              </p>
+            ) : (
+              <div className="space-y-4 mb-6">
+                {answers.map(answer => (
+                  <AnswerItem
+                    key={answer.id}
+                    answer={answer}
+                    isAdmin={isAdmin}
+                    onEdit={handleEditAnswer}
+                    onDelete={handleDeleteAnswer}
+                  />
+                ))}
+              </div>
+            )}
+
+            {answerError && <p className="text-sm text-red-500 mb-3">⚠️ {answerError}</p>}
+
+            {/* 관리자 답변 작성 폼 */}
+            {isAdmin && (
+              <div className="mt-4 pt-4 border-t border-amber-100">
+                <p className="text-xs text-amber-600 font-medium mb-2">관리자 답변 작성</p>
+                <div className="flex gap-3">
+                  <textarea
+                    value={answerInput}
+                    onChange={e => setAnswerInput(e.target.value)}
+                    onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSubmitAnswer(); } }}
+                    placeholder="답변을 입력하세요... (Shift+Enter 줄바꿈)"
+                    className="flex-1 px-4 py-3 border border-amber-200 rounded-xl text-sm focus:outline-none focus:border-amber-400 resize-none bg-amber-50"
+                    rows={3}
+                  />
+                  <button
+                    onClick={handleSubmitAnswer}
+                    disabled={answerLoading || !answerInput.trim()}
+                    className="px-5 py-2 bg-amber-500 hover:bg-amber-600 disabled:bg-amber-200 text-white rounded-xl text-sm font-medium transition-colors self-end">
+                    {answerLoading ? '...' : '등록'}
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
 
         {/* 댓글 영역 */}
         <div className="bg-white rounded-2xl shadow p-8 mt-4">
