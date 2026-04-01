@@ -352,6 +352,16 @@ export default function BoardListPage({ groupKey, groupLabel, groupEmoji, boards
                                 {(Date.now() - new Date(post.createdAt).getTime()) < 24 * 60 * 60 * 1000 && (
                                   <span className="shrink-0 px-1.5 py-0.5 bg-red-500 text-white text-[10px] font-bold rounded">NEW</span>
                                 )}
+                                {/* QnA/건의사항 답변 상태 뱃지 */}
+                                {(post.boardCode === 'QNA' || post.boardCode === 'SUGGESTION') && (
+                                  <span className={`shrink-0 px-1.5 py-0.5 text-[10px] font-bold rounded ${
+                                    post.answerCount > 0
+                                      ? 'bg-green-100 text-green-700'
+                                      : 'bg-gray-100 text-gray-400'
+                                  }`}>
+                                    {post.answerCount > 0 ? '✅ 답변' : '⏳ 대기'}
+                                  </span>
+                                )}
                               </div>
                             </td>
                             <td className="px-4 py-3 text-sm text-gray-500">{post.authorName}</td>
