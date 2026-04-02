@@ -21,7 +21,7 @@ export default function HomePage() {
       setUser(await userRes.json());
 
       // 홈 위젯 데이터
-      const homeRes = await authFetch('/api/home');
+      const homeRes = await authFetch('/api/posts/home');
       if (homeRes.ok) {
         const data = await homeRes.json();
         setRecentPosts(data.recentPosts ?? []);
