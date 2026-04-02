@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback, useRef } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { authFetch, getTokenPayload } from '../utils/authFetch';
 
@@ -105,7 +105,6 @@ export default function BoardListPage({ groupKey, groupLabel, groupEmoji, boards
     setSearchParams(params);
   };
   const [keywordInput, setKeywordInput] = useState(keyword);
-  const isComposing = useRef(false);
 
   const applyKeyword = (kw) => {
     const params = { scope, sort };
@@ -118,7 +117,7 @@ export default function BoardListPage({ groupKey, groupLabel, groupEmoji, boards
   };
 
   const handleKeywordKeyDown = (e) => {
-    if (e.key === 'Enter' && !isComposing.current) {
+    if (e.key === 'Enter') {
       applyKeyword(keywordInput);
     }
   };
@@ -199,8 +198,6 @@ export default function BoardListPage({ groupKey, groupLabel, groupEmoji, boards
                 <input type="text" placeholder="🔍 FAQ 검색"
                   value={keywordInput} onChange={handleKeywordChange}
                   onKeyDown={handleKeywordKeyDown}
-                  onCompositionStart={() => { isComposing.current = true; }}
-                  onCompositionEnd={(e) => { isComposing.current = false; }}
                   className="px-3 py-2 pr-16 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-green-400 w-48"
                 />
                 {keywordInput && (
@@ -260,8 +257,6 @@ export default function BoardListPage({ groupKey, groupLabel, groupEmoji, boards
                 <input type="text" placeholder="검색어 입력 후 Enter 또는 🔍"
                   value={keywordInput} onChange={handleKeywordChange}
                   onKeyDown={handleKeywordKeyDown}
-                  onCompositionStart={() => { isComposing.current = true; }}
-                  onCompositionEnd={(e) => { isComposing.current = false; }}
                   className="px-3 py-2 pr-16 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-blue-400 w-56"
                 />
                 {keywordInput && (
