@@ -172,7 +172,7 @@ export default function MyPage() {
 
   return (
     <div className="bg-gray-100 py-8 px-4">
-      <div className="max-w-2xl mx-auto">
+      <div className="max-w-4xl mx-auto">
 
         <h2 className="text-2xl font-bold text-gray-700 mb-6">⚙️ 마이페이지</h2>
 
