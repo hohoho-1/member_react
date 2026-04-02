@@ -107,13 +107,20 @@ export default function BoardListPage({ groupKey, groupLabel, groupEmoji, boards
   const [keywordInput, setKeywordInput] = useState(keyword);
   const isComposing = useRef(false);
 
-  const handleKeywordChange = (e) => {
-    const kw = e.target.value;
-    setKeywordInput(kw);
-    if (isComposing.current) return; // 한글 조합 중이면 검색 보류
+  const applyKeyword = (kw) => {
     const params = { scope, sort };
     if (kw) params.keyword = kw;
     setSearchParams(params);
+  };
+
+  const handleKeywordChange = (e) => {
+    setKeywordInput(e.target.value);
+  };
+
+  const handleKeywordKeyDown = (e) => {
+    if (e.key === 'Enter' && !isComposing.current) {
+      applyKeyword(keywordInput);
+    }
   };
 
   const goToDetail = (postId) => navigate(
@@ -191,14 +198,10 @@ export default function BoardListPage({ groupKey, groupLabel, groupEmoji, boards
               <div className="relative">
                 <input type="text" placeholder="🔍 FAQ 검색"
                   value={keywordInput} onChange={handleKeywordChange}
+                  onKeyDown={handleKeywordKeyDown}
                   onCompositionStart={() => { isComposing.current = true; }}
-                  onCompositionEnd={(e) => {
-                    isComposing.current = false;
-                    const kw = e.target.value;
-                    const params = { scope, sort };
-                    if (kw) params.keyword = kw;
-                    setSearchParams(params);
-                  }}
+                  onCompositionEnd={(e) => { isComposing.current = false; applyKeyword(e.target.value); }}
+                  onBlur={() => applyKeyword(keywordInput)}
                   className="px-3 py-2 pr-8 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-green-400 w-48"
                 />
                 {keywordInput && (
@@ -255,14 +258,10 @@ export default function BoardListPage({ groupKey, groupLabel, groupEmoji, boards
               <div className="relative">
                 <input type="text" placeholder="🔍 제목 또는 작성자 검색"
                   value={keywordInput} onChange={handleKeywordChange}
+                  onKeyDown={handleKeywordKeyDown}
                   onCompositionStart={() => { isComposing.current = true; }}
-                  onCompositionEnd={(e) => {
-                    isComposing.current = false;
-                    const kw = e.target.value;
-                    const params = { scope, sort };
-                    if (kw) params.keyword = kw;
-                    setSearchParams(params);
-                  }}
+                  onCompositionEnd={(e) => { isComposing.current = false; applyKeyword(e.target.value); }}
+                  onBlur={() => applyKeyword(keywordInput)}
                   className="px-3 py-2 pr-8 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-blue-400 w-52"
                 />
                 {keywordInput && (
