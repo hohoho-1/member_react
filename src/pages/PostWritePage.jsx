@@ -217,6 +217,25 @@ export default function PostWritePage() {
             </div>
           </div>
 
+          {/* QnA / 건의사항 안내 문구 */}
+          {(boardCode === 'QNA' || boardCode === 'SUGGESTION') && (
+            <div className={`flex items-start gap-2 px-4 py-3 rounded-xl text-sm ${
+              boardCode === 'QNA' ? 'bg-amber-50 text-amber-700 border border-amber-200' : 'bg-teal-50 text-teal-700 border border-teal-200'
+            }`}>
+              <span className="text-lg leading-none mt-0.5">{boardCode === 'QNA' ? '💬' : '📬'}</span>
+              <div>
+                <p className="font-semibold mb-0.5">
+                  {boardCode === 'QNA' ? 'Q&A 게시판' : '건의사항 게시판'}
+                </p>
+                <p>
+                  {boardCode === 'QNA'
+                    ? '질문을 남겨주시면 관리자가 검토 후 답변드립니다.'
+                    : '건의사항을 남겨주시면 관리자가 검토 후 답변드립니다.'}
+                </p>
+              </div>
+            </div>
+          )}
+
           {/* 제목 */}
           <div>
             <label className="block text-sm font-semibold text-gray-600 mb-2">제목</label>

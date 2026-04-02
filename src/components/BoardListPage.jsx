@@ -142,16 +142,52 @@ export default function BoardListPage({ groupKey, groupLabel, groupEmoji, boards
                 ))}
               </div>
             </div>
-            <input type="text" placeholder="🔍 제목 또는 작성자 검색"
-              value={keyword} onChange={handleKeywordChange}
-              className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-blue-400 w-52"
-            />
+            <div className="relative">
+              <input type="text" placeholder="🔍 제목 또는 작성자 검색"
+                value={keyword} onChange={handleKeywordChange}
+                className="px-3 py-2 pr-8 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-blue-400 w-52"
+              />
+              {keyword && (
+                <button
+                  onClick={() => setSearchParams(p => { p.set('keyword', ''); return p; })}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 text-base leading-none"
+                >✕</button>
+              )}
+            </div>
           </div>
 
           {loading ? (
             <div className="text-center py-16 text-gray-400">로딩 중...</div>
           ) : posts.length === 0 ? (
-            <div className="text-center py-16 text-gray-400">게시글이 없습니다.</div>
+            <div className="text-center py-16 text-gray-400">
+              <div className="text-4xl mb-3">
+                {keyword ? '🔍' :
+                 scope === 'NOTICE'     ? '📢' :
+                 scope === 'FAQ'        ? '❓' :
+                 scope === 'QNA'        ? '💬' :
+                 scope === 'SUGGESTION' ? '📬' :
+                 scope === 'GALLERY'    ? '🖼️' : '📝'}
+              </div>
+              <p className="font-medium text-gray-500">
+                {keyword
+                  ? `"${keyword}"에 해당하는 게시글이 없습니다.`
+                  : scope === 'NOTICE'     ? '등록된 공지사항이 없습니다.'
+                  : scope === 'FAQ'        ? '등록된 FAQ가 없습니다.'
+                  : scope === 'QNA'        ? '아직 문의글이 없습니다. 궁금한 점을 질문해 보세요!'
+                  : scope === 'SUGGESTION' ? '아직 건의사항이 없습니다. 의견을 자유롭게 남겨주세요!'
+                  : scope === 'GALLERY'    ? '아직 사진이 없습니다. 첫 번째 사진을 올려보세요!'
+                  : scope === 'FREE'       ? '아직 게시글이 없습니다. 첫 번째 글을 작성해 보세요!'
+                  : '게시글이 없습니다.'}
+              </p>
+              {canWrite && !keyword && (
+                <button
+                  onClick={() => navigate(`/board/write?boardCode=${scope}&returnTo=${encodeURIComponent(`${basePath}?scope=${scope}`)}`)}
+                  className="mt-4 px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg text-sm font-medium transition-colors"
+                >
+                  글 작성하기
+                </button>
+              )}
+            </div>
           ) : currentBoard?.boardType === 'GALLERY' ? (
             /* ── 갤러리 그리드 뷰 ── */
             <div className="p-4 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
