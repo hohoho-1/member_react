@@ -296,6 +296,13 @@ export default function MyPage() {
                         {post.boardName}
                       </span>
                       <span className="text-sm font-medium text-gray-700 truncate">{post.title}</span>
+                      {(post.boardType === 'QNA' || post.boardCode === 'SUGGESTION') && (
+                        <span className={`shrink-0 px-1.5 py-0.5 text-[10px] font-bold rounded ${
+                          post.answerCount > 0 ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-400'
+                        }`}>
+                          {post.answerCount > 0 ? '✅ 답변' : '⏳ 대기'}
+                        </span>
+                      )}
                       {post.commentCount > 0 && <span className="text-xs text-blue-400 shrink-0">💬 {post.commentCount}</span>}
                     </div>
                     <div className="flex gap-3 text-xs text-gray-400">
@@ -352,6 +359,13 @@ export default function MyPage() {
                         {post.boardName}
                       </span>
                       <span className="text-sm font-medium text-gray-700 truncate">{post.title}</span>
+                      {(post.boardType === 'QNA' || post.boardCode === 'SUGGESTION') && (
+                        <span className={`shrink-0 px-1.5 py-0.5 text-[10px] font-bold rounded ${
+                          post.answerCount > 0 ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-400'
+                        }`}>
+                          {post.answerCount > 0 ? '✅ 답변' : '⏳ 대기'}
+                        </span>
+                      )}
                       {post.commentCount > 0 && <span className="text-xs text-blue-400 shrink-0">💬 {post.commentCount}</span>}
                     </div>
                     <div className="flex gap-3 text-xs text-gray-400">

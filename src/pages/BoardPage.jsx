@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { authFetch, getTokenPayload } from '../utils/authFetch';
 
@@ -23,6 +23,8 @@ export default function BoardPage() {
   const [totalPages, setTotalPages] = useState(0);
   const [totalElements, setTotalElements] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [keywordInput, setKeywordInput] = useState(keyword);
+  const isComposing = useRef(false);
 
   const payload = getTokenPayload();
   const isLoggedIn = !!payload;
@@ -63,6 +65,8 @@ export default function BoardPage() {
 
   const handleKeywordChange = (e) => {
     const kw = e.target.value;
+    setKeywordInput(kw);
+    if (isComposing.current) return;
     const params = { category, sort };
     if (kw) params.keyword = kw;
     setSearchParams(params);
@@ -124,7 +128,15 @@ export default function BoardPage() {
               </div>
             </div>
             <input type="text" placeholder="🔍 제목 또는 작성자 검색"
-              value={keyword} onChange={handleKeywordChange}
+              value={keywordInput} onChange={handleKeywordChange}
+                onCompositionStart={() => { isComposing.current = true; }}
+                onCompositionEnd={(e) => {
+                  isComposing.current = false;
+                  const kw = e.target.value;
+                  const params = { category, sort };
+                  if (kw) params.keyword = kw;
+                  setSearchParams(params);
+                }}
               className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-blue-400 w-52"
             />
           </div>

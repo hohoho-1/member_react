@@ -36,7 +36,9 @@ export default function PostWritePage() {
 
   // 현재 선택된 게시판 메타정보
   const currentBoard = boards.find(b => b.code === boardCode) ?? null;
-  const isPinnableBoard = currentBoard?.adminOnly ?? false;
+  const isPinnableBoard   = currentBoard?.adminOnly ?? false;
+  const allowAttachment   = currentBoard?.allowAttachment ?? true;
+  const allowComment      = currentBoard?.allowComment ?? true;
 
   useEffect(() => {
     if (!payload) { navigate('/login'); return; }
@@ -263,6 +265,7 @@ export default function PostWritePage() {
           </div>
 
           {/* 파일 첨부 */}
+          {allowAttachment && (
           <div>
             <div className="flex items-center justify-between mb-2">
               <label className="text-sm font-semibold text-gray-600">
@@ -322,6 +325,7 @@ export default function PostWritePage() {
               </div>
             )}
           </div>
+          )}
 
           {errorMsg && (
             <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl text-sm text-center">

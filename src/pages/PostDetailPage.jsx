@@ -247,6 +247,8 @@ export default function PostDetailPage() {
   const isQnA        = post?.boardCode === 'QNA';
   const isFAQ        = post?.boardCode === 'FAQ';
   const isSuggestion = post?.boardCode === 'SUGGESTION';
+  const allowComment    = post?.boardAllowComment ?? true;
+  const allowAttachment = post?.boardAllowAttachment ?? true;
 
   useEffect(() => { loadPost(); loadComments(); loadFiles(); }, [id]);
   useEffect(() => { loadAdjacent(); }, [id, boardScope, boardKeyword, boardSort]);
@@ -464,7 +466,7 @@ export default function PostDetailPage() {
             ← 목록으로
           </button>
           <div className="flex items-center gap-2">
-            {isAdmin && post.board?.adminOnly && (
+            {isAdmin && post.boardAdminOnly && (
               <button onClick={handleTogglePin} disabled={pinLoading}
                 className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
                   post.pinned ? 'bg-amber-400 hover:bg-amber-500 text-white' : 'bg-gray-100 hover:bg-amber-100 text-gray-500 hover:text-amber-600'
@@ -570,7 +572,7 @@ export default function PostDetailPage() {
           )}
 
           {/* 첨부 파일 */}
-          {files.length > 0 && (() => {
+          {allowAttachment && files.length > 0 && (() => {
             const imageFiles = files.filter(f => f.image);
             const docFiles   = files.filter(f => !f.image);
             return (
@@ -692,8 +694,8 @@ export default function PostDetailPage() {
           </div>
         )}
 
-        {/* ── 댓글 영역 (FAQ 제외) ────────────────────────────────────────── */}
-        {!isFAQ && (
+        {/* ── 댓글 영역 (FAQ 제외, allowComment인 경우만) ────────────────────────────────────── */}
+        {!isFAQ && allowComment && (
           <div className="bg-white rounded-2xl shadow p-8 mt-4">
             <h2 className="text-base font-bold text-gray-700 mb-5">
               💬 댓글 <span className="text-blue-500">{countAllComments(comments)}</span>
