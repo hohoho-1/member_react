@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { authFetch, isAdmin, getTokenPayload } from '../utils/authFetch';
 
@@ -312,6 +312,7 @@ export default function AdminPage() {
   const [logTotalElements, setLogTotalElements] = useState(0);
   const [logPage, setLogPage] = useState(0);
   const [logKeyword, setLogKeyword] = useState('');
+  const [logKeywordInput, setLogKeywordInput] = useState('');
   const [logAction, setLogAction] = useState('');
 
   // 삭제 게시글 상태
@@ -321,6 +322,7 @@ export default function AdminPage() {
   const [deletedPostTotalElements, setDeletedPostTotalElements] = useState(0);
   const [deletedPostPage, setDeletedPostPage] = useState(0);
   const [deletedPostKeyword, setDeletedPostKeyword] = useState('');
+  const [deletedPostKeywordInput, setDeletedPostKeywordInput] = useState('');
   const [selectedPost, setSelectedPost] = useState(null);
 
   // 게시판 관리 상태
@@ -341,7 +343,7 @@ export default function AdminPage() {
   const keyword = searchParams.get('keyword') ?? '';
   const currentUserId = getTokenPayload()?.userId;
   const [keywordInput, setKeywordInput] = useState(keyword);
-  const isComposingMember = useRef(false);
+  
 
   useEffect(() => {
     if (!isAdmin()) { navigate('/forbidden'); return; }
@@ -474,12 +476,10 @@ export default function AdminPage() {
     setSearchParams(params);
   };
 
-  const handleKeywordChange = (e) => {
-    const kw = e.target.value;
-    setKeywordInput(kw);
-    if (isComposingMember.current) return;
+  const handleKeywordChange = (e) => setKeywordInput(e.target.value);
+  const handleKeywordSearch = () => {
     const params = { tab };
-    if (kw) params.keyword = kw;
+    if (keywordInput) params.keyword = keywordInput;
     setSearchParams(params);
   };
 
@@ -775,11 +775,20 @@ export default function AdminPage() {
                   <option value="WITHDRAW">탈퇴</option>
                   <option value="ROLE_CHANGE">권한변경</option>
                 </select>
-                <input type="text" placeholder="🔍 이름 또는 이메일"
-                  value={logKeyword}
-                  onChange={e => { const v = e.target.value; setLogKeyword(v); setLogPage(0); loadLogs(0, v, logAction); }}
-                  className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-purple-400 w-44"
-                />
+                <div className="relative flex items-center">
+                  <input type="text" placeholder="🔍 이름 또는 이메일"
+                    value={logKeywordInput}
+                    onChange={e => setLogKeywordInput(e.target.value)}
+                    onKeyDown={e => { if (e.key === 'Enter') { setLogKeyword(logKeywordInput); setLogPage(0); loadLogs(0, logKeywordInput, logAction); } }}
+                    className="px-3 py-2 pr-14 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-purple-400 w-44"
+                  />
+                  {logKeywordInput && (
+                    <button onClick={() => { setLogKeywordInput(''); setLogKeyword(''); setLogPage(0); loadLogs(0, '', logAction); }}
+                      className="absolute right-8 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 text-base leading-none">✕</button>
+                  )}
+                  <button onClick={() => { setLogKeyword(logKeywordInput); setLogPage(0); loadLogs(0, logKeywordInput, logAction); }}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-purple-500 text-base leading-none">🔍</button>
+                </div>
                 <button onClick={handleClearLogs}
                   className="px-3 py-2 bg-red-50 hover:bg-red-100 text-red-500 rounded-lg text-sm font-medium transition-colors">
                   전체삭제
@@ -852,11 +861,20 @@ export default function AdminPage() {
                 삭제된 게시글
                 <span className="ml-2 text-sm text-gray-400">({deletedPostTotalElements}건)</span>
               </span>
-              <input type="text" placeholder="🔍 제목 또는 작성자"
-                value={deletedPostKeyword}
-                onChange={e => { const v = e.target.value; setDeletedPostKeyword(v); setDeletedPostPage(0); loadDeletedPosts(0, v); }}
-                className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-orange-400 w-48"
-              />
+              <div className="relative flex items-center">
+                <input type="text" placeholder="🔍 제목 또는 작성자"
+                  value={deletedPostKeywordInput}
+                  onChange={e => setDeletedPostKeywordInput(e.target.value)}
+                  onKeyDown={e => { if (e.key === 'Enter') { setDeletedPostKeyword(deletedPostKeywordInput); setDeletedPostPage(0); loadDeletedPosts(0, deletedPostKeywordInput); } }}
+                  className="px-3 py-2 pr-14 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-orange-400 w-48"
+                />
+                {deletedPostKeywordInput && (
+                  <button onClick={() => { setDeletedPostKeywordInput(''); setDeletedPostKeyword(''); setDeletedPostPage(0); loadDeletedPosts(0, ''); }}
+                    className="absolute right-8 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 text-base leading-none">✕</button>
+                )}
+                <button onClick={() => { setDeletedPostKeyword(deletedPostKeywordInput); setDeletedPostPage(0); loadDeletedPosts(0, deletedPostKeywordInput); }}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-orange-500 text-base leading-none">🔍</button>
+              </div>
             </div>
 
             {deletedPostLoading ? (
@@ -1056,18 +1074,19 @@ export default function AdminPage() {
                 {tab === 'deleted' ? '탈퇴 회원 목록' : '전체 회원 목록'}
                 <span className="ml-2 text-sm text-gray-400">({currentPage + 1} / {totalPages || 1} 페이지)</span>
               </span>
-              <input type="text" placeholder="🔍 이름 또는 이메일 검색"
-                value={keywordInput} onChange={handleKeywordChange}
-                onCompositionStart={() => { isComposingMember.current = true; }}
-                onCompositionEnd={(e) => {
-                  isComposingMember.current = false;
-                  const kw = e.target.value;
-                  const params = { tab };
-                  if (kw) params.keyword = kw;
-                  setSearchParams(params);
-                }}
-                className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-blue-400 w-48"
-              />
+              <div className="relative flex items-center">
+                <input type="text" placeholder="🔍 이름 또는 이메일 검색"
+                  value={keywordInput} onChange={handleKeywordChange}
+                  onKeyDown={e => { if (e.key === 'Enter') handleKeywordSearch(); }}
+                  className="px-3 py-2 pr-14 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-blue-400 w-48"
+                />
+                {keywordInput && (
+                  <button onClick={() => { setKeywordInput(''); setSearchParams({ tab }); }}
+                    className="absolute right-8 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 text-base leading-none">✕</button>
+                )}
+                <button onClick={handleKeywordSearch}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-blue-500 text-base leading-none">🔍</button>
+              </div>
             </div>
 
             {loading ? (
