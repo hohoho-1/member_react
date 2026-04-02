@@ -188,18 +188,24 @@ export default function BoardListPage({ groupKey, groupLabel, groupEmoji, boards
               <span className="font-semibold text-gray-700">
                 총 {totalElements}개 FAQ
               </span>
-              <input type="text" placeholder="🔍 FAQ 검색"
-                value={keywordInput} onChange={handleKeywordChange}
-                onCompositionStart={() => { isComposing.current = true; }}
-                onCompositionEnd={(e) => {
-                  isComposing.current = false;
-                  const kw = e.target.value;
-                  const params = { scope, sort };
-                  if (kw) params.keyword = kw;
-                  setSearchParams(params);
-                }}
-                className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-green-400 w-48"
-              />
+              <div className="relative">
+                <input type="text" placeholder="🔍 FAQ 검색"
+                  value={keywordInput} onChange={handleKeywordChange}
+                  onCompositionStart={() => { isComposing.current = true; }}
+                  onCompositionEnd={(e) => {
+                    isComposing.current = false;
+                    const kw = e.target.value;
+                    const params = { scope, sort };
+                    if (kw) params.keyword = kw;
+                    setSearchParams(params);
+                  }}
+                  className="px-3 py-2 pr-8 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-green-400 w-48"
+                />
+                {keywordInput && (
+                  <button onClick={() => { setKeywordInput(''); setSearchParams({ scope, sort }); }}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 text-base leading-none">✕</button>
+                )}
+              </div>
             </div>
 
             {loading ? (
@@ -246,18 +252,24 @@ export default function BoardListPage({ groupKey, groupLabel, groupEmoji, boards
                   ))}
                 </div>
               </div>
-              <input type="text" placeholder="🔍 제목 또는 작성자 검색"
-                value={keywordInput} onChange={handleKeywordChange}
-                onCompositionStart={() => { isComposing.current = true; }}
-                onCompositionEnd={(e) => {
-                  isComposing.current = false;
-                  const kw = e.target.value;
-                  const params = { scope, sort };
-                  if (kw) params.keyword = kw;
-                  setSearchParams(params);
-                }}
-                className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-blue-400 w-52"
-              />
+              <div className="relative">
+                <input type="text" placeholder="🔍 제목 또는 작성자 검색"
+                  value={keywordInput} onChange={handleKeywordChange}
+                  onCompositionStart={() => { isComposing.current = true; }}
+                  onCompositionEnd={(e) => {
+                    isComposing.current = false;
+                    const kw = e.target.value;
+                    const params = { scope, sort };
+                    if (kw) params.keyword = kw;
+                    setSearchParams(params);
+                  }}
+                  className="px-3 py-2 pr-8 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-blue-400 w-52"
+                />
+                {keywordInput && (
+                  <button onClick={() => { setKeywordInput(''); setSearchParams({ scope, sort }); }}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 text-base leading-none">✕</button>
+                )}
+              </div>
             </div>
 
             {loading ? (

@@ -262,7 +262,7 @@ export default function PostDetailPage() {
       setLikeCount(data.likeCount ?? 0);
       setLikedByMe(data.likedByMe ?? false);
       setBookmarkedByMe(data.bookmarkedByMe ?? false);
-      if (data.boardCode === 'FAQ') { navigate('/support?scope=FAQ', { replace: true }); return; }
+      if (data.boardCode === 'FAQ' && !isAdmin) { navigate('/support?scope=FAQ', { replace: true }); return; }
       if (data.boardCode === 'QNA' || data.boardCode === 'SUGGESTION') loadAnswers();
     } else setErrorMsg('게시글을 불러올 수 없습니다.');
     setLoading(false);
