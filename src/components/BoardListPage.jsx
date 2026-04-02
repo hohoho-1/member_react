@@ -200,14 +200,15 @@ export default function BoardListPage({ groupKey, groupLabel, groupEmoji, boards
                   value={keywordInput} onChange={handleKeywordChange}
                   onKeyDown={handleKeywordKeyDown}
                   onCompositionStart={() => { isComposing.current = true; }}
-                  onCompositionEnd={(e) => { isComposing.current = false; applyKeyword(e.target.value); }}
-                  onBlur={() => applyKeyword(keywordInput)}
-                  className="px-3 py-2 pr-8 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-green-400 w-48"
+                  onCompositionEnd={(e) => { isComposing.current = false; }}
+                  className="px-3 py-2 pr-16 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-green-400 w-48"
                 />
                 {keywordInput && (
                   <button onClick={() => { setKeywordInput(''); setSearchParams({ scope, sort }); }}
-                    className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 text-base leading-none">✕</button>
+                    className="absolute right-8 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 text-base leading-none">✕</button>
                 )}
+                <button onClick={() => applyKeyword(keywordInput)}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-green-500 text-base leading-none">🔍</button>
               </div>
             </div>
 
@@ -256,18 +257,19 @@ export default function BoardListPage({ groupKey, groupLabel, groupEmoji, boards
                 </div>
               </div>
               <div className="relative">
-                <input type="text" placeholder="🔍 제목 또는 작성자 검색"
+                <input type="text" placeholder="검색어 입력 후 Enter 또는 🔍"
                   value={keywordInput} onChange={handleKeywordChange}
                   onKeyDown={handleKeywordKeyDown}
                   onCompositionStart={() => { isComposing.current = true; }}
-                  onCompositionEnd={(e) => { isComposing.current = false; applyKeyword(e.target.value); }}
-                  onBlur={() => applyKeyword(keywordInput)}
-                  className="px-3 py-2 pr-8 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-blue-400 w-52"
+                  onCompositionEnd={(e) => { isComposing.current = false; }}
+                  className="px-3 py-2 pr-16 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-blue-400 w-56"
                 />
                 {keywordInput && (
                   <button onClick={() => { setKeywordInput(''); setSearchParams({ scope, sort }); }}
-                    className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 text-base leading-none">✕</button>
+                    className="absolute right-8 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 text-base leading-none">✕</button>
                 )}
+                <button onClick={() => applyKeyword(keywordInput)}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-blue-500 text-base leading-none">🔍</button>
               </div>
             </div>
 
