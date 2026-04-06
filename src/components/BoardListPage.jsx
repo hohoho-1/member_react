@@ -6,8 +6,8 @@ import GalleryLightbox from './GalleryLightbox';
 const PAGE_SIZE = 10;
 
 // ─── FAQ 아코디언 아이템 ──────────────────────────────────────────────────────
-function FaqItem({ post }) {
-  const [open, setOpen] = useState(false);
+function FaqItem({ post, defaultOpen = false }) {
+  const [open, setOpen] = useState(defaultOpen);
   const isNew = (Date.now() - new Date(post.createdAt).getTime()) < 24 * 60 * 60 * 1000;
 
   return (
@@ -55,6 +55,7 @@ export default function BoardListPage({ groupKey, groupLabel, groupEmoji, boards
   const scope       = searchParams.get('scope') ?? boards[0]?.code ?? 'ALL';
   const keyword     = searchParams.get('keyword') ?? '';
   const sort        = searchParams.get('sort') ?? 'latest';
+  const openPostId  = parseInt(searchParams.get('open') ?? '0', 10) || null;
   const currentPage = Math.max(0, parseInt(searchParams.get('page') ?? '1', 10) - 1) || 0;
 
   const [posts, setPosts]               = useState([]);
@@ -227,7 +228,7 @@ export default function BoardListPage({ groupKey, groupLabel, groupEmoji, boards
             ) : (
               <div className="p-5 space-y-3">
                 {posts.map(post => (
-                  <FaqItem key={post.id} post={post} />
+                  <FaqItem key={post.id} post={post} defaultOpen={openPostId === post.id} />
                 ))}
               </div>
             )}

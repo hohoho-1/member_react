@@ -11,6 +11,7 @@ export default function HomePage() {
   const [user, setUser]             = useState(null);
   const [recentPosts, setRecentPosts]     = useState([]);
   const [recentNotices, setRecentNotices] = useState([]);
+  const [faqPosts, setFaqPosts]           = useState([]);
   const [popularPosts, setPopularPosts]   = useState([]);
   const [galleryPosts, setGalleryPosts]   = useState([]);
   const [loading, setLoading]       = useState(true);
@@ -28,6 +29,7 @@ export default function HomePage() {
         const data = await homeRes.json();
         setRecentPosts(data.recentPosts ?? []);
         setRecentNotices(data.recentNotices ?? []);
+        setFaqPosts(data.faqPosts ?? []);
         setPopularPosts(data.popularPosts ?? []);
         setGalleryPosts(data.galleryPosts ?? []);
       }
@@ -140,10 +142,38 @@ export default function HomePage() {
             )}
           </div>
 
+          {/* ── FAQ ── */}
+          <div className="bg-white rounded-2xl shadow p-6">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="font-bold text-gray-700">❓ 자주 묻는 질문</h3>
+              <button onClick={() => navigate('/support?scope=FAQ')}
+                className="text-xs text-blue-400 hover:text-blue-600">더보기 →</button>
+            </div>
+            {faqPosts.length === 0 ? (
+              <p className="text-sm text-gray-400 text-center py-6">등록된 FAQ가 없습니다.</p>
+            ) : (
+              <ul className="space-y-2">
+                {faqPosts.map(post => (
+                  <li key={post.id}
+                    onClick={() => navigate(`/support?scope=FAQ&open=${post.id}`)}
+                    className="cursor-pointer group flex items-start gap-2 py-1">
+                    <span className="shrink-0 mt-0.5 w-5 h-5 rounded-full bg-green-500 text-white text-[10px] font-bold flex items-center justify-center">Q</span>
+                    <p className="text-sm text-gray-700 group-hover:text-blue-600 truncate transition-colors">
+                      {post.title}
+                    </p>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+
           {/* ── 최근 게시글 ── */}
           <div className="bg-white rounded-2xl shadow p-6">
             <div className="flex justify-between items-center mb-4">
-              <h3 className="font-bold text-gray-700">🔥 최근 게시글</h3>
+              <h3 className="font-bold text-gray-700">🔔 최근 게시글</h3>
               <button onClick={() => navigate('/community?scope=FREE')}
                 className="text-xs text-blue-400 hover:text-blue-600">더보기 →</button>
             </div>
@@ -184,42 +214,42 @@ export default function HomePage() {
               </ul>
             )}
           </div>
-        </div>
 
-        {/* ── 인기글 ── */}
-        <div className="bg-white rounded-2xl shadow p-6">
-          <div className="flex justify-between items-center mb-4">
-            <h3 className="font-bold text-gray-700">🔥 인기글 <span className="text-xs font-normal text-gray-400 ml-1">최근 7일</span></h3>
+          {/* ── 인기글 ── */}
+          <div className="bg-white rounded-2xl shadow p-6">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="font-bold text-gray-700">🔥 인기글 <span className="text-xs font-normal text-gray-400 ml-1">최근 7일</span></h3>
+            </div>
+            {popularPosts.length === 0 ? (
+              <p className="text-sm text-gray-400 text-center py-6">인기글이 없습니다.</p>
+            ) : (
+              <ul className="space-y-2">
+                {popularPosts.map((post, i) => {
+                  const badge = boardBadge(post.boardCode);
+                  return (
+                    <li key={post.id}
+                      onClick={() => navigate(`/board/${post.id}?scope=${post.boardCode}&returnTo=${encodeURIComponent(`/${post.boardGroup?.toLowerCase() ?? 'community'}?scope=${post.boardCode}`)}`)}
+                      className="cursor-pointer group flex items-center gap-3 py-1.5">
+                      <span className={`shrink-0 w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold ${
+                        i === 0 ? 'bg-yellow-400 text-white' :
+                        i === 1 ? 'bg-gray-400 text-white' :
+                        i === 2 ? 'bg-orange-400 text-white' :
+                        'bg-gray-100 text-gray-500'
+                      }`}>{i + 1}</span>
+                      <span className={`shrink-0 px-1.5 py-0.5 rounded text-[10px] font-semibold ${badge.cls}`}>{badge.label}</span>
+                      <p className="flex-1 text-sm font-medium text-gray-700 group-hover:text-blue-600 truncate transition-colors">
+                        {post.title}
+                      </p>
+                      <div className="shrink-0 flex items-center gap-2 text-xs text-gray-400">
+                        {post.viewCount > 0 && <span>👁️ {post.viewCount}</span>}
+                        {post.likeCount > 0 && <span>❤️ {post.likeCount}</span>}
+                      </div>
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
           </div>
-          {popularPosts.length === 0 ? (
-            <p className="text-sm text-gray-400 text-center py-6">인기글이 없습니다.</p>
-          ) : (
-            <ul className="space-y-2">
-              {popularPosts.map((post, i) => {
-                const badge = boardBadge(post.boardCode);
-                return (
-                  <li key={post.id}
-                    onClick={() => navigate(`/board/${post.id}?scope=${post.boardCode}&returnTo=${encodeURIComponent(`/${post.boardGroup?.toLowerCase() ?? 'community'}?scope=${post.boardCode}`)}`)}
-                    className="cursor-pointer group flex items-center gap-3 py-1.5">
-                    <span className={`shrink-0 w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold ${
-                      i === 0 ? 'bg-yellow-400 text-white' :
-                      i === 1 ? 'bg-gray-400 text-white' :
-                      i === 2 ? 'bg-orange-400 text-white' :
-                      'bg-gray-100 text-gray-500'
-                    }`}>{i + 1}</span>
-                    <span className={`shrink-0 px-1.5 py-0.5 rounded text-[10px] font-semibold ${badge.cls}`}>{badge.label}</span>
-                    <p className="flex-1 text-sm font-medium text-gray-700 group-hover:text-blue-600 truncate transition-colors">
-                      {post.title}
-                    </p>
-                    <div className="shrink-0 flex items-center gap-2 text-xs text-gray-400">
-                      {post.viewCount > 0 && <span>👁️ {post.viewCount}</span>}
-                      {post.likeCount > 0 && <span>❤️ {post.likeCount}</span>}
-                    </div>
-                  </li>
-                );
-              })}
-            </ul>
-          )}
         </div>
 
         {/* ── 갤러리 미리보기 ── */}
