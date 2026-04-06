@@ -1,6 +1,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { authFetch, getTokenPayload } from '../utils/authFetch';
+import GalleryLightbox from './GalleryLightbox';
 
 const PAGE_SIZE = 10;
 
@@ -60,6 +61,7 @@ export default function BoardListPage({ groupKey, groupLabel, groupEmoji, boards
   const [totalPages, setTotalPages]     = useState(0);
   const [totalElements, setTotalElements] = useState(0);
   const [loading, setLoading]           = useState(true);
+  const [lightboxIndex, setLightboxIndex] = useState(null);
 
   const payload    = getTokenPayload();
   const isLoggedIn = !!payload;
@@ -88,7 +90,7 @@ export default function BoardListPage({ groupKey, groupLabel, groupEmoji, boards
     setLoading(false);
   }, [scope, keyword, sort, currentPage]);
 
-  useEffect(() => { loadPosts(); }, [loadPosts]);
+  useEffect(() => { loadPosts(); setLightboxIndex(null); }, [loadPosts]);
 
   const setParam = (updates) => {
     const next = { scope, sort };
@@ -173,9 +175,9 @@ export default function BoardListPage({ groupKey, groupLabel, groupEmoji, boards
           )}
         </div>
 
-        {/* 게시판 탭 */}
+        {/* 게시판 탭 (비활성 게시판 숨김) */}
         <div className="flex mb-4 bg-white rounded-2xl shadow overflow-hidden">
-          {boards.map(board => (
+          {boards.filter(b => b.active !== false).map(board => (
             <button key={board.code} onClick={() => switchScope(board.code)}
               className={`flex-1 py-3 text-sm font-semibold transition-colors ${
                 scope === board.code ? 'bg-blue-500 text-white' : 'text-gray-500 hover:bg-gray-50'
@@ -277,10 +279,10 @@ export default function BoardListPage({ groupKey, groupLabel, groupEmoji, boards
               /* ── 갤러리 그리드 ── */
               <>
                 <div className="p-4 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-                  {posts.map(post => (
+                  {posts.map((post, i) => (
                     <div key={post.id}
                       className="cursor-pointer rounded-xl overflow-hidden border border-gray-100 hover:shadow-md transition-shadow bg-white"
-                      onClick={() => goToDetail(post.id)}>
+                      onClick={() => setLightboxIndex(i)}>
                       <div className="aspect-square bg-gray-100 flex items-center justify-center overflow-hidden">
                         {post.thumbnailUrl ? (
                           <img
@@ -311,6 +313,16 @@ export default function BoardListPage({ groupKey, groupLabel, groupEmoji, boards
                   ))}
                 </div>
                 {totalPages > 1 && renderPagination()}
+
+                {/* 라이트박스 */}
+                <GalleryLightbox
+                  posts={posts}
+                  index={lightboxIndex}
+                  onClose={() => setLightboxIndex(null)}
+                  onNavigate={(i) => setLightboxIndex(i)}
+                  onGoDetail={(postId) => { setLightboxIndex(null); goToDetail(postId); }}
+                  allowComment={allowComment}
+                />
               </>
 
             ) : (

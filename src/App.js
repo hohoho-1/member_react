@@ -7,7 +7,6 @@ import MyPage from './pages/MyPage';
 import AdminPage from './pages/AdminPage';
 import ForbiddenPage from './pages/ForbiddenPage';
 import AdminUserDetailPage from './pages/AdminUserDetailPage';
-import BoardPage from './pages/BoardPage';
 import CommunityPage from './pages/CommunityPage';
 import SupportPage from './pages/SupportPage';
 import PostDetailPage from './pages/PostDetailPage';

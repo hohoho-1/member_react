@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { authFetch, logout } from '../utils/authFetch';
 
 const TABS = [
@@ -7,6 +7,7 @@ const TABS = [
   { key: 'posts',     label: '📝 내 글' },
   { key: 'comments',  label: '💬 내 댓글' },
   { key: 'bookmarks', label: '🔖 북마크' },
+  { key: 'answers',   label: '📬 받은 답변' },
 ];
 
 // 게시판 코드별 뱃지 색상
@@ -38,9 +39,10 @@ const Pagination = ({ page, totalPages, onPageChange }) => (
 
 export default function MyPage() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const fileInputRef = useRef(null);
   const [imgError, setImgError] = useState(false);
-  const [tab, setTab] = useState('info');
+  const [tab, setTab] = useState(searchParams.get('tab') ?? 'info');
   const [user, setUser] = useState(null);
   const [form, setForm] = useState({ username: '', email: '', currentPassword: '', newPassword: '' });
   const [deletePassword, setDeletePassword] = useState('');
@@ -65,6 +67,11 @@ export default function MyPage() {
   const [bookmarksTotalPages, setBookmarksTotalPages] = useState(0);
   const [bookmarksLoading, setBookmarksLoading] = useState(false);
 
+  const [myAnswers, setMyAnswers] = useState([]);
+  const [myAnswersPage, setMyAnswersPage] = useState(0);
+  const [myAnswersTotalPages, setMyAnswersTotalPages] = useState(0);
+  const [myAnswersLoading, setMyAnswersLoading] = useState(false);
+
   useEffect(() => {
     authFetch('/api/users/me')
       .then(res => res.ok ? res.json() : null)
@@ -78,6 +85,7 @@ export default function MyPage() {
     if (tab === 'posts')     loadMyPosts(0);
     if (tab === 'comments')  loadMyComments(0);
     if (tab === 'bookmarks') loadBookmarks(0);
+    if (tab === 'answers')   loadMyAnswers(0);
   }, [tab]);
 
   const loadMyPosts = async (page) => {
@@ -99,6 +107,13 @@ export default function MyPage() {
     const res = await authFetch(`/api/users/me/bookmarks?page=${page}&size=10`);
     if (res.ok) { const d = await res.json(); setBookmarks(d.posts); setBookmarksTotalPages(d.totalPages); setBookmarksPage(page); }
     setBookmarksLoading(false);
+  };
+
+  const loadMyAnswers = async (page) => {
+    setMyAnswersLoading(true);
+    const res = await authFetch(`/api/users/me/answers?page=${page}&size=10`);
+    if (res.ok) { const d = await res.json(); setMyAnswers(d.answers); setMyAnswersTotalPages(d.totalPages); setMyAnswersPage(page); }
+    setMyAnswersLoading(false);
   };
 
   const handleUpdate = async (e) => {
@@ -290,7 +305,7 @@ export default function MyPage() {
               <div className="divide-y divide-gray-100">
                 {myPosts.map(post => (
                   <div key={post.id} className="px-6 py-4 hover:bg-gray-50 cursor-pointer"
-                    onClick={() => navigate(`/board/${post.id}?returnTo=/mypage`)}>
+                    onClick={() => navigate(`/board/${post.id}?returnTo=${encodeURIComponent('/mypage?tab=posts')}`)}>
                     <div className="flex items-center gap-2 mb-1">
                       <span className={`shrink-0 px-2 py-0.5 rounded-full text-xs font-medium ${getBadgeClass(post.boardCode)}`}>
                         {post.boardName}
@@ -328,7 +343,7 @@ export default function MyPage() {
               <div className="divide-y divide-gray-100">
                 {myComments.map(comment => (
                   <div key={comment.id} className="px-6 py-4 hover:bg-gray-50 cursor-pointer"
-                    onClick={() => navigate(`/board/${comment.postId}`)}>
+                    onClick={() => navigate(`/board/${comment.postId}?returnTo=${encodeURIComponent('/mypage?tab=comments')}`)}>
                     <p className="text-sm text-gray-700 mb-1 truncate">{comment.content}</p>
                     <div className="flex gap-3 text-xs text-gray-400">
                       <span>📝 게시글 #{comment.postId}</span>
@@ -353,7 +368,7 @@ export default function MyPage() {
               <div className="divide-y divide-gray-100">
                 {bookmarks.map(post => (
                   <div key={post.id} className="px-6 py-4 hover:bg-gray-50 cursor-pointer"
-                    onClick={() => navigate(`/board/${post.id}?returnTo=/mypage`)}>
+                    onClick={() => navigate(`/board/${post.id}?returnTo=${encodeURIComponent('/mypage?tab=bookmarks')}`)}>
                     <div className="flex items-center gap-2 mb-1">
                       <span className={`shrink-0 px-2 py-0.5 rounded-full text-xs font-medium ${getBadgeClass(post.boardCode)}`}>
                         {post.boardName}
@@ -379,6 +394,43 @@ export default function MyPage() {
               </div>
             )}
             {bookmarksTotalPages > 1 && <Pagination page={bookmarksPage} totalPages={bookmarksTotalPages} onPageChange={loadBookmarks} />}
+          </div>
+        )}
+
+        {/* ── 받은 답변 탭 ── */}
+        {tab === 'answers' && (
+          <div className="bg-white rounded-2xl shadow overflow-hidden">
+            {myAnswersLoading ? (
+              <div className="text-center py-12 text-gray-400">로딩 중...</div>
+            ) : myAnswers.length === 0 ? (
+              <div className="text-center py-12 text-gray-400">
+                <p className="text-3xl mb-3">📭</p>
+                <p>받은 답변이 없습니다.</p>
+                <p className="text-xs text-gray-300 mt-1">QnA 또는 건의사항 게시글에 관리자 답변이 달리면 여기에 표시됩니다.</p>
+              </div>
+            ) : (
+              <div className="divide-y divide-gray-100">
+                {myAnswers.map(answer => (
+                  <div key={answer.answerId}
+                    className="px-6 py-4 hover:bg-gray-50 cursor-pointer"
+                    onClick={() => navigate(`/board/${answer.postId}?returnTo=${encodeURIComponent('/mypage?tab=answers')}`)}>
+                    <div className="flex items-center gap-2 mb-1.5">
+                      <span className={`shrink-0 px-2 py-0.5 rounded-full text-xs font-medium ${getBadgeClass(answer.boardCode)}`}>
+                        {answer.boardName}
+                      </span>
+                      <span className="text-sm font-medium text-gray-700 truncate">{answer.postTitle}</span>
+                      <span className="shrink-0 px-1.5 py-0.5 bg-green-100 text-green-700 text-[10px] font-bold rounded">✅ 답변완료</span>
+                    </div>
+                    <p className="text-sm text-gray-600 truncate mb-1.5 pl-0.5">{answer.content}</p>
+                    <div className="flex gap-3 text-xs text-gray-400">
+                      <span>💬 {answer.authorName}</span>
+                      <span>📅 {new Date(answer.createdAt).toLocaleDateString('ko-KR')}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+            {myAnswersTotalPages > 1 && <Pagination page={myAnswersPage} totalPages={myAnswersTotalPages} onPageChange={loadMyAnswers} />}
           </div>
         )}
 
