@@ -142,34 +142,6 @@ export default function HomePage() {
             )}
           </div>
 
-          {/* ── FAQ ── */}
-          <div className="bg-white rounded-2xl shadow p-6">
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="font-bold text-gray-700">❓ 자주 묻는 질문</h3>
-              <button onClick={() => navigate('/support?scope=FAQ')}
-                className="text-xs text-blue-400 hover:text-blue-600">더보기 →</button>
-            </div>
-            {faqPosts.length === 0 ? (
-              <p className="text-sm text-gray-400 text-center py-6">등록된 FAQ가 없습니다.</p>
-            ) : (
-              <ul className="space-y-2">
-                {faqPosts.map(post => (
-                  <li key={post.id}
-                    onClick={() => navigate(`/support?scope=FAQ&open=${post.id}`)}
-                    className="cursor-pointer group flex items-start gap-2 py-1">
-                    <span className="shrink-0 mt-0.5 w-5 h-5 rounded-full bg-green-500 text-white text-[10px] font-bold flex items-center justify-center">Q</span>
-                    <p className="text-sm text-gray-700 group-hover:text-blue-600 truncate transition-colors">
-                      {post.title}
-                    </p>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-
           {/* ── 최근 게시글 ── */}
           <div className="bg-white rounded-2xl shadow p-6">
             <div className="flex justify-between items-center mb-4">
@@ -211,6 +183,34 @@ export default function HomePage() {
                     </li>
                   );
                 })}
+              </ul>
+            )}
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+
+          {/* ── FAQ ── */}
+          <div className="bg-white rounded-2xl shadow p-6">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="font-bold text-gray-700">❓ 자주 묻는 질문</h3>
+              <button onClick={() => navigate('/support?scope=FAQ')}
+                className="text-xs text-blue-400 hover:text-blue-600">더보기 →</button>
+            </div>
+            {faqPosts.length === 0 ? (
+              <p className="text-sm text-gray-400 text-center py-6">등록된 FAQ가 없습니다.</p>
+            ) : (
+              <ul className="space-y-2">
+                {faqPosts.map(post => (
+                  <li key={post.id}
+                    onClick={() => navigate(`/support?scope=FAQ&open=${post.id}`)}
+                    className="cursor-pointer group flex items-start gap-2 py-1">
+                    <span className="shrink-0 mt-0.5 w-5 h-5 rounded-full bg-green-500 text-white text-[10px] font-bold flex items-center justify-center">Q</span>
+                    <p className="text-sm text-gray-700 group-hover:text-blue-600 truncate transition-colors">
+                      {post.title}
+                    </p>
+                  </li>
+                ))}
               </ul>
             )}
           </div>
