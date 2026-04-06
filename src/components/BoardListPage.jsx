@@ -55,7 +55,7 @@ export default function BoardListPage({ groupKey, groupLabel, groupEmoji, boards
   const scope       = searchParams.get('scope') ?? boards[0]?.code ?? 'ALL';
   const keyword     = searchParams.get('keyword') ?? '';
   const sort        = searchParams.get('sort') ?? 'latest';
-  const currentPage = Math.max(0, parseInt(searchParams.get('page') ?? '1') - 1);
+  const currentPage = Math.max(0, parseInt(searchParams.get('page') ?? '1', 10) - 1) || 0;
 
   const [posts, setPosts]               = useState([]);
   const [totalPages, setTotalPages]     = useState(0);
@@ -95,7 +95,10 @@ export default function BoardListPage({ groupKey, groupLabel, groupEmoji, boards
   const setParam = (updates) => {
     const next = { scope, sort };
     if (keyword) next.keyword = keyword;
-    setSearchParams({ ...next, ...updates });
+    const merged = { ...next, ...updates };
+    // undefined 값 제거 (page: undefined 등)
+    Object.keys(merged).forEach(k => merged[k] === undefined && delete merged[k]);
+    setSearchParams(merged);
   };
 
   const switchScope = (s) => setSearchParams({ scope: s, sort });
@@ -338,9 +341,8 @@ export default function BoardListPage({ groupKey, groupLabel, groupEmoji, boards
                   <thead className="bg-gray-50">
                     <tr>
                       {[
-                        '번호', '게시판', '제목', '작성자', '날짜', '조회',
+                        '번호', '게시판', '제목', '작성자', '날짜', '조회', '❤️',
                         ...(allowComment ? ['💬'] : []),
-                        '❤️',
                       ].map(h => (
                         <th key={h} className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">{h}</th>
                       ))}
@@ -395,10 +397,10 @@ export default function BoardListPage({ groupKey, groupLabel, groupEmoji, boards
                               {new Date(post.createdAt).toLocaleDateString('ko-KR')}
                             </td>
                             <td className="px-4 py-3 text-sm text-gray-400">{post.viewCount}</td>
+                            <td className="px-4 py-3 text-sm text-red-400">{post.likeCount > 0 ? post.likeCount : '-'}</td>
                             {allowComment && (
                               <td className="px-4 py-3 text-sm text-blue-400">{post.commentCount > 0 ? post.commentCount : '-'}</td>
                             )}
-                            <td className="px-4 py-3 text-sm text-red-400">{post.likeCount > 0 ? post.likeCount : '-'}</td>
                           </tr>
                         </>
                       );
