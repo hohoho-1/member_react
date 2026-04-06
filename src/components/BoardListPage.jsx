@@ -166,13 +166,19 @@ export default function BoardListPage({ groupKey, groupLabel, groupEmoji, boards
         {/* 헤더 */}
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-2xl font-bold text-gray-700">{groupEmoji} {groupLabel}</h2>
-          {canWrite && (
+          {canWrite ? (
             <button
               onClick={() => navigate(`/board/write?boardCode=${scope}&returnTo=${encodeURIComponent(`${basePath}?scope=${scope}`)}`)}
               className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg text-sm font-medium transition-colors">
               ✏️ 글쓰기
             </button>
-          )}
+          ) : !isLoggedIn ? (
+            <button
+              onClick={() => navigate(`/login`)}
+              className="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-500 rounded-lg text-sm font-medium transition-colors">
+              ✏️ 글쓰기
+            </button>
+          ) : null}
         </div>
 
         {/* 게시판 탭 (비활성 게시판 숨김) */}

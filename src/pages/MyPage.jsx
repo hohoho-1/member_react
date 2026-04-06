@@ -344,9 +344,14 @@ export default function MyPage() {
                 {myComments.map(comment => (
                   <div key={comment.id} className="px-6 py-4 hover:bg-gray-50 cursor-pointer"
                     onClick={() => navigate(`/board/${comment.postId}?returnTo=${encodeURIComponent('/mypage?tab=comments')}`)}>
-                    <p className="text-sm text-gray-700 mb-1 truncate">{comment.content}</p>
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className={`shrink-0 px-2 py-0.5 rounded-full text-xs font-medium ${getBadgeClass(comment.boardCode)}`}>
+                        {comment.boardName || '게시판'}
+                      </span>
+                      <span className="text-sm font-medium text-gray-600 truncate">{comment.postTitle}</span>
+                    </div>
+                    <p className="text-sm text-gray-700 truncate mb-1 pl-0.5">{comment.content}</p>
                     <div className="flex gap-3 text-xs text-gray-400">
-                      <span>📝 게시글 #{comment.postId}</span>
                       <span>📅 {new Date(comment.createdAt).toLocaleDateString('ko-KR')}</span>
                     </div>
                   </div>
