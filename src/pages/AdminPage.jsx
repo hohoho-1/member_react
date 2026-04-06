@@ -1,6 +1,14 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { authFetch, isAdmin, getTokenPayload } from '../utils/authFetch';
+import {
+  DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, DragOverlay,
+} from '@dnd-kit/core';
+import {
+  SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy,
+  useSortable, arrayMove,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 
 // 삭제 게시글 상세 모달
 function DeletedPostModal({ post, onClose, onRestore, onPermanentDelete }) {
@@ -143,14 +151,98 @@ function DeletedUserModal({ user, onClose, onRestore, onPermanentDelete }) {
 const PAGE_SIZE = 5;
 const LOG_PAGE_SIZE = 15;
 
-const BOARD_TYPE_LABELS = { NORMAL: '일반형', GALLERY: '이미지형', QNA: '질문답변형', FAQ: 'FAQ형' };
-const BOARD_GROUP_LABELS = { COMMUNITY: '커뮤니티', SUPPORT: '고객센터' };
-
 const BOARD_FORM_DEFAULT = {
   code: '', name: '', boardGroup: 'COMMUNITY', boardType: 'NORMAL',
   adminOnly: false, allowComment: true, allowAttachment: true,
   sortOrder: 0, active: true,
 };
+
+// ── 드래그 가능한 게시판 행 ──────────────────────────────────────────────────
+function SortableBoardItem({ board, onToggleActive, onEdit, onDelete, isDragging }) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging: isSelfDragging } = useSortable({ id: board.code });
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isSelfDragging ? 0.3 : 1,
+  };
+
+  const BOARD_TYPE_LABELS = { NORMAL: '일반형', GALLERY: '이미지형', QNA: '질문답변형', FAQ: 'FAQ형' };
+  const BOARD_GROUP_LABELS = { COMMUNITY: '커뮤니티', SUPPORT: '고객센터' };
+
+  return (
+    <div ref={setNodeRef} style={style}
+      className={`flex items-center gap-4 px-6 py-4 transition-colors ${board.active ? 'bg-white hover:bg-gray-50' : 'bg-gray-50'} ${isDragging ? 'shadow-lg' : ''}`}>
+
+      {/* 드래그 핸들 */}
+      <button {...attributes} {...listeners}
+        className="text-gray-300 hover:text-gray-500 cursor-grab active:cursor-grabbing touch-none shrink-0 px-1"
+        title="드래그해서 순서 변경">
+        ⠿
+      </button>
+
+      {/* 게시판 정보 */}
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-2 flex-wrap">
+          <span className={`font-semibold text-sm ${board.active ? 'text-gray-800' : 'text-gray-400'}`}>
+            {board.name}
+          </span>
+          <span className="text-xs text-gray-400 font-mono bg-gray-100 px-1.5 py-0.5 rounded">
+            {board.code}
+          </span>
+          {!board.active && (
+            <span className="px-2 py-0.5 bg-gray-200 text-gray-500 text-xs rounded-full">비활성</span>
+          )}
+        </div>
+        <div className="flex items-center gap-2 mt-1 flex-wrap">
+          <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
+            board.boardGroup === 'COMMUNITY' ? 'bg-blue-100 text-blue-600' : 'bg-purple-100 text-purple-600'
+          }`}>
+            {BOARD_GROUP_LABELS[board.boardGroup] ?? board.boardGroup}
+          </span>
+          <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
+            board.boardType === 'GALLERY' ? 'bg-pink-100 text-pink-600' :
+            board.boardType === 'QNA'     ? 'bg-amber-100 text-amber-600' :
+            board.boardType === 'FAQ'     ? 'bg-green-100 text-green-600' :
+            'bg-gray-100 text-gray-500'
+          }`}>
+            {BOARD_TYPE_LABELS[board.boardType] ?? board.boardType}
+          </span>
+          {board.adminOnly && (
+            <span className="text-xs px-2 py-0.5 rounded-full bg-red-100 text-red-500 font-medium">관리자 전용</span>
+          )}
+          {!board.allowComment && (
+            <span className="text-xs px-2 py-0.5 rounded-full bg-gray-100 text-gray-400">댓글 비허용</span>
+          )}
+        </div>
+      </div>
+
+      {/* 순서 표시 */}
+      <span className="text-xs text-gray-300 font-mono shrink-0 w-8 text-center">{board.sortOrder}</span>
+
+      {/* 활성/비활성 토글 */}
+      <button onClick={() => onToggleActive(board.code)}
+        className={`shrink-0 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+          board.active
+            ? 'bg-green-50 hover:bg-green-100 text-green-600'
+            : 'bg-gray-100 hover:bg-gray-200 text-gray-500'
+        }`}>
+        {board.active ? '✅ 활성' : '⛔ 비활성'}
+      </button>
+
+      {/* 수정 / 삭제 */}
+      <div className="flex gap-1 shrink-0">
+        <button onClick={() => onEdit(board)}
+          className="px-2 py-1.5 bg-blue-50 hover:bg-blue-100 text-blue-600 rounded-lg text-xs font-medium transition-colors">
+          수정
+        </button>
+        <button onClick={() => onDelete(board.code, board.name)}
+          className="px-2 py-1.5 bg-red-50 hover:bg-red-100 text-red-500 rounded-lg text-xs font-medium transition-colors">
+          삭제
+        </button>
+      </div>
+    </div>
+  );
+}
 
 // ── 게시판 생성/수정 모달 ──────────────────────────────────────────────────
 function BoardFormModal({ board, onClose, onSave }) {
@@ -328,8 +420,13 @@ export default function AdminPage() {
   // 게시판 관리 상태
   const [boards, setBoards] = useState([]);
   const [boardLoading, setBoardLoading] = useState(false);
-  const [editingSortOrder, setEditingSortOrder] = useState({});
   const [boardFormTarget, setBoardFormTarget] = useState(null); // null=닫힘, {}=생성, board=수정
+  const [activeDragId, setActiveDragId] = useState(null);
+
+  const dndSensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
+  );
 
   // 알림 상태
   const [errorMsg, setErrorMsg] = useState('');
@@ -534,9 +631,6 @@ export default function AdminPage() {
     if (res.ok) {
       const data = await res.json();
       setBoards(data);
-      const initSortOrder = {};
-      data.forEach(b => { initSortOrder[b.code] = b.sortOrder; });
-      setEditingSortOrder(initSortOrder);
     }
     setBoardLoading(false);
   };
@@ -550,18 +644,31 @@ export default function AdminPage() {
     } else showError('게시판 상태 변경에 실패했습니다.');
   };
 
-  const handleUpdateSortOrder = async (code) => {
-    const newOrder = parseInt(editingSortOrder[code], 10);
-    if (isNaN(newOrder)) { showError('올바른 숫자를 입력하세요.'); return; }
-    const res = await authFetch(`/api/boards/${code}/sort-order`, {
-      method: 'PATCH', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ sortOrder: newOrder }),
+  const handleDragStart = ({ active }) => setActiveDragId(active.id);
+
+  const handleDragEnd = async ({ active, over }) => {
+    setActiveDragId(null);
+    if (!over || active.id === over.id) return;
+
+    const oldIndex = boards.findIndex(b => b.code === active.id);
+    const newIndex = boards.findIndex(b => b.code === over.id);
+    const reordered = arrayMove(boards, oldIndex, newIndex).map((b, i) => ({ ...b, sortOrder: i + 1 }));
+    setBoards(reordered); // 낙관적 업데이트
+
+    const payload = reordered.map(b => ({ code: b.code, sortOrder: b.sortOrder }));
+    const res = await authFetch('/api/boards/reorder', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
     });
     if (res.ok) {
       const updated = await res.json();
-      setBoards(prev => [...prev.map(b => b.code === code ? updated : b)].sort((a, b) => a.sortOrder - b.sortOrder));
-      showSuccess(`'${updated.name}' 순서가 변경되었습니다.`);
-    } else showError('순서 변경에 실패했습니다.');
+      setBoards(updated);
+      showSuccess('게시판 순서가 저장되었습니다.');
+    } else {
+      showError('순서 저장에 실패했습니다.');
+      loadBoards(); // 실패 시 서버 상태로 복원
+    }
   };
 
   const handleSaveBoard = async (form, isEdit) => {
@@ -578,7 +685,6 @@ export default function AdminPage() {
         showSuccess(`'${saved.name}' 게시판이 수정되었습니다.`);
       } else {
         setBoards(prev => [...prev, saved].sort((a, b) => a.sortOrder - b.sortOrder));
-        setEditingSortOrder(prev => ({ ...prev, [saved.code]: saved.sortOrder }));
         showSuccess(`'${saved.name}' 게시판이 생성되었습니다.`);
       }
       setBoardFormTarget(null);
@@ -975,92 +1081,46 @@ export default function AdminPage() {
             ) : boards.length === 0 ? (
               <div className="text-center py-10 text-gray-400">게시판이 없습니다.</div>
             ) : (
-              <div className="divide-y divide-gray-50">
-                {boards.map(board => (
-                  <div key={board.code}
-                    className={`flex items-center gap-4 px-6 py-4 transition-colors ${board.active ? 'bg-white hover:bg-gray-50' : 'bg-gray-50'}`}>
-
-                    {/* 게시판 정보 */}
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <span className={`font-semibold text-sm ${board.active ? 'text-gray-800' : 'text-gray-400'}`}>
-                          {board.name}
-                        </span>
-                        <span className="text-xs text-gray-400 font-mono bg-gray-100 px-1.5 py-0.5 rounded">
-                          {board.code}
-                        </span>
-                        {!board.active && (
-                          <span className="px-2 py-0.5 bg-gray-200 text-gray-500 text-xs rounded-full">비활성</span>
-                        )}
-                      </div>
-                      <div className="flex items-center gap-2 mt-1 flex-wrap">
-                        <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
-                          board.boardGroup === 'COMMUNITY' ? 'bg-blue-100 text-blue-600' : 'bg-purple-100 text-purple-600'
-                        }`}>
-                          {BOARD_GROUP_LABELS[board.boardGroup] ?? board.boardGroup}
-                        </span>
-                        <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
-                          board.boardType === 'GALLERY' ? 'bg-pink-100 text-pink-600' :
-                          board.boardType === 'QNA'     ? 'bg-amber-100 text-amber-600' :
-                          'bg-gray-100 text-gray-500'
-                        }`}>
-                          {BOARD_TYPE_LABELS[board.boardType] ?? board.boardType}
-                        </span>
-                        {board.adminOnly && (
-                          <span className="text-xs px-2 py-0.5 rounded-full bg-red-100 text-red-500 font-medium">관리자 전용</span>
-                        )}
-                        {!board.allowComment && (
-                          <span className="text-xs px-2 py-0.5 rounded-full bg-gray-100 text-gray-400">댓글 비허용</span>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* 순서 편집 */}
-                    <div className="flex items-center gap-1.5 shrink-0">
-                      <span className="text-xs text-gray-400">순서</span>
-                      <input
-                        type="number"
-                        value={editingSortOrder[board.code] ?? board.sortOrder}
-                        onChange={e => setEditingSortOrder(prev => ({ ...prev, [board.code]: e.target.value }))}
-                        onKeyDown={e => { if (e.key === 'Enter') handleUpdateSortOrder(board.code); }}
-                        className="w-14 px-2 py-1 border border-gray-200 rounded-lg text-sm text-center focus:outline-none focus:border-indigo-400"
+              <DndContext
+                sensors={dndSensors}
+                collisionDetection={closestCenter}
+                onDragStart={handleDragStart}
+                onDragEnd={handleDragEnd}
+              >
+                <SortableContext items={boards.map(b => b.code)} strategy={verticalListSortingStrategy}>
+                  <div className="divide-y divide-gray-50">
+                    {boards.map(board => (
+                      <SortableBoardItem
+                        key={board.code}
+                        board={board}
+                        onToggleActive={handleToggleBoardActive}
+                        onEdit={setBoardFormTarget}
+                        onDelete={handleDeleteBoard}
                       />
-                      <button onClick={() => handleUpdateSortOrder(board.code)}
-                        className="px-2 py-1 bg-indigo-50 hover:bg-indigo-100 text-indigo-600 rounded-lg text-xs font-medium transition-colors">
-                        적용
-                      </button>
-                    </div>
-
-                    {/* 활성/비활성 토글 */}
-                    <button onClick={() => handleToggleBoardActive(board.code)}
-                      className={`shrink-0 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
-                        board.active
-                          ? 'bg-green-50 hover:bg-green-100 text-green-600'
-                          : 'bg-gray-100 hover:bg-gray-200 text-gray-500'
-                      }`}>
-                      {board.active ? '✅ 활성' : '⛔ 비활성'}
-                    </button>
-
-                    {/* 수정 / 삭제 */}
-                    <div className="flex gap-1 shrink-0">
-                      <button onClick={() => setBoardFormTarget(board)}
-                        className="px-2 py-1.5 bg-blue-50 hover:bg-blue-100 text-blue-600 rounded-lg text-xs font-medium transition-colors">
-                        수정
-                      </button>
-                      <button onClick={() => handleDeleteBoard(board.code, board.name)}
-                        className="px-2 py-1.5 bg-red-50 hover:bg-red-100 text-red-500 rounded-lg text-xs font-medium transition-colors">
-                        삭제
-                      </button>
-                    </div>
+                    ))}
                   </div>
-                ))}
-              </div>
+                </SortableContext>
+                <DragOverlay>
+                  {activeDragId ? (() => {
+                    const board = boards.find(b => b.code === activeDragId);
+                    return board ? (
+                      <SortableBoardItem
+                        board={board}
+                        onToggleActive={() => {}}
+                        onEdit={() => {}}
+                        onDelete={() => {}}
+                        isDragging
+                      />
+                    ) : null;
+                  })() : null}
+                </DragOverlay>
+              </DndContext>
             )}
 
             {/* 안내 */}
             <div className="px-6 py-3 bg-gray-50 border-t border-gray-100">
               <p className="text-xs text-gray-400">
-                💡 순서 숫자가 작을수록 사용자 화면 탭에서 앞쪽에 표시됩니다. &nbsp;|&nbsp; 비활성 게시판은 사용자 화면에서 숨겨집니다.
+                💡 ⠿ 핸들을 드래그해서 순서를 변경하세요. 드롭하면 자동으로 저장됩니다. &nbsp;|&nbsp; 비활성 게시판은 사용자 화면에서 숨겨집니다.
               </p>
             </div>
           </div>
