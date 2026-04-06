@@ -7,6 +7,7 @@ const TABS = [
   { key: 'posts',     label: '📝 내 글' },
   { key: 'comments',  label: '💬 내 댓글' },
   { key: 'bookmarks', label: '🔖 북마크' },
+  { key: 'likes',     label: '❤️ 좋아요' },
   { key: 'answers',   label: '📬 받은 답변' },
 ];
 
@@ -72,6 +73,11 @@ export default function MyPage() {
   const [myAnswersTotalPages, setMyAnswersTotalPages] = useState(0);
   const [myAnswersLoading, setMyAnswersLoading] = useState(false);
 
+  const [myLikes, setMyLikes] = useState([]);
+  const [myLikesPage, setMyLikesPage] = useState(0);
+  const [myLikesTotalPages, setMyLikesTotalPages] = useState(0);
+  const [myLikesLoading, setMyLikesLoading] = useState(false);
+
   useEffect(() => {
     authFetch('/api/users/me')
       .then(res => res.ok ? res.json() : null)
@@ -85,6 +91,7 @@ export default function MyPage() {
     if (tab === 'posts')     loadMyPosts(0);
     if (tab === 'comments')  loadMyComments(0);
     if (tab === 'bookmarks') loadBookmarks(0);
+    if (tab === 'likes')     loadMyLikes(0);
     if (tab === 'answers')   loadMyAnswers(0);
   }, [tab]);
 
@@ -114,6 +121,13 @@ export default function MyPage() {
     const res = await authFetch(`/api/users/me/answers?page=${page}&size=10`);
     if (res.ok) { const d = await res.json(); setMyAnswers(d.answers); setMyAnswersTotalPages(d.totalPages); setMyAnswersPage(page); }
     setMyAnswersLoading(false);
+  };
+
+  const loadMyLikes = async (page) => {
+    setMyLikesLoading(true);
+    const res = await authFetch(`/api/users/me/likes?page=${page}&size=10`);
+    if (res.ok) { const d = await res.json(); setMyLikes(d.posts); setMyLikesTotalPages(d.totalPages); setMyLikesPage(page); }
+    setMyLikesLoading(false);
   };
 
   const handleUpdate = async (e) => {
@@ -399,6 +413,42 @@ export default function MyPage() {
               </div>
             )}
             {bookmarksTotalPages > 1 && <Pagination page={bookmarksPage} totalPages={bookmarksTotalPages} onPageChange={loadBookmarks} />}
+          </div>
+        )}
+
+        {/* ── 좋아요한 글 탭 ── */}
+        {tab === 'likes' && (
+          <div className="bg-white rounded-2xl shadow overflow-hidden">
+            {myLikesLoading ? (
+              <div className="text-center py-12 text-gray-400">로딩 중...</div>
+            ) : myLikes.length === 0 ? (
+              <div className="text-center py-12 text-gray-400">
+                <p className="text-3xl mb-3">🤍</p>
+                <p>좋아요한 게시글이 없습니다.</p>
+              </div>
+            ) : (
+              <div className="divide-y divide-gray-100">
+                {myLikes.map(post => (
+                  <div key={post.id} className="px-6 py-4 hover:bg-gray-50 cursor-pointer"
+                    onClick={() => navigate(`/board/${post.id}?returnTo=${encodeURIComponent('/mypage?tab=likes')}`)}>
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className={`shrink-0 px-2 py-0.5 rounded-full text-xs font-medium ${getBadgeClass(post.boardCode)}`}>
+                        {post.boardName}
+                      </span>
+                      <span className="text-sm font-medium text-gray-700 truncate">{post.title}</span>
+                      {post.commentCount > 0 && <span className="text-xs text-blue-400 shrink-0">💬 {post.commentCount}</span>}
+                    </div>
+                    <div className="flex gap-3 text-xs text-gray-400">
+                      <span>✍️ {post.authorName}</span>
+                      <span>📅 {new Date(post.createdAt).toLocaleDateString('ko-KR')}</span>
+                      <span>👁️ {post.viewCount}</span>
+                      <span className="text-red-400">❤️ {post.likeCount}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+            {myLikesTotalPages > 1 && <Pagination page={myLikesPage} totalPages={myLikesTotalPages} onPageChange={loadMyLikes} />}
           </div>
         )}
 
