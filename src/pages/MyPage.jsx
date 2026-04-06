@@ -3,7 +3,6 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { authFetch, logout } from '../utils/authFetch';
 
 const TABS = [
-  { key: 'info',      label: '⚙️ 내 정보' },
   { key: 'posts',     label: '📝 내 글' },
   { key: 'comments',  label: '💬 내 댓글' },
   { key: 'bookmarks', label: '🔖 북마크' },
@@ -11,7 +10,6 @@ const TABS = [
   { key: 'answers',   label: '📬 받은 답변' },
 ];
 
-// 게시판 코드별 뱃지 색상
 const getBadgeClass = (code) => {
   const map = {
     NOTICE:     'bg-red-100 text-red-500',
@@ -43,7 +41,8 @@ export default function MyPage() {
   const [searchParams] = useSearchParams();
   const fileInputRef = useRef(null);
   const [imgError, setImgError] = useState(false);
-  const [tab, setTab] = useState(searchParams.get('tab') ?? 'info');
+  const [tab, setTab] = useState(searchParams.get('tab') ?? 'posts');
+
   const [user, setUser] = useState(null);
   const [form, setForm] = useState({ username: '', email: '', currentPassword: '', newPassword: '' });
   const [deletePassword, setDeletePassword] = useState('');
@@ -53,30 +52,33 @@ export default function MyPage() {
   const [deleteLoading, setDeleteLoading] = useState(false);
   const [profileUploading, setProfileUploading] = useState(false);
 
-  const [myPosts, setMyPosts] = useState([]);
-  const [myPostsPage, setMyPostsPage] = useState(0);
+  // 프로필 카드 내 패널 열기 상태
+  const [infoPanel, setInfoPanel] = useState(null); // null | 'edit' | 'withdraw'
+
+  const [myPosts, setMyPosts]           = useState([]);
+  const [myPostsPage, setMyPostsPage]   = useState(0);
   const [myPostsTotalPages, setMyPostsTotalPages] = useState(0);
-  const [myPostsLoading, setMyPostsLoading] = useState(false);
+  const [myPostsLoading, setMyPostsLoading]       = useState(false);
 
-  const [myComments, setMyComments] = useState([]);
-  const [myCommentsPage, setMyCommentsPage] = useState(0);
+  const [myComments, setMyComments]           = useState([]);
+  const [myCommentsPage, setMyCommentsPage]   = useState(0);
   const [myCommentsTotalPages, setMyCommentsTotalPages] = useState(0);
-  const [myCommentsLoading, setMyCommentsLoading] = useState(false);
+  const [myCommentsLoading, setMyCommentsLoading]       = useState(false);
 
-  const [bookmarks, setBookmarks] = useState([]);
-  const [bookmarksPage, setBookmarksPage] = useState(0);
+  const [bookmarks, setBookmarks]             = useState([]);
+  const [bookmarksPage, setBookmarksPage]     = useState(0);
   const [bookmarksTotalPages, setBookmarksTotalPages] = useState(0);
-  const [bookmarksLoading, setBookmarksLoading] = useState(false);
+  const [bookmarksLoading, setBookmarksLoading]       = useState(false);
 
-  const [myAnswers, setMyAnswers] = useState([]);
-  const [myAnswersPage, setMyAnswersPage] = useState(0);
-  const [myAnswersTotalPages, setMyAnswersTotalPages] = useState(0);
-  const [myAnswersLoading, setMyAnswersLoading] = useState(false);
-
-  const [myLikes, setMyLikes] = useState([]);
-  const [myLikesPage, setMyLikesPage] = useState(0);
+  const [myLikes, setMyLikes]             = useState([]);
+  const [myLikesPage, setMyLikesPage]     = useState(0);
   const [myLikesTotalPages, setMyLikesTotalPages] = useState(0);
-  const [myLikesLoading, setMyLikesLoading] = useState(false);
+  const [myLikesLoading, setMyLikesLoading]       = useState(false);
+
+  const [myAnswers, setMyAnswers]           = useState([]);
+  const [myAnswersPage, setMyAnswersPage]   = useState(0);
+  const [myAnswersTotalPages, setMyAnswersTotalPages] = useState(0);
+  const [myAnswersLoading, setMyAnswersLoading]       = useState(false);
 
   useEffect(() => {
     authFetch('/api/users/me')
@@ -101,33 +103,29 @@ export default function MyPage() {
     if (res.ok) { const d = await res.json(); setMyPosts(d.posts); setMyPostsTotalPages(d.totalPages); setMyPostsPage(page); }
     setMyPostsLoading(false);
   };
-
   const loadMyComments = async (page) => {
     setMyCommentsLoading(true);
     const res = await authFetch(`/api/users/me/comments?page=${page}&size=10`);
     if (res.ok) { const d = await res.json(); setMyComments(d.comments); setMyCommentsTotalPages(d.totalPages); setMyCommentsPage(page); }
     setMyCommentsLoading(false);
   };
-
   const loadBookmarks = async (page) => {
     setBookmarksLoading(true);
     const res = await authFetch(`/api/users/me/bookmarks?page=${page}&size=10`);
     if (res.ok) { const d = await res.json(); setBookmarks(d.posts); setBookmarksTotalPages(d.totalPages); setBookmarksPage(page); }
     setBookmarksLoading(false);
   };
-
-  const loadMyAnswers = async (page) => {
-    setMyAnswersLoading(true);
-    const res = await authFetch(`/api/users/me/answers?page=${page}&size=10`);
-    if (res.ok) { const d = await res.json(); setMyAnswers(d.answers); setMyAnswersTotalPages(d.totalPages); setMyAnswersPage(page); }
-    setMyAnswersLoading(false);
-  };
-
   const loadMyLikes = async (page) => {
     setMyLikesLoading(true);
     const res = await authFetch(`/api/users/me/likes?page=${page}&size=10`);
     if (res.ok) { const d = await res.json(); setMyLikes(d.posts); setMyLikesTotalPages(d.totalPages); setMyLikesPage(page); }
     setMyLikesLoading(false);
+  };
+  const loadMyAnswers = async (page) => {
+    setMyAnswersLoading(true);
+    const res = await authFetch(`/api/users/me/answers?page=${page}&size=10`);
+    if (res.ok) { const d = await res.json(); setMyAnswers(d.answers); setMyAnswersTotalPages(d.totalPages); setMyAnswersPage(page); }
+    setMyAnswersLoading(false);
   };
 
   const handleUpdate = async (e) => {
@@ -203,112 +201,148 @@ export default function MyPage() {
     <div className="bg-gray-100 py-8 px-4">
       <div className="max-w-4xl mx-auto">
 
-        <h2 className="text-2xl font-bold text-gray-700 mb-6">⚙️ 마이페이지</h2>
+        <h2 className="text-2xl font-bold text-gray-700 mb-6">👤 마이페이지</h2>
 
-        {/* 프로필 카드 */}
-        <div className="bg-white rounded-2xl shadow p-5 mb-4 flex items-center gap-4">
-          <div className="relative group shrink-0">
-            {user.profileImageUrl && !imgError ? (
-              <img
-                src={`http://localhost:8080${user.profileImageUrl}`}
-                alt="프로필"
-                className="w-16 h-16 rounded-full object-cover border-2 border-blue-100"
-                onError={() => setImgError(true)}
-              />
-            ) : (
-              <div className="w-16 h-16 rounded-full bg-blue-100 flex items-center justify-center text-2xl font-bold text-blue-500">
-                {user.username[0]}
+        {/* ── 프로필 카드 ───────────────────────────────────────────── */}
+        <div className="bg-white rounded-2xl shadow mb-4">
+          {/* 기본 정보 영역 */}
+          <div className="flex items-center gap-4 p-5">
+            {/* 아바타 */}
+            <div className="relative group shrink-0">
+              {user.profileImageUrl && !imgError ? (
+                <img src={`http://localhost:8080${user.profileImageUrl}`} alt="프로필"
+                  className="w-16 h-16 rounded-full object-cover border-2 border-blue-100"
+                  onError={() => setImgError(true)} />
+              ) : (
+                <div className="w-16 h-16 rounded-full bg-blue-100 flex items-center justify-center text-2xl font-bold text-blue-500">
+                  {user.username[0]}
+                </div>
+              )}
+              <button onClick={() => fileInputRef.current?.click()} disabled={profileUploading}
+                className="absolute inset-0 rounded-full bg-black/40 text-white text-xs font-medium opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                {profileUploading ? '...' : '변경'}
+              </button>
+              <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleProfileImageChange} />
+            </div>
+
+            {/* 유저 정보 */}
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2">
+                <p className="font-semibold text-gray-800">{user.username}</p>
+                <span className="text-xs text-gray-400">{user.role === 'ROLE_ADMIN' ? '👑 관리자' : '일반 회원'}</span>
               </div>
-            )}
-            <button
-              onClick={() => fileInputRef.current?.click()}
-              disabled={profileUploading}
-              className="absolute inset-0 rounded-full bg-black/40 text-white text-xs font-medium opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-              {profileUploading ? '...' : '변경'}
-            </button>
-            <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleProfileImageChange} />
+              <p className="text-sm text-gray-400 mt-0.5">{user.email}</p>
+            </div>
+
+            {/* 우측 버튼들 */}
+            <div className="flex items-center gap-2 shrink-0">
+              {user.profileImageUrl && !imgError && (
+                <button onClick={handleDeleteProfileImage}
+                  className="text-xs text-gray-400 hover:text-red-400 transition-colors px-2 py-1 rounded-lg hover:bg-red-50">
+                  사진 삭제
+                </button>
+              )}
+              <button
+                onClick={() => setInfoPanel(infoPanel === 'edit' ? null : 'edit')}
+                className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+                  infoPanel === 'edit' ? 'bg-blue-500 text-white' : 'bg-gray-100 hover:bg-gray-200 text-gray-600'
+                }`}>
+                ✏️ 정보 수정
+              </button>
+              <button
+                onClick={() => setInfoPanel(infoPanel === 'withdraw' ? null : 'withdraw')}
+                className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+                  infoPanel === 'withdraw' ? 'bg-red-500 text-white' : 'bg-gray-100 hover:bg-red-50 text-gray-400 hover:text-red-400'
+                }`}>
+                회원탈퇴
+              </button>
+            </div>
           </div>
 
-          <div className="flex-1">
-            <p className="font-semibold text-gray-700">{user.username}</p>
-            <p className="text-sm text-gray-400">{user.email}</p>
-            <p className="text-xs text-gray-300 mt-0.5">{user.role === 'ROLE_ADMIN' ? '👑 관리자' : '일반 회원'}</p>
-          </div>
+          {/* 정보 수정 패널 */}
+          {infoPanel === 'edit' && (
+            <div className="border-t border-gray-100 px-6 py-5">
+              <form onSubmit={handleUpdate} className="space-y-3 max-w-md">
+                <p className="text-xs font-semibold text-blue-500 uppercase tracking-wide mb-3">회원정보 수정</p>
+                {[
+                  { label: '이름', name: 'username', type: 'text' },
+                  { label: '이메일', name: 'email', type: 'email' },
+                ].map(f => (
+                  <div key={f.name}>
+                    <label className="block text-xs text-gray-500 mb-1">{f.label}</label>
+                    <input type={f.type} value={form[f.name]}
+                      onChange={e => setForm({ ...form, [f.name]: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-blue-400" />
+                  </div>
+                ))}
+                <p className="text-xs font-semibold text-blue-500 uppercase tracking-wide pt-1">비밀번호 변경 (선택)</p>
+                {[
+                  { label: '현재 비밀번호', name: 'currentPassword' },
+                  { label: '새 비밀번호', name: 'newPassword' },
+                ].map(f => (
+                  <div key={f.name}>
+                    <label className="block text-xs text-gray-500 mb-1">{f.label}</label>
+                    <input type="password" value={form[f.name]}
+                      onChange={e => setForm({ ...form, [f.name]: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-blue-400" />
+                  </div>
+                ))}
+                {updateMsg.text && (
+                  <div className={`text-sm text-center px-3 py-2 rounded-lg ${
+                    updateMsg.type === 'success' ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'
+                  }`}>{updateMsg.text}</div>
+                )}
+                <div className="flex gap-2 pt-1">
+                  <button type="submit" disabled={updateLoading}
+                    className="px-5 py-2 bg-blue-500 hover:bg-blue-600 disabled:bg-blue-300 text-white rounded-lg text-sm font-medium transition-colors">
+                    {updateLoading ? '수정 중...' : '저장'}
+                  </button>
+                  <button type="button" onClick={() => setInfoPanel(null)}
+                    className="px-5 py-2 bg-gray-100 hover:bg-gray-200 text-gray-600 rounded-lg text-sm font-medium transition-colors">
+                    취소
+                  </button>
+                </div>
+              </form>
+            </div>
+          )}
 
-          {user.profileImageUrl && (
-            <button onClick={handleDeleteProfileImage}
-              className="text-xs text-red-400 hover:text-red-600 shrink-0">
-              이미지 삭제
-            </button>
+          {/* 회원탈퇴 패널 */}
+          {infoPanel === 'withdraw' && (
+            <div className="border-t border-gray-100 px-6 py-5">
+              <div className="max-w-md bg-red-50 border border-red-200 rounded-xl p-4">
+                <p className="text-xs text-red-600 mb-3">⚠️ 탈퇴 시 모든 정보가 삭제되며 복구할 수 없습니다.</p>
+                <input type="password" placeholder="현재 비밀번호 입력" value={deletePassword}
+                  onChange={e => setDeletePassword(e.target.value)}
+                  className="w-full px-3 py-2 border border-red-200 rounded-lg text-sm focus:outline-none focus:border-red-400 mb-2" />
+                {deleteMsg && <p className="text-xs text-red-600 mb-2">{deleteMsg}</p>}
+                <div className="flex gap-2">
+                  <button onClick={handleDelete} disabled={deleteLoading}
+                    className="px-5 py-2 bg-red-500 hover:bg-red-600 disabled:bg-red-300 text-white rounded-lg text-sm font-medium transition-colors">
+                    {deleteLoading ? '처리 중...' : '탈퇴 확인'}
+                  </button>
+                  <button onClick={() => setInfoPanel(null)}
+                    className="px-5 py-2 bg-gray-100 hover:bg-gray-200 text-gray-600 rounded-lg text-sm font-medium transition-colors">
+                    취소
+                  </button>
+                </div>
+              </div>
+            </div>
           )}
         </div>
 
-        {/* 탭 */}
+        {/* ── 탭 ──────────────────────────────────────────────────── */}
         <div className="flex mb-4 bg-white rounded-2xl shadow overflow-hidden">
           {TABS.map(t => (
             <button key={t.key} onClick={() => setTab(t.key)}
-              className={`flex-1 py-3 text-sm font-semibold transition-colors ${tab === t.key ? 'bg-blue-500 text-white' : 'text-gray-500 hover:bg-gray-50'}`}>
+              className={`flex-1 py-3 text-sm font-semibold transition-colors ${
+                tab === t.key ? 'bg-blue-500 text-white' : 'text-gray-500 hover:bg-gray-50'
+              }`}>
               {t.label}
             </button>
           ))}
         </div>
 
-        {/* ── 내 정보 탭 ── */}
-        {tab === 'info' && (
-          <div className="bg-white rounded-2xl shadow p-8">
-            <form onSubmit={handleUpdate} className="space-y-3">
-              <p className="text-xs font-semibold text-blue-500 uppercase tracking-wide">회원정보 수정</p>
-              {[
-                { label: '이름', name: 'username', type: 'text' },
-                { label: '이메일', name: 'email', type: 'email' },
-              ].map(f => (
-                <div key={f.name}>
-                  <label className="block text-sm text-gray-600 mb-1">{f.label}</label>
-                  <input type={f.type} value={form[f.name]}
-                    onChange={e => setForm({ ...form, [f.name]: e.target.value })}
-                    className="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100" />
-                </div>
-              ))}
-              <p className="text-xs font-semibold text-blue-500 uppercase tracking-wide pt-2">비밀번호 변경 (선택)</p>
-              {[
-                { label: '현재 비밀번호', name: 'currentPassword' },
-                { label: '새 비밀번호', name: 'newPassword' },
-              ].map(f => (
-                <div key={f.name}>
-                  <label className="block text-sm text-gray-600 mb-1">{f.label}</label>
-                  <input type="password" value={form[f.name]}
-                    onChange={e => setForm({ ...form, [f.name]: e.target.value })}
-                    className="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100" />
-                </div>
-              ))}
-              {updateMsg.text && (
-                <div className={`text-sm text-center px-3 py-2 rounded-lg ${updateMsg.type === 'success' ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'}`}>
-                  {updateMsg.text}
-                </div>
-              )}
-              <button type="submit" disabled={updateLoading}
-                className="w-full py-2.5 bg-blue-500 hover:bg-blue-600 disabled:bg-blue-300 text-white rounded-lg font-medium transition-colors">
-                {updateLoading ? '수정 중...' : '정보 수정'}
-              </button>
-            </form>
-
-            <hr className="my-6 border-gray-200" />
-
-            <div className="bg-red-50 border border-red-200 rounded-xl p-4">
-              <p className="text-xs text-red-600 mb-3">⚠️ 탈퇴 시 모든 정보가 삭제되며 복구할 수 없습니다.</p>
-              <input type="password" placeholder="현재 비밀번호 입력" value={deletePassword}
-                onChange={e => setDeletePassword(e.target.value)}
-                className="w-full px-4 py-2.5 border border-red-200 rounded-lg text-sm focus:outline-none focus:border-red-400 focus:ring-2 focus:ring-red-100 mb-2" />
-              {deleteMsg && <p className="text-xs text-red-600 mb-2">{deleteMsg}</p>}
-              <button onClick={handleDelete} disabled={deleteLoading}
-                className="w-full py-2.5 bg-red-500 hover:bg-red-600 disabled:bg-red-300 text-white rounded-lg font-medium transition-colors">
-                {deleteLoading ? '처리 중...' : '회원 탈퇴'}
-              </button>
-            </div>
-          </div>
-        )}
-
-        {/* ── 내 글 탭 ── */}
+        {/* ── 내 글 ───────────────────────────────────────────────── */}
         {tab === 'posts' && (
           <div className="bg-white rounded-2xl shadow overflow-hidden">
             {myPostsLoading ? (
@@ -346,7 +380,7 @@ export default function MyPage() {
           </div>
         )}
 
-        {/* ── 내 댓글 탭 ── */}
+        {/* ── 내 댓글 ─────────────────────────────────────────────── */}
         {tab === 'comments' && (
           <div className="bg-white rounded-2xl shadow overflow-hidden">
             {myCommentsLoading ? (
@@ -376,7 +410,7 @@ export default function MyPage() {
           </div>
         )}
 
-        {/* ── 북마크 탭 ── */}
+        {/* ── 북마크 ──────────────────────────────────────────────── */}
         {tab === 'bookmarks' && (
           <div className="bg-white rounded-2xl shadow overflow-hidden">
             {bookmarksLoading ? (
@@ -416,7 +450,7 @@ export default function MyPage() {
           </div>
         )}
 
-        {/* ── 좋아요한 글 탭 ── */}
+        {/* ── 좋아요 ──────────────────────────────────────────────── */}
         {tab === 'likes' && (
           <div className="bg-white rounded-2xl shadow overflow-hidden">
             {myLikesLoading ? (
@@ -452,7 +486,7 @@ export default function MyPage() {
           </div>
         )}
 
-        {/* ── 받은 답변 탭 ── */}
+        {/* ── 받은 답변 ────────────────────────────────────────────── */}
         {tab === 'answers' && (
           <div className="bg-white rounded-2xl shadow overflow-hidden">
             {myAnswersLoading ? (
@@ -466,8 +500,7 @@ export default function MyPage() {
             ) : (
               <div className="divide-y divide-gray-100">
                 {myAnswers.map(answer => (
-                  <div key={answer.answerId}
-                    className="px-6 py-4 hover:bg-gray-50 cursor-pointer"
+                  <div key={answer.answerId} className="px-6 py-4 hover:bg-gray-50 cursor-pointer"
                     onClick={() => navigate(`/board/${answer.postId}?returnTo=${encodeURIComponent('/mypage?tab=answers')}`)}>
                     <div className="flex items-center gap-2 mb-1.5">
                       <span className={`shrink-0 px-2 py-0.5 rounded-full text-xs font-medium ${getBadgeClass(answer.boardCode)}`}>
