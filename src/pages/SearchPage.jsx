@@ -151,9 +151,11 @@ export default function SearchPage() {
     setSearchParams({ keyword, tab: activeTab, ...(page > 0 ? { page: String(page + 1) } : {}) });
   };
 
-  const goToDetail = (postId) => {
-    const currentSearch = `/search?keyword=${encodeURIComponent(keyword)}&tab=${activeTab}`;
-    navigate(`/board/${postId}?returnTo=${encodeURIComponent(currentSearch)}`);
+  const goToDetail = (postId, boardCode, boardGroup) => {
+    const returnTo = boardGroup === 'SUPPORT'
+      ? `/support?scope=${boardCode}`
+      : `/community?scope=${boardCode}`;
+    navigate(`/board/${postId}?returnTo=${encodeURIComponent(returnTo)}`);
   };
 
   // 탭 목록: 전체 + 결과 있는 게시판들
@@ -265,7 +267,7 @@ export default function SearchPage() {
                               <PostRow
                                 key={post.id}
                                 post={post}
-                                onClick={() => goToDetail(post.id)}
+                                onClick={() => goToDetail(post.id, post.boardCode, section.board.boardGroup)}
                               />
                             ))}
                           </div>
@@ -295,7 +297,10 @@ export default function SearchPage() {
                       <PostRow
                         key={post.id}
                         post={post}
-                        onClick={() => goToDetail(post.id)}
+                        onClick={() => {
+                          const board = boards.find(b => b.code === post.boardCode);
+                          goToDetail(post.id, post.boardCode, board?.boardGroup ?? 'COMMUNITY');
+                        }}
                       />
                     ))}
                     {tabTotalPages > 1 && (
