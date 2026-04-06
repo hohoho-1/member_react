@@ -81,7 +81,10 @@ export default function SearchPage() {
   const [tabTotalPages, setTabTotalPages] = useState(0);
   const [tabLoading, setTabLoading] = useState(false);
 
-  // 게시판 목록 (탭 구성용)
+  // 탭 목록: 전체 + 게시판별 검색 건수 (섹션과 별도로 항상 로드)
+  const [tabCounts, setTabCounts] = useState({});
+  const [tabCountsLoading, setTabCountsLoading] = useState(false);
+
   const [boards, setBoards] = useState([]);
 
   useEffect(() => {
@@ -89,6 +92,25 @@ export default function SearchPage() {
       .then(r => r.ok ? r.json() : [])
       .then(setBoards);
   }, []);
+
+  // keyword 바뀔 때마다 게시판별 건수 로드 (탭 표시용)
+  useEffect(() => {
+    if (!keyword) { setTabCounts({}); return; }
+    setTabCountsLoading(true);
+    authFetch('/api/boards').then(r => r.ok ? r.json() : []).then(async (allBoards) => {
+      const counts = {};
+      await Promise.all(allBoards.map(async (board) => {
+        const params = new URLSearchParams({ scope: board.code, keyword, page: '0', size: '1' });
+        const res = await authFetch(`/api/posts?${params}`);
+        if (res.ok) {
+          const data = await res.json();
+          counts[board.code] = data.totalElements;
+        }
+      }));
+      setTabCounts(counts);
+      setTabCountsLoading(false);
+    });
+  }, [keyword]);
 
   useEffect(() => {
     if (!keyword) { setSections({}); setTabPosts([]); return; }
@@ -159,10 +181,7 @@ export default function SearchPage() {
   };
 
   // 탭 목록: 전체 + 결과 있는 게시판들
-  const totalCount = Object.values(sections).reduce((sum, s) => sum + s.total, 0);
-  const boardTabCounts = Object.fromEntries(
-    Object.entries(sections).map(([code, s]) => [code, s.total])
-  );
+  const totalCount = Object.values(tabCounts).reduce((sum, c) => sum + c, 0);
 
   return (
     <div className="bg-gray-100 min-h-screen py-8 px-4">
@@ -216,14 +235,14 @@ export default function SearchPage() {
                 }`}>
                 전체 {activeTab === 'all' && totalCount > 0 ? totalCount : ''}
               </button>
-              {boards.filter(b => boardTabCounts[b.code] > 0 || activeTab === b.code).map(board => (
+              {boards.filter(b => tabCounts[b.code] > 0).map(board => (
                 <button
                   key={board.code}
                   onClick={() => handleTabChange(board.code)}
                   className={`shrink-0 px-5 py-3 text-sm font-semibold transition-colors whitespace-nowrap ${
                     activeTab === board.code ? 'bg-blue-500 text-white' : 'text-gray-500 hover:bg-gray-50'
                   }`}>
-                  {board.name} {boardTabCounts[board.code] > 0 ? boardTabCounts[board.code] : ''}
+                  {board.name} {tabCounts[board.code] > 0 ? tabCounts[board.code] : ''}
                 </button>
               ))}
             </div>
