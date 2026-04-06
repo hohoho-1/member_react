@@ -86,17 +86,13 @@ export default function NotificationBell({ showProfile = true }) {
     }
     setOpen(false);
     if (noti.postId) {
-      // 알림 타입별 returnTo 분기
+      // 게시판 그룹별 목록 경로 결정
       const returnTo = (() => {
-        switch (noti.type) {
-          case 'ANSWER': return '/mypage?tab=answers';
-          default:       return null; // 댓글/좋아요 등은 이전 게시판 목록으로 돌아갈 맥락이 없으므로 기본값 사용
-        }
+        if (noti.boardGroup === 'COMMUNITY') return `/community?scope=${noti.boardCode}`;
+        if (noti.boardGroup === 'SUPPORT')   return `/support?scope=${noti.boardCode}`;
+        return '/community'; // 폴백
       })();
-      const query = returnTo
-        ? `?returnTo=${encodeURIComponent(returnTo)}`
-        : '';
-      navigate(`/board/${noti.postId}${query}`);
+      navigate(`/board/${noti.postId}?returnTo=${encodeURIComponent(returnTo)}`);
     }
   };
 
