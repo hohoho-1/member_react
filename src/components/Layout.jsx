@@ -1,6 +1,6 @@
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { authFetch, getTokenPayload, isAdmin, logout } from '../utils/authFetch';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import NotificationBell from './NotificationBell';
 import UserAvatar from './UserAvatar';
 
@@ -10,6 +10,8 @@ export default function Layout({ children }) {
   const payload = getTokenPayload();
   const isLoggedIn = !!payload;
   const [myProfile, setMyProfile] = useState(null);
+  const [searchInput, setSearchInput] = useState('');
+  const isComposing = useRef(false);
 
   useEffect(() => {
     if (isLoggedIn) {
@@ -20,6 +22,12 @@ export default function Layout({ children }) {
   const handleLogout = async () => {
     await authFetch('/api/users/logout', { method: 'POST' });
     logout();
+  };
+
+  const handleSearch = () => {
+    if (!searchInput.trim()) return;
+    navigate(`/search?keyword=${encodeURIComponent(searchInput.trim())}`);
+    setSearchInput('');
   };
 
   const isActive = (path) => location.pathname.startsWith(path);
@@ -66,6 +74,20 @@ export default function Layout({ children }) {
                 </Link>
               )}
             </nav>
+          </div>
+
+          {/* 중앙: 검색창 */}
+          <div className="flex items-center gap-1 flex-1 max-w-xs mx-4">
+            <input
+              type="text"
+              value={searchInput}
+              onChange={e => setSearchInput(e.target.value)}
+              onCompositionStart={() => { isComposing.current = true; }}
+              onCompositionEnd={() => { isComposing.current = false; }}
+              onKeyDown={e => { if (e.key === 'Enter' && !isComposing.current) handleSearch(); }}
+              placeholder="🔍 통합검색"
+              className="flex-1 px-3 py-1.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-blue-400 bg-gray-50"
+            />
           </div>
 
           {/* 우측: 프로필 + 알림 + 로그인/로그아웃 */}

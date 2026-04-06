@@ -7,6 +7,7 @@ import MyPage from './pages/MyPage';
 import AdminPage from './pages/AdminPage';
 import ForbiddenPage from './pages/ForbiddenPage';
 import AdminUserDetailPage from './pages/AdminUserDetailPage';
+import SearchPage from './pages/SearchPage';
 import CommunityPage from './pages/CommunityPage';
 import SupportPage from './pages/SupportPage';
 import PostDetailPage from './pages/PostDetailPage';
@@ -24,6 +25,9 @@ function App() {
         <Route path="/admin" element={<Layout><AdminPage /></Layout>} />
         <Route path="/admin/users/:id" element={<Layout><AdminUserDetailPage /></Layout>} />
         <Route path="/forbidden" element={<Layout><ForbiddenPage /></Layout>} />
+
+        {/* 통합 검색 */}
+        <Route path="/search" element={<Layout><SearchPage /></Layout>} />
 
         {/* 기존 /board는 자유게시판으로 redirect (하위 호환) */}
         <Route path="/board" element={<Navigate to="/community?scope=FREE" replace />} />
