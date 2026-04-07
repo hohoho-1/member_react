@@ -328,7 +328,7 @@ export default function SchedulePage() {
           style={{ height: 620 }}
           culture="ko"
           defaultView="month"
-          views={['month']}
+          views={['month', 'week']}
           onNavigate={handleNavigate}
           onSelectEvent={handleSelectEvent}
           onSelectSlot={handleSelectSlot}
@@ -340,6 +340,7 @@ export default function SchedulePage() {
             previous: '◀',
             today: '오늘',
             month: '월',
+            week: '주',
             noEventsInRange: '이 기간에 일정이 없습니다.',
             showMore: count => `+${count}개 더보기`,
           }}
