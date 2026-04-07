@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
+import { useNavigate, useParams, useSearchParams, useLocation } from 'react-router-dom';
 import { authFetch, getTokenPayload } from '../utils/authFetch';
 import UserAvatar from '../components/UserAvatar';
 
@@ -112,7 +112,7 @@ function FaqAccordion({ title, content }) {
     <div className={`border rounded-xl overflow-hidden transition-all ${open ? 'border-green-300 shadow-sm' : 'border-gray-200'}`}>
       <button
         onClick={() => setOpen(v => !v)}
-        className={`w-full flex items-start justify-between gap-3 px-5 py-4 text-left transition-colors ${open ? 'bg-green-50' : 'bg-white hover:bg-gray-50'}`}
+        className={`w-full flex items-start justify-between gap-3 px-5 py-4 text-left transition-colors ${open ? 'bg-green-50 dark:bg-green-950' : 'bg-white hover:bg-gray-50'}`}
       >
         <div className="flex items-start gap-3">
           <span className="shrink-0 mt-0.5 w-6 h-6 rounded-full bg-green-500 text-white text-xs font-bold flex items-center justify-center">Q</span>
@@ -121,7 +121,7 @@ function FaqAccordion({ title, content }) {
         <span className={`shrink-0 text-green-500 text-lg transition-transform duration-200 ${open ? 'rotate-180' : ''}`}>⌄</span>
       </button>
       {open && (
-        <div className="px-5 py-4 bg-white border-t border-green-100">
+        <div className="px-5 py-4 bg-white dark:bg-gray-800 border-t border-green-100 dark:border-green-900">
           <div className="flex items-start gap-3">
             <span className="shrink-0 mt-0.5 w-6 h-6 rounded-full bg-gray-200 text-gray-500 text-xs font-bold flex items-center justify-center">A</span>
             <p className="text-sm text-gray-600 whitespace-pre-wrap leading-relaxed">{content}</p>
@@ -139,18 +139,18 @@ function AnswerItem({ answer, isAdmin, onEdit, onDelete, colorScheme = 'amber' }
 
   const colors = {
     amber: {
-      bg: 'bg-amber-50', border: 'border-amber-200',
+      bg: 'bg-amber-50 dark:bg-amber-950', border: 'border-amber-200 dark:border-amber-800',
       badge: 'bg-amber-500',
-      inputBorder: 'border-amber-300',
+      inputBorder: 'border-amber-300 dark:border-amber-700',
       saveBg: 'bg-amber-500 hover:bg-amber-600',
-      editText: 'text-amber-600', editHover: 'hover:bg-amber-100',
+      editText: 'text-amber-600 dark:text-amber-400', editHover: 'hover:bg-amber-100 dark:hover:bg-amber-900',
     },
     teal: {
-      bg: 'bg-teal-50', border: 'border-teal-200',
+      bg: 'bg-teal-50 dark:bg-teal-950', border: 'border-teal-200 dark:border-teal-800',
       badge: 'bg-teal-500',
-      inputBorder: 'border-teal-300',
+      inputBorder: 'border-teal-300 dark:border-teal-700',
       saveBg: 'bg-teal-500 hover:bg-teal-600',
-      editText: 'text-teal-600', editHover: 'hover:bg-teal-100',
+      editText: 'text-teal-600 dark:text-teal-400', editHover: 'hover:bg-teal-100 dark:hover:bg-teal-900',
     },
   };
   const c = colors[colorScheme] ?? colors.amber;
@@ -175,7 +175,7 @@ function AnswerItem({ answer, isAdmin, onEdit, onDelete, colorScheme = 'amber' }
           {isEditing ? (
             <div className="flex gap-2">
               <textarea value={editContent} onChange={e => setEditContent(e.target.value)}
-                className={`flex-1 px-3 py-2 border ${c.inputBorder} rounded-lg text-sm focus:outline-none resize-none bg-white`} rows={4} />
+                className={`flex-1 px-3 py-2 border ${c.inputBorder} rounded-lg text-sm focus:outline-none resize-none bg-white dark:bg-gray-800`} rows={4} />
               <div className="flex flex-col gap-1 shrink-0">
                 <button onClick={handleSave} className={`px-3 py-1 ${c.saveBg} text-white rounded-lg text-xs font-medium`}>저장</button>
                 <button onClick={() => { setIsEditing(false); setEditContent(answer.content); }}
@@ -203,6 +203,7 @@ function AnswerItem({ answer, isAdmin, onEdit, onDelete, colorScheme = 'amber' }
 export default function PostDetailPage() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const [searchParams] = useSearchParams();
 
   const boardScope   = searchParams.get('scope') ?? searchParams.get('category') ?? 'ALL';
@@ -363,7 +364,7 @@ export default function PostDetailPage() {
   };
 
   const handleLikeComment = async (commentId) => {
-    if (!isLoggedIn) { navigate('/login'); return; }
+    if (!isLoggedIn) { navigate('/login', { state: { from: location } }); return; }
     const res = await authFetch(`/api/posts/${id}/comments/${commentId}/like`, { method: 'POST' });
     if (res.ok) {
       const data = await res.json();
@@ -377,7 +378,7 @@ export default function PostDetailPage() {
   };
 
   const handleToggleLike = async () => {
-    if (!isLoggedIn) { navigate('/login'); return; }
+    if (!isLoggedIn) { navigate('/login', { state: { from: location } }); return; }
     setLikeLoading(true);
     const res = await authFetch(`/api/posts/${id}/like`, { method: 'POST' });
     if (res.ok) { const d = await res.json(); setLikeCount(d.likeCount); setLikedByMe(d.liked); }
@@ -385,7 +386,7 @@ export default function PostDetailPage() {
   };
 
   const handleToggleBookmark = async () => {
-    if (!isLoggedIn) { navigate('/login'); return; }
+    if (!isLoggedIn) { navigate('/login', { state: { from: location } }); return; }
     setBookmarkLoading(true);
     const res = await authFetch(`/api/users/me/bookmarks/${id}`, { method: 'POST' });
     if (res.ok) { const d = await res.json(); setBookmarkedByMe(d.bookmarked); }
@@ -631,7 +632,7 @@ export default function PostDetailPage() {
               💡 답변 <span className="text-amber-500">{answers.length}</span>
             </h2>
             {answers.length === 0 ? (
-              <p className="text-sm text-gray-400 text-center py-6 bg-amber-50 rounded-xl">아직 등록된 답변이 없습니다.</p>
+              <p className="text-sm text-gray-400 text-center py-6 bg-amber-50 dark:bg-amber-950 rounded-xl">아직 등록된 답변이 없습니다.</p>
             ) : (
               <div className="space-y-4 mb-6">
                 {answers.map(answer => (
@@ -648,7 +649,7 @@ export default function PostDetailPage() {
                   <textarea value={answerInput} onChange={e => setAnswerInput(e.target.value)}
                     onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSubmitAnswer(); } }}
                     placeholder="답변을 입력하세요... (Shift+Enter 줄바꿈)"
-                    className="flex-1 px-4 py-3 border border-amber-200 rounded-xl text-sm focus:outline-none focus:border-amber-400 resize-none bg-amber-50" rows={3} />
+                    className="flex-1 px-4 py-3 border border-amber-200 dark:border-amber-700 rounded-xl text-sm focus:outline-none focus:border-amber-400 resize-none bg-amber-50 dark:bg-amber-950" rows={3} />
                   <button onClick={handleSubmitAnswer} disabled={answerLoading || !answerInput.trim()}
                     className="px-5 py-2 bg-amber-500 hover:bg-amber-600 disabled:bg-amber-200 text-white rounded-xl text-sm font-medium transition-colors self-end">
                     {answerLoading ? '...' : '등록'}
@@ -666,7 +667,7 @@ export default function PostDetailPage() {
               💬 답변 <span className="text-teal-500">{answers.length}</span>
             </h2>
             {answers.length === 0 ? (
-              <p className="text-sm text-gray-400 text-center py-6 bg-teal-50 rounded-xl">아직 등록된 답변이 없습니다.</p>
+              <p className="text-sm text-gray-400 text-center py-6 bg-teal-50 dark:bg-teal-950 rounded-xl">아직 등록된 답변이 없습니다.</p>
             ) : (
               <div className="space-y-4 mb-6">
                 {answers.map(answer => (
@@ -683,7 +684,7 @@ export default function PostDetailPage() {
                   <textarea value={answerInput} onChange={e => setAnswerInput(e.target.value)}
                     onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSubmitAnswer(); } }}
                     placeholder="답변을 입력하세요... (Shift+Enter 줄바꿈)"
-                    className="flex-1 px-4 py-3 border border-teal-200 rounded-xl text-sm focus:outline-none focus:border-teal-400 resize-none bg-teal-50" rows={3} />
+                    className="flex-1 px-4 py-3 border border-teal-200 dark:border-teal-700 rounded-xl text-sm focus:outline-none focus:border-teal-400 resize-none bg-teal-50 dark:bg-teal-950" rows={3} />
                   <button onClick={handleSubmitAnswer} disabled={answerLoading || !answerInput.trim()}
                     className="px-5 py-2 bg-teal-500 hover:bg-teal-600 disabled:bg-teal-200 text-white rounded-xl text-sm font-medium transition-colors self-end">
                     {answerLoading ? '...' : '등록'}
@@ -734,7 +735,7 @@ export default function PostDetailPage() {
             ) : (
               <p className="text-sm text-gray-400 text-center py-3">
                 댓글을 작성하려면{' '}
-                <button onClick={() => navigate('/login')} className="text-blue-500 hover:underline">로그인</button>이 필요합니다.
+                <button onClick={() => navigate('/login', { state: { from: location } })} className="text-blue-500 hover:underline">로그인</button>이 필요합니다.
               </p>
             )}
           </div>

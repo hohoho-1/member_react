@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { authFetch, getTokenPayload } from '../utils/authFetch';
 import UserAvatar from '../components/UserAvatar';
 
 export default function HomePage() {
   const navigate = useNavigate();
+  const location = useLocation();
   const payload = getTokenPayload();
   const isAdmin = payload?.role === 'ROLE_ADMIN';
 
@@ -18,12 +19,13 @@ export default function HomePage() {
 
   useEffect(() => {
     const init = async () => {
-      // 유저 정보
-      const userRes = await authFetch('/api/users/me');
-      if (!userRes.ok) { navigate('/login'); return; }
-      setUser(await userRes.json());
+      // 유저 정보 (로그인 상태일 때만)
+      if (payload) {
+        const userRes = await authFetch('/api/users/me');
+        if (userRes.ok) setUser(await userRes.json());
+      }
 
-      // 홈 위젯 데이터
+      // 홈 위젯 데이터 (비로그인도 가능)
       const homeRes = await authFetch('/api/posts/home');
       if (homeRes.ok) {
         const data = await homeRes.json();
@@ -36,7 +38,7 @@ export default function HomePage() {
       setLoading(false);
     };
     init();
-  }, [navigate]);
+  }, []);
 
   const timeAgo = (dateStr) => {
     const diff = Date.now() - new Date(dateStr).getTime();
@@ -60,39 +62,61 @@ export default function HomePage() {
     return map[code] ?? { label: code, cls: 'bg-gray-100 text-gray-600' };
   };
 
-  if (!user || loading) return (
+  if (loading) return (
     <div className="flex items-center justify-center py-20 text-gray-400">로딩 중...</div>
   );
+
+  const isLoggedIn = !!payload;
 
   return (
     <div className="bg-gray-100 min-h-screen p-6">
       <div className="max-w-4xl mx-auto space-y-6">
 
         {/* ── 환영 배너 ── */}
-        <div className="bg-gradient-to-r from-blue-500 to-blue-400 rounded-2xl shadow p-6 flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <UserAvatar profileImageUrl={user.profileImageUrl} username={user.username} size={14} />
-            <div>
-              <p className="text-blue-100 text-sm">안녕하세요 👋</p>
-              <p className="text-white text-xl font-bold">{user.username}님</p>
-              <span className={`inline-block mt-1 px-2.5 py-0.5 rounded-full text-xs font-semibold ${
-                isAdmin ? 'bg-yellow-300 text-yellow-900' : 'bg-blue-200 text-blue-800'
-              }`}>
-                {isAdmin ? '👑 관리자' : '일반회원'}
-              </span>
+        {isLoggedIn && user ? (
+          <div className="bg-gradient-to-r from-blue-500 to-blue-400 rounded-2xl shadow p-6 flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <UserAvatar profileImageUrl={user.profileImageUrl} username={user.username} size={14} />
+              <div>
+                <p className="text-blue-100 text-sm">안녕하세요 👋</p>
+                <p className="text-white text-xl font-bold">{user.username}님</p>
+                <span className={`inline-block mt-1 px-2.5 py-0.5 rounded-full text-xs font-semibold ${
+                  isAdmin ? 'bg-yellow-300 text-yellow-900' : 'bg-blue-200 text-blue-800'
+                }`}>
+                  {isAdmin ? '👑 관리자' : '일반회원'}
+                </span>
+              </div>
+            </div>
+            <div className="hidden sm:flex flex-col items-end gap-2">
+              <button onClick={() => navigate('/community?scope=FREE')}
+                className="px-4 py-2 bg-white bg-opacity-20 hover:bg-opacity-30 text-white rounded-xl text-sm font-medium transition-colors">
+                📋 게시판 바로가기
+              </button>
+              <button onClick={() => navigate('/mypage')}
+                className="px-4 py-2 bg-white bg-opacity-20 hover:bg-opacity-30 text-white rounded-xl text-sm font-medium transition-colors">
+                👤 마이페이지
+              </button>
             </div>
           </div>
-          <div className="hidden sm:flex flex-col items-end gap-2">
-            <button onClick={() => navigate('/community?scope=FREE')}
-              className="px-4 py-2 bg-white bg-opacity-20 hover:bg-opacity-30 text-white rounded-xl text-sm font-medium transition-colors">
-              📋 게시판 바로가기
-            </button>
-            <button onClick={() => navigate('/mypage')}
-              className="px-4 py-2 bg-white bg-opacity-20 hover:bg-opacity-30 text-white rounded-xl text-sm font-medium transition-colors">
-              👤 마이페이지
-            </button>
+        ) : (
+          <div className="bg-gradient-to-r from-blue-500 to-blue-400 rounded-2xl shadow p-6 flex items-center justify-between">
+            <div>
+              <p className="text-blue-100 text-sm">환영합니다 👋</p>
+              <p className="text-white text-xl font-bold">커뮤니티에 오신 걸 환영해요!</p>
+              <p className="text-blue-100 text-sm mt-1">로그인하면 글쓰기, 좋아요, 북마크 등 더 많은 기능을 이용할 수 있어요.</p>
+            </div>
+            <div className="hidden sm:flex flex-col items-end gap-2 shrink-0 ml-4">
+              <button onClick={() => navigate('/login', { state: { from: location } })}
+                className="px-4 py-2 bg-white text-blue-500 hover:bg-blue-50 rounded-xl text-sm font-bold transition-colors">
+                🔐 로그인
+              </button>
+              <button onClick={() => navigate('/signup')}
+                className="px-4 py-2 bg-white bg-opacity-20 hover:bg-opacity-30 text-white rounded-xl text-sm font-medium transition-colors">
+                ✍️ 회원가입
+              </button>
+            </div>
           </div>
-        </div>
+        )}
 
         {/* ── 빠른 이동 ── */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">

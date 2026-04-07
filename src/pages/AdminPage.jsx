@@ -16,7 +16,7 @@ function DeletedPostModal({ post, onClose, onRestore, onPermanentDelete }) {
   return (
     <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50"
       onClick={onClose}>
-      <div className="bg-white rounded-2xl shadow-xl w-[480px] p-8"
+      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl w-[480px] p-8"
         onClick={e => e.stopPropagation()}>
         <div className="flex justify-between items-center mb-6">
           <h3 className="text-lg font-bold text-gray-700">📝 삭제된 게시글 상세</h3>
@@ -39,11 +39,11 @@ function DeletedPostModal({ post, onClose, onRestore, onPermanentDelete }) {
 
         <h4 className="text-base font-semibold text-gray-700 mb-3">{post.title}</h4>
 
-        <div className="bg-gray-50 rounded-xl p-4 text-sm text-gray-600 mb-4 max-h-40 overflow-y-auto whitespace-pre-wrap leading-relaxed">
+        <div className="bg-gray-50 dark:bg-gray-700 rounded-xl p-4 text-sm text-gray-600 mb-4 max-h-40 overflow-y-auto whitespace-pre-wrap leading-relaxed">
           {post.content || <span className="text-gray-400">내용 없음</span>}
         </div>
 
-        <div className="bg-gray-50 rounded-xl p-4 space-y-2 text-sm mb-6">
+        <div className="bg-gray-50 dark:bg-gray-700 rounded-xl p-4 space-y-2 text-sm mb-6">
           <div className="flex justify-between">
             <span className="text-gray-400">번호</span>
             <span className="font-medium text-gray-600">{post.id}</span>
@@ -91,7 +91,7 @@ function DeletedUserModal({ user, onClose, onRestore, onPermanentDelete }) {
   return (
     <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50"
       onClick={onClose}>
-      <div className="bg-white rounded-2xl shadow-xl w-[400px] p-8"
+      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl w-[400px] p-8"
         onClick={e => e.stopPropagation()}>
         <div className="flex justify-between items-center mb-6">
           <h3 className="text-lg font-bold text-gray-700">🗑️ 탈퇴 회원 상세</h3>
@@ -107,7 +107,7 @@ function DeletedUserModal({ user, onClose, onRestore, onPermanentDelete }) {
           </div>
           <span className="ml-auto px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-500">탈퇴</span>
         </div>
-        <div className="bg-gray-50 rounded-xl p-4 space-y-2 text-sm mb-6">
+        <div className="bg-gray-50 dark:bg-gray-700 rounded-xl p-4 space-y-2 text-sm mb-6">
           <div className="flex justify-between">
             <span className="text-gray-400">ID</span>
             <span className="font-medium text-gray-600">{user.id}</span>
@@ -244,6 +244,121 @@ function SortableBoardItem({ board, onToggleActive, onEdit, onDelete, isDragging
   );
 }
 
+// ── 일정 생성/수정 모달 ──────────────────────────────────────────────────
+const SCHEDULE_COLORS = [
+  { label: '파랑', value: '#3B82F6' },
+  { label: '초록', value: '#10B981' },
+  { label: '빨강', value: '#EF4444' },
+  { label: '주황', value: '#F97316' },
+  { label: '보라', value: '#8B5CF6' },
+  { label: '분홍', value: '#EC4899' },
+  { label: '하늘', value: '#06B6D4' },
+  { label: '노랑', value: '#EAB308' },
+];
+
+const SCHEDULE_FORM_DEFAULT = {
+  title: '', content: '', startDate: '', endDate: '', color: '#3B82F6',
+};
+
+function ScheduleFormModal({ schedule, onClose, onSave }) {
+  const isEdit = !!schedule?.id;
+  const [form, setForm] = useState(
+    isEdit ? {
+      id: schedule.id,
+      title: schedule.title,
+      content: schedule.content ?? '',
+      startDate: schedule.startDate,
+      endDate: schedule.endDate,
+      color: schedule.color ?? '#3B82F6',
+    } : { ...SCHEDULE_FORM_DEFAULT }
+  );
+  const [error, setError] = useState('');
+
+  const set = (key, val) => setForm(prev => ({ ...prev, [key]: val }));
+
+  const handleSubmit = async () => {
+    if (!form.title.trim()) { setError('일정 제목을 입력하세요.'); return; }
+    if (!form.startDate) { setError('시작일을 입력하세요.'); return; }
+    if (!form.endDate) { setError('종료일을 입력하세요.'); return; }
+    if (form.endDate < form.startDate) { setError('종료일은 시작일 이후여야 합니다.'); return; }
+    setError('');
+    await onSave(form, isEdit);
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50" onClick={onClose}>
+      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl w-[480px] max-h-[90vh] overflow-y-auto p-8"
+        onClick={e => e.stopPropagation()}>
+        <div className="flex justify-between items-center mb-6">
+          <h3 className="text-lg font-bold text-gray-700">
+            {isEdit ? '📝 일정 수정' : '➕ 일정 등록'}
+          </h3>
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 text-xl font-bold">×</button>
+        </div>
+
+        <div className="space-y-4">
+          {/* 제목 */}
+          <div>
+            <label className="block text-xs font-semibold text-gray-500 mb-1">제목 <span className="text-red-400">*</span></label>
+            <input value={form.title} onChange={e => set('title', e.target.value)}
+              placeholder="일정 제목"
+              className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-teal-400" />
+          </div>
+
+          {/* 시작일 / 종료일 */}
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-xs font-semibold text-gray-500 mb-1">시작일 <span className="text-red-400">*</span></label>
+              <input type="date" value={form.startDate} onChange={e => set('startDate', e.target.value)}
+                className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-teal-400" />
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-gray-500 mb-1">종료일 <span className="text-red-400">*</span></label>
+              <input type="date" value={form.endDate} onChange={e => set('endDate', e.target.value)}
+                className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-teal-400" />
+            </div>
+          </div>
+
+          {/* 색상 */}
+          <div>
+            <label className="block text-xs font-semibold text-gray-500 mb-2">색상</label>
+            <div className="flex gap-2 flex-wrap">
+              {SCHEDULE_COLORS.map(c => (
+                <button key={c.value} onClick={() => set('color', c.value)}
+                  title={c.label}
+                  style={{ backgroundColor: c.value }}
+                  className={`w-8 h-8 rounded-full transition-transform ${form.color === c.value ? 'scale-125 ring-2 ring-offset-2 ring-gray-400' : 'hover:scale-110'}`} />
+              ))}
+            </div>
+          </div>
+
+          {/* 내용 */}
+          <div>
+            <label className="block text-xs font-semibold text-gray-500 mb-1">내용 (선택)</label>
+            <textarea value={form.content} onChange={e => set('content', e.target.value)}
+              placeholder="일정 상세 내용"
+              rows={3}
+              className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-teal-400 resize-none" />
+          </div>
+
+          {error && <p className="text-sm text-red-500">⚠️ {error}</p>}
+
+          <div className="flex gap-3 pt-2">
+            <button onClick={onClose}
+              className="flex-1 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-600 rounded-xl text-sm font-medium transition-colors">
+              취소
+            </button>
+            <button onClick={handleSubmit}
+              className="flex-1 py-2.5 bg-teal-500 hover:bg-teal-600 text-white rounded-xl text-sm font-medium transition-colors">
+              {isEdit ? '수정 완료' : '일정 등록'}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ── 게시판 생성/수정 모달 ──────────────────────────────────────────────────
 function BoardFormModal({ board, onClose, onSave }) {
   const isEdit = !!board?.code;
@@ -269,7 +384,7 @@ function BoardFormModal({ board, onClose, onSave }) {
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50" onClick={onClose}>
-      <div className="bg-white rounded-2xl shadow-xl w-[500px] max-h-[90vh] overflow-y-auto p-8"
+      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl w-[500px] max-h-[90vh] overflow-y-auto p-8"
         onClick={e => e.stopPropagation()}>
         <div className="flex justify-between items-center mb-6">
           <h3 className="text-lg font-bold text-gray-700">
@@ -329,7 +444,7 @@ function BoardFormModal({ board, onClose, onSave }) {
           </div>
 
           {/* 옵션 체크박스들 */}
-          <div className="bg-gray-50 rounded-xl p-4 space-y-3">
+          <div className="bg-gray-50 dark:bg-gray-700 rounded-xl p-4 space-y-3">
             <p className="text-xs font-semibold text-gray-500 mb-2">옵션 설정</p>
             {[
               { key: 'adminOnly',       label: '관리자만 글쓰기 가능', desc: '공지사항·FAQ 등 관리자 전용 게시판' },
@@ -349,7 +464,7 @@ function BoardFormModal({ board, onClose, onSave }) {
           </div>
 
           {/* 유형 안내 */}
-          <div className="bg-indigo-50 rounded-xl p-4 text-xs text-indigo-700 space-y-1">
+          <div className="bg-indigo-50 dark:bg-indigo-950 rounded-xl p-4 text-xs text-indigo-700 dark:text-indigo-300 space-y-1">
             <p className="font-semibold mb-1">📌 게시판 유형 안내</p>
             <p>• <strong>일반형</strong> — 텍스트 중심 게시판 (자유게시판, 공지사항, 건의사항)</p>
             <p>• <strong>이미지형</strong> — 썸네일 그리드 뷰 (사진갤러리)</p>
@@ -423,6 +538,11 @@ export default function AdminPage() {
   const [boardFormTarget, setBoardFormTarget] = useState(null); // null=닫힘, {}=생성, board=수정
   const [activeDragId, setActiveDragId] = useState(null);
 
+  // 일정 관리 상태
+  const [schedules, setSchedules] = useState([]);
+  const [scheduleLoading, setScheduleLoading] = useState(false);
+  const [scheduleFormTarget, setScheduleFormTarget] = useState(null); // null=닫힘, {}=생성, schedule=수정
+
   const dndSensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
@@ -452,6 +572,8 @@ export default function AdminPage() {
       loadDeletedPosts(0, '');
     } else if (tab === 'boards') {
       loadBoards();
+    } else if (tab === 'schedules') {
+      loadSchedules();
     } else {
       loadUsers(currentPage, keyword, tab);
     }
@@ -706,6 +828,51 @@ export default function AdminPage() {
     }
   };
 
+  // ── 일정 관리 ──────────────────────────────────────────────────────────
+  const loadSchedules = async () => {
+    setScheduleLoading(true);
+    const res = await authFetch('/api/schedules/all');
+    if (res.ok) {
+      const data = await res.json();
+      setSchedules(data);
+    }
+    setScheduleLoading(false);
+  };
+
+  const handleSaveSchedule = async (form, isEdit) => {
+    const url    = isEdit ? `/api/schedules/${form.id}` : '/api/schedules';
+    const method = isEdit ? 'PUT' : 'POST';
+    const res = await authFetch(url, {
+      method, headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(form),
+    });
+    if (res.ok) {
+      const saved = await res.json();
+      if (isEdit) {
+        setSchedules(prev => prev.map(s => s.id === saved.id ? saved : s));
+        showSuccess(`'${saved.title}' 일정이 수정되었습니다.`);
+      } else {
+        setSchedules(prev => [saved, ...prev]);
+        showSuccess(`'${saved.title}' 일정이 등록되었습니다.`);
+      }
+      setScheduleFormTarget(null);
+    } else {
+      const data = await res.json().catch(() => ({}));
+      showError(data.message || (isEdit ? '수정에 실패했습니다.' : '등록에 실패했습니다.'));
+    }
+  };
+
+  const handleDeleteSchedule = async (id, title) => {
+    if (!window.confirm(`'${title}' 일정을 삭제하시겠습니까?`)) return;
+    const res = await authFetch(`/api/schedules/${id}`, { method: 'DELETE' });
+    if (res.ok) {
+      setSchedules(prev => prev.filter(s => s.id !== id));
+      showSuccess(`'${title}' 일정이 삭제되었습니다.`);
+    } else {
+      showError('삭제에 실패했습니다.');
+    }
+  };
+
   const pageNumbers = Array.from({ length: totalPages }, (_, i) => i);
 
   return (
@@ -729,18 +896,25 @@ export default function AdminPage() {
           onSave={handleSaveBoard}
         />
       )}
+      {scheduleFormTarget !== null && (
+        <ScheduleFormModal
+          schedule={scheduleFormTarget}
+          onClose={() => setScheduleFormTarget(null)}
+          onSave={handleSaveSchedule}
+        />
+      )}
       <div className="max-w-4xl mx-auto">
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-2xl font-bold text-gray-700">🛠️ 관리자 페이지</h2>
         </div>
 
         {errorMsg && (
-          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl mb-4 text-sm text-center">
+          <div className="bg-red-50 dark:bg-red-950 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 px-4 py-3 rounded-xl mb-4 text-sm text-center">
             ⚠️ {errorMsg}
           </div>
         )}
         {successMsg && (
-          <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-xl mb-4 text-sm text-center">
+          <div className="bg-green-50 dark:bg-green-950 border border-green-200 dark:border-green-800 text-green-700 dark:text-green-400 px-4 py-3 rounded-xl mb-4 text-sm text-center">
             ✅ {successMsg}
           </div>
         )}
@@ -775,23 +949,23 @@ export default function AdminPage() {
           {aiLoading ? (
             <div className="text-center py-8 text-gray-400 text-sm">AI 인사이트를 불러오는 중입니다...</div>
           ) : aiError ? (
-            <div className="bg-red-50 border border-red-200 text-red-600 rounded-xl px-4 py-3 text-sm">
+            <div className="bg-red-50 dark:bg-red-950 border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 rounded-xl px-4 py-3 text-sm">
               ⚠️ {aiError}
             </div>
           ) : aiInsights ? (
             <div className="space-y-4">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div className="bg-blue-50 rounded-xl px-4 py-3">
+                <div className="bg-blue-50 dark:bg-blue-950 rounded-xl px-4 py-3">
                   <p className="text-xs text-blue-400">활성 게시글 수</p>
                   <p className="text-2xl font-bold text-blue-600">{aiInsights.activePostCount ?? 0}</p>
                 </div>
-                <div className="bg-red-50 rounded-xl px-4 py-3">
+                <div className="bg-red-50 dark:bg-red-950 rounded-xl px-4 py-3">
                   <p className="text-xs text-red-400">삭제 게시글 수</p>
                   <p className="text-2xl font-bold text-red-500">{aiInsights.deletedPostCount ?? 0}</p>
                 </div>
               </div>
 
-              <div className="bg-gray-50 rounded-xl p-4">
+              <div className="bg-gray-50 dark:bg-gray-700 rounded-xl p-4">
                 <p className="text-sm font-semibold text-gray-700 mb-2">카테고리별 게시글</p>
                 {normalizeCategoryStats(aiInsights.categoryStats).length === 0 ? (
                   <p className="text-sm text-gray-400">카테고리 통계 데이터가 없습니다.</p>
@@ -799,7 +973,7 @@ export default function AdminPage() {
                   <div className="flex flex-wrap gap-2">
                     {normalizeCategoryStats(aiInsights.categoryStats).map(stat => (
                       <span key={stat.category}
-                        className="px-3 py-1 rounded-full bg-gray-200 text-gray-600 text-xs font-medium">
+                        className="px-3 py-1 rounded-full bg-gray-200 dark:bg-gray-600 text-gray-600 dark:text-gray-300 text-xs font-medium">
                         {stat.category}: {stat.count}
                       </span>
                     ))}
@@ -807,8 +981,8 @@ export default function AdminPage() {
                 )}
               </div>
 
-              <div className="bg-indigo-50 rounded-xl p-4">
-                <p className="text-sm font-semibold text-indigo-700 mb-2">AI 분석</p>
+              <div className="bg-indigo-50 dark:bg-indigo-950 rounded-xl p-4">
+                <p className="text-sm font-semibold text-indigo-700 dark:text-indigo-300 mb-2">AI 분석</p>
                 {aiInsights.insight ? (
                   <p className="text-sm text-gray-700 whitespace-pre-line">{aiInsights.insight}</p>
                 ) : (
@@ -829,7 +1003,7 @@ export default function AdminPage() {
         </div>
 
         {/* 회원 수 카드 (로그/삭제게시글/게시판관리 탭 제외) */}
-        {tab !== 'logs' && tab !== 'deletedPosts' && tab !== 'boards' && (
+        {tab !== 'logs' && tab !== 'deletedPosts' && tab !== 'boards' && tab !== 'schedules' && (
           <div className="bg-white rounded-2xl shadow p-6 mb-6 text-center">
             <p className="text-4xl font-bold text-blue-500">{totalElements}</p>
             <p className="text-sm text-gray-400 mt-1">
@@ -859,6 +1033,10 @@ export default function AdminPage() {
           <button onClick={() => switchTab('boards')}
             className={`flex-1 py-3 text-sm font-semibold transition-colors ${tab === 'boards' ? 'bg-indigo-500 text-white' : 'text-gray-500 hover:bg-gray-50'}`}>
             📌 게시판 관리
+          </button>
+          <button onClick={() => switchTab('schedules')}
+            className={`flex-1 py-3 text-sm font-semibold transition-colors ${tab === 'schedules' ? 'bg-teal-500 text-white' : 'text-gray-500 hover:bg-gray-50'}`}>
+            📅 일정 관리
           </button>
         </div>
 
@@ -1118,7 +1296,7 @@ export default function AdminPage() {
             )}
 
             {/* 안내 */}
-            <div className="px-6 py-3 bg-gray-50 border-t border-gray-100">
+            <div className="px-6 py-3 bg-gray-50 dark:bg-gray-700 border-t border-gray-100 dark:border-gray-600">
               <p className="text-xs text-gray-400">
                 💡 ⠿ 핸들을 드래그해서 순서를 변경하세요. 드롭하면 자동으로 저장됩니다. &nbsp;|&nbsp; 비활성 게시판은 사용자 화면에서 숨겨집니다.
               </p>
@@ -1127,7 +1305,7 @@ export default function AdminPage() {
         )}
 
         {/* ── 활성/탈퇴 회원 탭 ── */}
-        {tab !== 'logs' && tab !== 'deletedPosts' && tab !== 'boards' && (
+        {tab !== 'logs' && tab !== 'deletedPosts' && tab !== 'boards' && tab !== 'schedules' && (
           <div className="bg-white rounded-2xl shadow overflow-hidden">
             <div className="flex justify-between items-center px-6 py-4 border-b border-gray-100">
               <span className="font-semibold text-gray-700">
@@ -1232,6 +1410,62 @@ export default function AdminPage() {
                     className="px-3 py-1.5 rounded-lg text-sm font-medium transition-colors disabled:text-gray-300 disabled:cursor-not-allowed text-gray-500 hover:bg-gray-100">›</button>
                 </div>
               </>
+            )}
+          </div>
+        )}
+
+        {/* ── 일정 관리 탭 ── */}
+        {tab === 'schedules' && (
+          <div className="bg-white rounded-2xl shadow overflow-hidden">
+            <div className="flex justify-between items-center px-6 py-4 border-b border-gray-100">
+              <span className="font-semibold text-gray-700">
+                일정 목록
+                <span className="ml-2 text-sm text-gray-400">({schedules.length}건)</span>
+              </span>
+              <button onClick={() => setScheduleFormTarget({})}
+                className="px-4 py-2 bg-teal-500 hover:bg-teal-600 text-white rounded-lg text-sm font-medium transition-colors">
+                + 일정 등록
+              </button>
+            </div>
+
+            {scheduleLoading ? (
+              <div className="text-center py-10 text-gray-400">로딩 중...</div>
+            ) : schedules.length === 0 ? (
+              <div className="text-center py-10 text-gray-400">등록된 일정이 없습니다.</div>
+            ) : (
+              <div className="divide-y divide-gray-50">
+                {schedules.map(s => (
+                  <div key={s.id} className="flex items-center gap-4 px-6 py-4 hover:bg-gray-50 transition-colors">
+                    {/* 색상 바 */}
+                    <div className="w-1.5 h-12 rounded-full shrink-0" style={{ backgroundColor: s.color ?? '#3B82F6' }} />
+
+                    {/* 일정 정보 */}
+                    <div className="flex-1 min-w-0">
+                      <p className="font-semibold text-sm text-gray-800 truncate">{s.title}</p>
+                      <p className="text-xs text-gray-400 mt-0.5">
+                        {s.startDate} ~ {s.endDate}
+                        <span className="ml-2 text-gray-300">|</span>
+                        <span className="ml-2">{s.authorName}</span>
+                      </p>
+                      {s.content && (
+                        <p className="text-xs text-gray-400 mt-0.5 truncate">{s.content}</p>
+                      )}
+                    </div>
+
+                    {/* 버튼 */}
+                    <div className="flex gap-1 shrink-0">
+                      <button onClick={() => setScheduleFormTarget(s)}
+                        className="px-2 py-1.5 bg-blue-50 hover:bg-blue-100 text-blue-600 rounded-lg text-xs font-medium transition-colors">
+                        수정
+                      </button>
+                      <button onClick={() => handleDeleteSchedule(s.id, s.title)}
+                        className="px-2 py-1.5 bg-red-50 hover:bg-red-100 text-red-500 rounded-lg text-xs font-medium transition-colors">
+                        삭제
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
             )}
           </div>
         )}

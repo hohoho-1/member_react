@@ -1,8 +1,19 @@
-import { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { useNavigate, useLocation, Link } from 'react-router-dom';
+import { isLoggedIn } from '../utils/authFetch';
 
 export default function LoginPage() {
   const navigate = useNavigate();
+  const location = useLocation();
+
+  // 이미 로그인된 상태면 홈 또는 이전 페이지로
+  useEffect(() => {
+    if (isLoggedIn()) {
+      const fromLocation = location.state?.from;
+      const from = fromLocation ? (fromLocation.pathname + (fromLocation.search ?? '')) : '/home';
+      navigate(from, { replace: true });
+    }
+  }, []);
   const [form, setForm] = useState({ email: '', password: '' });
   const [message, setMessage] = useState({ text: '', type: '' });
   const [loading, setLoading] = useState(false);
@@ -27,7 +38,9 @@ export default function LoginPage() {
         localStorage.setItem('accessToken', data.accessToken);
         localStorage.setItem('refreshToken', data.refreshToken);
         setMessage({ text: `환영합니다, ${data.user.username}님!`, type: 'success' });
-        setTimeout(() => navigate('/home'), 800);
+        const fromLocation = location.state?.from;
+      const from = fromLocation ? (fromLocation.pathname + (fromLocation.search ?? '')) : '/home';
+        setTimeout(() => navigate(from, { replace: true }), 800);
       } else {
         setMessage({ text: data.message || '로그인에 실패했습니다.', type: 'error' });
       }

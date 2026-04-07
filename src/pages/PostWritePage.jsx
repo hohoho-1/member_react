@@ -222,7 +222,9 @@ export default function PostWritePage() {
           {/* QnA / 건의사항 안내 문구 */}
           {(boardCode === 'QNA' || boardCode === 'SUGGESTION') && (
             <div className={`flex items-start gap-2 px-4 py-3 rounded-xl text-sm ${
-              boardCode === 'QNA' ? 'bg-amber-50 text-amber-700 border border-amber-200' : 'bg-teal-50 text-teal-700 border border-teal-200'
+              boardCode === 'QNA'
+                ? 'bg-amber-50 dark:bg-amber-950 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800'
+                : 'bg-teal-50 dark:bg-teal-950 text-teal-700 dark:text-teal-300 border border-teal-200 dark:border-teal-800'
             }`}>
               <span className="text-lg leading-none mt-0.5">{boardCode === 'QNA' ? '💬' : '📬'}</span>
               <div>
@@ -294,7 +296,7 @@ export default function PostWritePage() {
 
             {/* 기존 파일 (수정 모드) */}
             {activeExistingFiles.map(file => (
-              <div key={file.id} className="flex items-center justify-between px-3 py-2 bg-blue-50 rounded-lg mb-1">
+              <div key={file.id} className="flex items-center justify-between px-3 py-2 bg-blue-50 dark:bg-blue-950 rounded-lg mb-1">
                 <div className="flex items-center gap-2 text-sm text-gray-700 truncate">
                   <span>{file.image ? '🖼️' : '📄'}</span>
                   <span className="truncate">{file.originalName}</span>
@@ -307,7 +309,7 @@ export default function PostWritePage() {
 
             {/* 새로 선택한 파일 */}
             {pendingFiles.map((file, idx) => (
-              <div key={idx} className="flex items-center justify-between px-3 py-2 bg-green-50 rounded-lg mb-1">
+              <div key={idx} className="flex items-center justify-between px-3 py-2 bg-green-50 dark:bg-green-950 rounded-lg mb-1">
                 <div className="flex items-center gap-2 text-sm text-gray-700 truncate">
                   <span>{file.type.startsWith('image/') ? '🖼️' : '📄'}</span>
                   <span className="truncate">{file.name}</span>
@@ -328,7 +330,7 @@ export default function PostWritePage() {
           )}
 
           {errorMsg && (
-            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl text-sm text-center">
+            <div className="bg-red-50 dark:bg-red-950 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-300 px-4 py-3 rounded-xl text-sm text-center">
               ⚠️ {errorMsg}
             </div>
           )}

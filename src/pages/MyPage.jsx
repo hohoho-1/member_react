@@ -156,7 +156,7 @@ export default function MyPage() {
     try {
       const res = await authFetch('/api/users/me', { method: 'DELETE', body: JSON.stringify({ password: deletePassword }) });
       const data = await res.json();
-      if (res.ok) { logout(); }
+      if (res.ok) { logout(true); }
       else setDeleteMsg(data.message || '탈퇴에 실패했습니다.');
     } catch {
       setDeleteMsg('서버 오류가 발생했습니다.');
@@ -232,6 +232,17 @@ export default function MyPage() {
                 <span className="text-xs text-gray-400">{user.role === 'ROLE_ADMIN' ? '👑 관리자' : '일반 회원'}</span>
               </div>
               <p className="text-sm text-gray-400 mt-0.5">{user.email}</p>
+              <div className="flex flex-wrap gap-x-4 gap-y-0.5 mt-2">
+                <span className="text-xs text-gray-400">
+                  📅 가입일 {user.createdAt ? new Date(user.createdAt).toLocaleDateString('ko-KR') : '-'}
+                </span>
+                <span className="text-xs text-gray-400">
+                  🕐 최종 로그인 {user.lastLoginAt ? new Date(user.lastLoginAt).toLocaleString('ko-KR') : '-'}
+                </span>
+                <span className="text-xs text-gray-400">
+                  🔑 로그인 {user.loginCount ?? 0}회
+                </span>
+              </div>
             </div>
 
             {/* 우측 버튼들 */}

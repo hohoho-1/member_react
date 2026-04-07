@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams, useLocation } from 'react-router-dom';
 import { authFetch, getTokenPayload } from '../utils/authFetch';
 import GalleryLightbox from './GalleryLightbox';
 
@@ -14,7 +14,7 @@ function FaqItem({ post, defaultOpen = false }) {
     <div className={`border rounded-xl overflow-hidden transition-all ${open ? 'border-green-300 shadow-sm' : 'border-gray-200'}`}>
       <button
         onClick={() => setOpen(v => !v)}
-        className={`w-full flex items-start justify-between gap-3 px-5 py-4 text-left transition-colors ${open ? 'bg-green-50' : 'bg-white hover:bg-gray-50'}`}
+        className={`w-full flex items-start justify-between gap-3 px-5 py-4 text-left transition-colors ${open ? 'bg-green-50 dark:bg-green-950' : 'bg-white hover:bg-gray-50'}`}
       >
         <div className="flex items-start gap-3 flex-1 min-w-0">
           <span className="shrink-0 mt-0.5 w-6 h-6 rounded-full bg-green-500 text-white text-xs font-bold flex items-center justify-center">Q</span>
@@ -29,7 +29,7 @@ function FaqItem({ post, defaultOpen = false }) {
         </div>
       </button>
       {open && (
-        <div className="bg-white border-t border-green-100">
+        <div className="bg-white dark:bg-gray-800 border-t border-green-100 dark:border-green-900">
           <div className="flex items-start gap-3 px-5 py-4">
             <span className="shrink-0 mt-0.5 w-6 h-6 rounded-full bg-gray-200 text-gray-500 text-xs font-bold flex items-center justify-center">A</span>
             <p className="text-sm text-gray-600 whitespace-pre-wrap leading-relaxed">{post.content}</p>
@@ -50,6 +50,7 @@ function FaqItem({ post, defaultOpen = false }) {
  */
 export default function BoardListPage({ groupKey, groupLabel, groupEmoji, boards, basePath }) {
   const navigate = useNavigate();
+  const location = useLocation();
   const [searchParams, setSearchParams] = useSearchParams();
 
   const scope       = searchParams.get('scope') ?? boards[0]?.code ?? 'ALL';
@@ -178,7 +179,9 @@ export default function BoardListPage({ groupKey, groupLabel, groupEmoji, boards
             </button>
           ) : !isLoggedIn ? (
             <button
-              onClick={() => navigate(`/login`)}
+              onClick={() => navigate('/login', {
+                state: { from: { pathname: `/board/write`, search: `?boardCode=${scope}&returnTo=${encodeURIComponent(`${basePath}?scope=${scope}`)}` } }
+              })}
               className="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-500 rounded-lg text-sm font-medium transition-colors">
               ✏️ 글쓰기
             </button>
@@ -365,7 +368,7 @@ export default function BoardListPage({ groupKey, groupLabel, groupEmoji, boards
                           )}
                           <tr key={post.id}
                             className={`border-t border-gray-50 hover:bg-gray-50 cursor-pointer transition-colors ${
-                              isPinned ? 'bg-amber-50 hover:bg-amber-100' : ''
+                              isPinned ? 'bg-amber-50 dark:bg-amber-950 hover:bg-amber-100 dark:hover:bg-amber-900' : ''
                             }`}
                             onClick={() => goToDetail(post.id)}>
                             <td className="px-4 py-3 text-sm text-gray-400">
