@@ -15,6 +15,7 @@ export default function HomePage() {
   const [faqPosts, setFaqPosts]           = useState([]);
   const [popularPosts, setPopularPosts]   = useState([]);
   const [galleryPosts, setGalleryPosts]   = useState([]);
+  const [upcomingSchedules, setUpcomingSchedules] = useState([]);
   const [loading, setLoading]       = useState(true);
 
   useEffect(() => {
@@ -34,6 +35,21 @@ export default function HomePage() {
         setFaqPosts(data.faqPosts ?? []);
         setPopularPosts(data.popularPosts ?? []);
         setGalleryPosts(data.galleryPosts ?? []);
+      }
+
+      // 이번 달 + 다음달 일정 (오늘 이후만 필터)
+      const now = new Date();
+      const year = now.getFullYear();
+      const month = now.getMonth() + 1;
+      const schedRes = await fetch(`/api/schedules?year=${year}&month=${month}`);
+      if (schedRes.ok) {
+        const schedData = await schedRes.json();
+        const today = now.toISOString().slice(0, 10);
+        const filtered = schedData
+          .filter(s => s.endDate >= today)
+          .sort((a, b) => a.startDate.localeCompare(b.startDate))
+          .slice(0, 5);
+        setUpcomingSchedules(filtered);
       }
       setLoading(false);
     };
@@ -274,6 +290,46 @@ export default function HomePage() {
               </ul>
             )}
           </div>
+        </div>
+
+        {/* ── 일정 위젯 ── */}
+        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow p-6">
+          <div className="flex justify-between items-center mb-4">
+            <h3 className="font-bold text-gray-700 dark:text-gray-100">📅 다가오는 일정</h3>
+            <button onClick={() => navigate('/schedule')}
+              className="text-xs text-blue-400 hover:text-blue-600">전체보기 →</button>
+          </div>
+          {upcomingSchedules.length === 0 ? (
+            <p className="text-sm text-gray-400 text-center py-6">예정된 일정이 없습니다.</p>
+          ) : (
+            <ul className="space-y-2">
+              {upcomingSchedules.map(s => {
+                const today = new Date().toISOString().slice(0, 10);
+                const isToday = s.startDate <= today && s.endDate >= today;
+                return (
+                  <li key={s.id}
+                    onClick={() => navigate('/schedule')}
+                    className="cursor-pointer group flex items-center gap-3 py-1.5 hover:opacity-80 transition-opacity">
+                    {/* 색상 바 */}
+                    <div className="w-1 h-8 rounded-full shrink-0" style={{ backgroundColor: s.color ?? '#3B82F6' }} />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-gray-700 dark:text-gray-200 truncate group-hover:text-blue-600 transition-colors">
+                        {s.title}
+                      </p>
+                      <p className="text-xs text-gray-400 mt-0.5">
+                        {s.startDate === s.endDate ? s.startDate : `${s.startDate} ~ ${s.endDate}`}
+                      </p>
+                    </div>
+                    {isToday && (
+                      <span className="shrink-0 px-2 py-0.5 bg-teal-100 text-teal-600 text-xs font-semibold rounded-full">
+                        오늘
+                      </span>
+                    )}
+                  </li>
+                );
+              })}
+            </ul>
+          )}
         </div>
 
         {/* ── 갤러리 미리보기 ── */}
