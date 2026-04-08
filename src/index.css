@@ -52,3 +52,19 @@ html.dark ::-webkit-scrollbar-track { background: #1f2937; }
 html.dark ::-webkit-scrollbar-thumb { background: #4b5563; }
 html.dark ::-webkit-scrollbar-thumb:hover { background: #6b7280; }
 
+/* ── react-big-calendar ── */
+/* 행 최소 높이 보장 (6주 달 기준 740px / 6 ≈ 110px, 헤더 제외하면 약 90px) */
+.rbc-month-row {
+  min-height: 95px;
+}
+.rbc-show-more {
+  font-size: 11px;
+  color: #6b7280;
+  padding: 1px 4px;
+  background: none;
+}
+.rbc-show-more:hover {
+  color: #3b82f6;
+  text-decoration: underline;
+}
+

@@ -257,7 +257,9 @@ const SCHEDULE_COLORS = [
 ];
 
 const SCHEDULE_FORM_DEFAULT = {
-  title: '', content: '', startDate: '', endDate: '', color: '#3B82F6', visibility: 'PUBLIC',
+  title: '', content: '', startDate: '', endDate: '',
+  startTime: '', endTime: '', allDay: true,
+  color: '#3B82F6', visibility: 'PUBLIC',
 };
 
 const VISIBILITY_OPTIONS = [
@@ -275,6 +277,9 @@ function ScheduleFormModal({ schedule, onClose, onSave }) {
       content: schedule.content ?? '',
       startDate: schedule.startDate,
       endDate: schedule.endDate,
+      startTime: schedule.startTime ?? '',
+      endTime: schedule.endTime ?? '',
+      allDay: !schedule.startTime,
       color: schedule.color ?? '#3B82F6',
       visibility: schedule.visibility ?? 'PUBLIC',
     } : { ...SCHEDULE_FORM_DEFAULT }
@@ -325,6 +330,31 @@ function ScheduleFormModal({ schedule, onClose, onSave }) {
                 className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-teal-400" />
             </div>
           </div>
+
+          {/* 종일 토글 */}
+          <div className="flex items-center gap-3">
+            <button onClick={() => set('allDay', !form.allDay)}
+              className={`relative w-10 h-5 rounded-full transition-colors ${form.allDay ? 'bg-teal-500' : 'bg-gray-300'}`}>
+              <span className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform ${form.allDay ? 'left-5' : 'left-0.5'}`} />
+            </button>
+            <span className="text-sm text-gray-600">종일</span>
+          </div>
+
+          {/* 시간 (종일 아닐 때) */}
+          {!form.allDay && (
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block text-xs font-semibold text-gray-500 mb-1">시작 시간 <span className="text-red-400">*</span></label>
+                <input type="time" value={form.startTime} onChange={e => set('startTime', e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-teal-400" />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-gray-500 mb-1">종료 시간 <span className="text-red-400">*</span></label>
+                <input type="time" value={form.endTime} onChange={e => set('endTime', e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-teal-400" />
+              </div>
+            </div>
+          )}
 
           {/* 색상 */}
           <div>

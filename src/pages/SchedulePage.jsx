@@ -32,9 +32,9 @@ const VISIBILITY_OPTIONS = [
 ];
 
 const VISIBILITY_META = {
-  PUBLIC:  { icon: '🌐', label: '전체 공개',  color: 'text-teal-500' },
-  MEMBER:  { icon: '👥', label: '회원 공개',  color: 'text-blue-500' },
-  PRIVATE: { icon: '🔒', label: '비공개',     color: 'text-gray-500' },
+  PUBLIC:  { icon: '🌐', label: '전체 공개', color: 'text-teal-500' },
+  MEMBER:  { icon: '👥', label: '회원 공개', color: 'text-blue-500' },
+  PRIVATE: { icon: '🔒', label: '비공개',    color: 'text-gray-500' },
 };
 
 // ── 등록/수정 모달 ────────────────────────────────────────────────────────
@@ -42,12 +42,15 @@ function ScheduleFormModal({ initial, onClose, onSave }) {
   const isEdit = !!initial?.id;
   const [form, setForm] = useState(
     isEdit
-      ? { ...initial }
+      ? { allDay: !initial.startTime, ...initial }
       : {
           title: '',
           content: '',
           startDate: initial?.startDate ?? '',
           endDate: initial?.endDate ?? '',
+          startTime: '',
+          endTime: '',
+          allDay: true,
           color: '#3B82F6',
           visibility: 'PUBLIC',
         }
@@ -61,8 +64,20 @@ function ScheduleFormModal({ initial, onClose, onSave }) {
     if (!form.startDate)    { setError('시작일을 입력하세요.'); return; }
     if (!form.endDate)      { setError('종료일을 입력하세요.'); return; }
     if (form.endDate < form.startDate) { setError('종료일은 시작일 이후여야 합니다.'); return; }
+    if (!form.allDay) {
+      if (!form.startTime) { setError('시작 시간을 입력하세요.'); return; }
+      if (!form.endTime)   { setError('종료 시간을 입력하세요.'); return; }
+      if (form.startDate === form.endDate && form.endTime <= form.startTime) {
+        setError('종료 시간은 시작 시간 이후여야 합니다.'); return;
+      }
+    }
     setError('');
-    await onSave(form, isEdit);
+    const payload = {
+      ...form,
+      startTime: form.allDay ? null : form.startTime,
+      endTime:   form.allDay ? null : form.endTime,
+    };
+    await onSave(payload, isEdit);
   };
 
   return (
@@ -85,6 +100,16 @@ function ScheduleFormModal({ initial, onClose, onSave }) {
               className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-teal-400 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100" />
           </div>
 
+          {/* 종일 토글 */}
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => set('allDay', !form.allDay)}
+              className={`relative w-10 h-5 rounded-full transition-colors ${form.allDay ? 'bg-teal-500' : 'bg-gray-300'}`}>
+              <span className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform ${form.allDay ? 'left-5' : 'left-0.5'}`} />
+            </button>
+            <span className="text-sm text-gray-600 dark:text-gray-300">종일</span>
+          </div>
+
           {/* 날짜 */}
           <div className="grid grid-cols-2 gap-3">
             <div>
@@ -98,6 +123,22 @@ function ScheduleFormModal({ initial, onClose, onSave }) {
                 className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-teal-400 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100" />
             </div>
           </div>
+
+          {/* 시간 (종일 아닐 때) */}
+          {!form.allDay && (
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block text-xs font-semibold text-gray-500 mb-1">시작 시간 <span className="text-red-400">*</span></label>
+                <input type="time" value={form.startTime} onChange={e => set('startTime', e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-teal-400 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100" />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-gray-500 mb-1">종료 시간 <span className="text-red-400">*</span></label>
+                <input type="time" value={form.endTime} onChange={e => set('endTime', e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-teal-400 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100" />
+              </div>
+            </div>
+          )}
 
           {/* 색상 */}
           <div>
@@ -182,15 +223,17 @@ function ScheduleDetailModal({ event, isAdmin, onClose, onEdit, onDelete }) {
 
         <div className="bg-gray-50 dark:bg-gray-700 rounded-xl p-4 space-y-3 text-sm mb-4">
           <div className="flex justify-between">
-            <span className="text-gray-400">시작일</span>
+            <span className="text-gray-400">시작</span>
             <span className="font-medium text-gray-700 dark:text-gray-200">
-              {format(event.start, 'yyyy년 M월 d일 (eee)', { locale: ko })}
+              {format(event.start, event.allDay ? 'yyyy년 M월 d일 (eee)' : 'yyyy년 M월 d일 (eee) HH:mm', { locale: ko })}
             </span>
           </div>
           <div className="flex justify-between">
-            <span className="text-gray-400">종료일</span>
+            <span className="text-gray-400">종료</span>
             <span className="font-medium text-gray-700 dark:text-gray-200">
-              {format(subDay(event.end), 'yyyy년 M월 d일 (eee)', { locale: ko })}
+              {event.allDay
+                ? format(subDay(event.end), 'yyyy년 M월 d일 (eee)', { locale: ko })
+                : format(event.end, 'yyyy년 M월 d일 (eee) HH:mm', { locale: ko })}
             </span>
           </div>
           {event.authorName && (
@@ -201,9 +244,7 @@ function ScheduleDetailModal({ event, isAdmin, onClose, onEdit, onDelete }) {
           )}
           <div className="flex justify-between">
             <span className="text-gray-400">공개 설정</span>
-            <span className={`font-medium text-sm ${vis.color}`}>
-              {vis.icon} {vis.label}
-            </span>
+            <span className={`font-medium text-sm ${vis.color}`}>{vis.icon} {vis.label}</span>
           </div>
         </div>
 
@@ -215,24 +256,12 @@ function ScheduleDetailModal({ event, isAdmin, onClose, onEdit, onDelete }) {
 
         {isAdmin ? (
           <div className="flex gap-2">
-            <button onClick={onClose}
-              className="flex-1 py-2.5 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-600 dark:text-gray-300 rounded-xl text-sm font-medium transition-colors">
-              닫기
-            </button>
-            <button onClick={() => onEdit(event)}
-              className="flex-1 py-2.5 bg-blue-500 hover:bg-blue-600 text-white rounded-xl text-sm font-medium transition-colors">
-              수정
-            </button>
-            <button onClick={() => onDelete(event)}
-              className="flex-1 py-2.5 bg-red-500 hover:bg-red-600 text-white rounded-xl text-sm font-medium transition-colors">
-              삭제
-            </button>
+            <button onClick={onClose} className="flex-1 py-2.5 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-600 dark:text-gray-300 rounded-xl text-sm font-medium transition-colors">닫기</button>
+            <button onClick={() => onEdit(event)} className="flex-1 py-2.5 bg-blue-500 hover:bg-blue-600 text-white rounded-xl text-sm font-medium transition-colors">수정</button>
+            <button onClick={() => onDelete(event)} className="flex-1 py-2.5 bg-red-500 hover:bg-red-600 text-white rounded-xl text-sm font-medium transition-colors">삭제</button>
           </div>
         ) : (
-          <button onClick={onClose}
-            className="w-full py-2.5 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-600 dark:text-gray-300 rounded-xl text-sm font-medium transition-colors">
-            닫기
-          </button>
+          <button onClick={onClose} className="w-full py-2.5 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-600 dark:text-gray-300 rounded-xl text-sm font-medium transition-colors">닫기</button>
         )}
       </div>
     </div>
@@ -256,7 +285,7 @@ function EventItem({ event }) {
 export default function SchedulePage() {
   const payload = getTokenPayload();
   const isAdmin = payload?.role === 'ROLE_ADMIN';
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
 
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -272,40 +301,52 @@ export default function SchedulePage() {
       const res = await authFetch(`/api/schedules?year=${year}&month=${month}`);
       if (res.ok) {
         const data = await res.json();
-        const mapped = data.map(s => ({
-          id: s.id,
-          title: s.title,
-          start: parseLocalDate(s.startDate),
-          end: addDay(parseLocalDate(s.endDate)),
-          color: s.color ?? '#3B82F6',
-          content: s.content,
-          authorName: s.authorName,
-          visibility: s.visibility ?? 'PUBLIC',
-          startDate: s.startDate,
-          endDate: s.endDate,
-          allDay: true,
-        }));
+        const mapped = data.map(s => {
+          const hasTime = !!s.startTime;
+          let start, end;
+          if (hasTime) {
+            // 시간 지정 일정
+            start = parseLocalDateTime(s.startDate, s.startTime);
+            end   = parseLocalDateTime(s.endDate, s.endTime);
+          } else {
+            // 종일 일정
+            start = parseLocalDate(s.startDate);
+            end   = addDay(parseLocalDate(s.endDate));
+          }
+          return {
+            id: s.id,
+            title: s.title,
+            start,
+            end,
+            allDay: !hasTime,
+            color: s.color ?? '#3B82F6',
+            content: s.content,
+            authorName: s.authorName,
+            visibility: s.visibility ?? 'PUBLIC',
+            startDate: s.startDate,
+            endDate: s.endDate,
+            startTime: s.startTime ?? '',
+            endTime: s.endTime ?? '',
+          };
+        });
         setEvents(mapped);
-        // 딥링크: ?open=id 파라미터가 있으면 해당 이벤트 모달 자동 오픈
         const openId = searchParams.get('open');
         if (openId) {
           const target = mapped.find(e => String(e.id) === openId);
           if (target) setDetailEvent(target);
+          setSearchParams({}, { replace: true });
         }
       }
     } finally {
       setLoading(false);
     }
-  }, [searchParams]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { fetchSchedules(currentDate); }, []);
 
-  const handleNavigate = (date) => {
-    setCurrentDate(date);
-    fetchSchedules(date);
-  };
-
+  const handleNavigate = (date) => { setCurrentDate(date); fetchSchedules(date); };
   const handleSelectEvent = (event) => setDetailEvent(event);
 
   const handleSelectSlot = ({ start, end }) => {
@@ -338,6 +379,9 @@ export default function SchedulePage() {
       content: event.content ?? '',
       startDate: event.startDate,
       endDate: event.endDate,
+      startTime: event.startTime ?? '',
+      endTime: event.endTime ?? '',
+      allDay: event.allDay,
       color: event.color,
       visibility: event.visibility ?? 'PUBLIC',
     });
@@ -346,36 +390,19 @@ export default function SchedulePage() {
   const handleDelete = async (event) => {
     if (!window.confirm(`'${event.title}' 일정을 삭제하시겠습니까?`)) return;
     const res = await authFetch(`/api/schedules/${event.id}`, { method: 'DELETE' });
-    if (res.ok) {
-      setDetailEvent(null);
-      fetchSchedules(currentDate);
-    }
+    if (res.ok) { setDetailEvent(null); fetchSchedules(currentDate); }
   };
 
   const eventStyleGetter = (event) => {
     const v = event.visibility ?? 'PUBLIC';
-    const base = {
-      borderRadius: '6px',
-      fontSize: '12px',
-      padding: '2px 6px',
-      borderWidth: '2px',
-      borderColor: event.color ?? '#3B82F6',
-    };
-    if (v === 'PRIVATE') {
-      // 비공개: 반투명 + 점선
-      return { style: { ...base, backgroundColor: 'transparent', borderStyle: 'dashed', color: event.color ?? '#3B82F6' } };
-    }
-    if (v === 'MEMBER') {
-      // 회원공개: 색상 유지 + 실선
-      return { style: { ...base, backgroundColor: event.color ?? '#3B82F6', borderStyle: 'solid', color: '#fff', opacity: 0.75 } };
-    }
-    // PUBLIC: 기본 solid
+    const base = { borderRadius: '6px', fontSize: '12px', padding: '2px 6px', borderWidth: '2px', borderColor: event.color ?? '#3B82F6' };
+    if (v === 'PRIVATE') return { style: { ...base, backgroundColor: 'transparent', borderStyle: 'dashed', color: event.color ?? '#3B82F6' } };
+    if (v === 'MEMBER')  return { style: { ...base, backgroundColor: event.color ?? '#3B82F6', borderStyle: 'solid', color: '#fff', opacity: 0.75 } };
     return { style: { ...base, backgroundColor: event.color ?? '#3B82F6', borderStyle: 'solid', color: '#fff' } };
   };
 
   return (
     <div className="max-w-5xl mx-auto px-4 py-8">
-      {/* 헤더 */}
       <div className="flex justify-between items-start mb-6">
         <div>
           <h1 className="text-2xl font-bold text-gray-800 dark:text-gray-100">📅 일정</h1>
@@ -384,33 +411,21 @@ export default function SchedulePage() {
           </p>
         </div>
         {isAdmin && (
-          <button onClick={() => setFormInitial({})}
-            className="px-4 py-2 bg-teal-500 hover:bg-teal-600 text-white rounded-lg text-sm font-medium transition-colors">
+          <button onClick={() => setFormInitial({})} className="px-4 py-2 bg-teal-500 hover:bg-teal-600 text-white rounded-lg text-sm font-medium transition-colors">
             + 일정 등록
           </button>
         )}
       </div>
 
-      {/* 범례 (관리자만) */}
       {isAdmin && (
         <div className="flex gap-4 mb-4 text-xs text-gray-500 dark:text-gray-400">
-          <span className="flex items-center gap-1.5">
-            <span className="inline-block w-6 h-3 rounded" style={{ backgroundColor: '#3B82F6' }} />
-            🌐 전체 공개
-          </span>
-          <span className="flex items-center gap-1.5">
-            <span className="inline-block w-6 h-3 rounded opacity-75" style={{ backgroundColor: '#3B82F6' }} />
-            👥 회원 공개
-          </span>
-          <span className="flex items-center gap-1.5">
-            <span className="inline-block w-6 h-3 rounded border-2 border-dashed border-blue-400" style={{ backgroundColor: 'transparent' }} />
-            🔒 비공개
-          </span>
+          <span className="flex items-center gap-1.5"><span className="inline-block w-6 h-3 rounded" style={{ backgroundColor: '#3B82F6' }} />🌐 전체 공개</span>
+          <span className="flex items-center gap-1.5"><span className="inline-block w-6 h-3 rounded opacity-75" style={{ backgroundColor: '#3B82F6' }} />👥 회원 공개</span>
+          <span className="flex items-center gap-1.5"><span className="inline-block w-6 h-3 rounded border-2 border-dashed border-blue-400" style={{ backgroundColor: 'transparent' }} />🔒 비공개</span>
         </div>
       )}
 
-      {/* 캘린더 */}
-      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow p-4 min-h-[620px] relative">
+      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow p-4 relative">
         {loading && (
           <div className="absolute inset-0 flex items-center justify-center bg-white/60 dark:bg-gray-800/60 rounded-2xl z-10">
             <div className="text-sm text-gray-400">로딩 중...</div>
@@ -421,7 +436,7 @@ export default function SchedulePage() {
           events={events}
           startAccessor="start"
           endAccessor="end"
-          style={{ height: 620 }}
+          style={{ height: 740 }}
           culture="ko"
           defaultView="month"
           views={['month', 'week']}
@@ -429,30 +444,23 @@ export default function SchedulePage() {
           onSelectEvent={handleSelectEvent}
           onSelectSlot={handleSelectSlot}
           selectable={isAdmin}
+          dayMaxEvents={2}
           components={{ event: EventItem }}
           eventPropGetter={eventStyleGetter}
           popup
           messages={{
-            next: '▶',
-            previous: '◀',
-            today: '오늘',
-            month: '월',
-            week: '주',
+            next: '▶', previous: '◀', today: '오늘', month: '월', week: '주',
             noEventsInRange: '이 기간에 일정이 없습니다.',
             showMore: count => `+${count}개 더보기`,
           }}
         />
-
         {!loading && events.length === 0 && (
           <div className="flex flex-col items-center justify-center py-10 text-center text-gray-400 dark:text-gray-500 gap-2">
             <span className="text-4xl">📭</span>
             <p className="text-sm font-medium">이 달에 등록된 일정이 없습니다.</p>
             {isAdmin && (
-              <p className="text-xs">
-                날짜를 클릭하거나{' '}
-                <button onClick={() => setFormInitial({})} className="text-teal-500 hover:underline font-medium">
-                  + 일정 등록
-                </button>
+              <p className="text-xs">날짜를 클릭하거나{' '}
+                <button onClick={() => setFormInitial({})} className="text-teal-500 hover:underline font-medium">+ 일정 등록</button>
                 {' '}버튼으로 추가해보세요.
               </p>
             )}
@@ -475,44 +483,30 @@ export default function SchedulePage() {
                 const isToday = event.startDate <= today && event.endDate >= today;
                 const isPast  = event.endDate < today;
                 return (
-                  <li key={event.id}
-                    onClick={() => setDetailEvent(event)}
+                  <li key={event.id} onClick={() => setDetailEvent(event)}
                     className="flex items-center gap-4 py-3 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 rounded-xl px-2 transition-colors group">
-                    {/* 색상 바 */}
-                    <div className="w-1 h-10 rounded-full shrink-0"
-                      style={{ backgroundColor: event.color ?? '#3B82F6', opacity: isPast ? 0.4 : 1 }} />
-                    {/* 날짜 */}
-                    <div className="w-20 shrink-0 text-center">
+                    <div className="w-1 h-10 rounded-full shrink-0" style={{ backgroundColor: event.color ?? '#3B82F6', opacity: isPast ? 0.4 : 1 }} />
+                    <div className="w-24 shrink-0">
                       <p className={`text-xs font-semibold ${isPast ? 'text-gray-300 dark:text-gray-600' : 'text-gray-500 dark:text-gray-400'}`}>
                         {event.startDate.slice(5).replace('-', '/')}
+                        {event.startTime && ` ${event.startTime.slice(0, 5)}`}
                       </p>
-                      {event.startDate !== event.endDate && (
+                      {(event.startDate !== event.endDate || event.endTime) && (
                         <p className={`text-[10px] ${isPast ? 'text-gray-300 dark:text-gray-600' : 'text-gray-400'}`}>
                           ~ {event.endDate.slice(5).replace('-', '/')}
+                          {event.endTime && ` ${event.endTime.slice(0, 5)}`}
                         </p>
                       )}
                     </div>
-                    {/* 제목 */}
                     <div className="flex-1 min-w-0">
-                      <p className={`text-sm font-medium truncate group-hover:text-blue-600 transition-colors ${
-                        isPast ? 'text-gray-400 dark:text-gray-500 line-through' : 'text-gray-700 dark:text-gray-200'
-                      }`}>
-                        {event.title}
+                      <p className={`text-sm font-medium truncate group-hover:text-blue-600 transition-colors ${isPast ? 'text-gray-400 dark:text-gray-500 line-through' : 'text-gray-700 dark:text-gray-200'}`}>
+                        {!event.allDay && <span className="text-xs mr-1">🕐</span>}{event.title}
                       </p>
-                      {event.content && (
-                        <p className="text-xs text-gray-400 truncate mt-0.5">{event.content}</p>
-                      )}
+                      {event.content && <p className="text-xs text-gray-400 truncate mt-0.5">{event.content}</p>}
                     </div>
-                    {/* 뱃지 */}
                     <div className="flex items-center gap-2 shrink-0">
-                      {isToday && (
-                        <span className="px-2 py-0.5 bg-teal-100 text-teal-600 dark:bg-teal-900 dark:text-teal-300 text-xs font-semibold rounded-full">
-                          오늘
-                        </span>
-                      )}
-                      {isAdmin && (
-                        <span className={`text-xs ${vis.color}`}>{vis.icon}</span>
-                      )}
+                      {isToday && <span className="px-2 py-0.5 bg-teal-100 text-teal-600 dark:bg-teal-900 dark:text-teal-300 text-xs font-semibold rounded-full">오늘</span>}
+                      {isAdmin && <span className={`text-xs ${vis.color}`}>{vis.icon}</span>}
                     </div>
                   </li>
                 );
@@ -522,21 +516,8 @@ export default function SchedulePage() {
         );
       })()}
 
-      <ScheduleDetailModal
-        event={detailEvent}
-        isAdmin={isAdmin}
-        onClose={() => setDetailEvent(null)}
-        onEdit={handleEdit}
-        onDelete={handleDelete}
-      />
-
-      {formInitial !== null && (
-        <ScheduleFormModal
-          initial={formInitial}
-          onClose={() => setFormInitial(null)}
-          onSave={handleSave}
-        />
-      )}
+      <ScheduleDetailModal event={detailEvent} isAdmin={isAdmin} onClose={() => setDetailEvent(null)} onEdit={handleEdit} onDelete={handleDelete} />
+      {formInitial !== null && <ScheduleFormModal initial={formInitial} onClose={() => setFormInitial(null)} onSave={handleSave} />}
     </div>
   );
 }
@@ -545,6 +526,11 @@ export default function SchedulePage() {
 function parseLocalDate(str) {
   const [y, m, d] = str.split('-').map(Number);
   return new Date(y, m - 1, d);
+}
+function parseLocalDateTime(dateStr, timeStr) {
+  const [y, m, d] = dateStr.split('-').map(Number);
+  const [h, min]  = timeStr.split(':').map(Number);
+  return new Date(y, m - 1, d, h, min);
 }
 function addDay(date) { const d = new Date(date); d.setDate(d.getDate() + 1); return d; }
 function subDay(date) { const d = new Date(date); d.setDate(d.getDate() - 1); return d; }
