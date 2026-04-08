@@ -18,6 +18,7 @@ export default function HomePage() {
   const [upcomingSchedules, setUpcomingSchedules] = useState([]);
   const [loading, setLoading]       = useState(true);
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     const init = async () => {
       // 유저 정보 (로그인 상태일 때만)
@@ -314,6 +315,8 @@ export default function HomePage() {
                     <div className="w-1 h-8 rounded-full shrink-0" style={{ backgroundColor: s.color ?? '#3B82F6' }} />
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium text-gray-700 dark:text-gray-200 truncate group-hover:text-blue-600 transition-colors">
+                        {s.visibility === 'PRIVATE' && <span className="mr-1">🔒</span>}
+                        {s.visibility === 'MEMBER'  && <span className="mr-1">👥</span>}
                         {s.title}
                       </p>
                       <p className="text-xs text-gray-400 mt-0.5">

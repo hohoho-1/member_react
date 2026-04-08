@@ -24,6 +24,18 @@ const SCHEDULE_COLORS = [
   { label: '노랑', value: '#EAB308' },
 ];
 
+const VISIBILITY_OPTIONS = [
+  { value: 'PUBLIC',  label: '🌐 전체 공개', desc: '비로그인 포함 모두 볼 수 있음' },
+  { value: 'MEMBER',  label: '👥 회원 공개', desc: '로그인한 회원만 볼 수 있음' },
+  { value: 'PRIVATE', label: '🔒 비공개',    desc: '관리자만 볼 수 있음' },
+];
+
+const VISIBILITY_META = {
+  PUBLIC:  { icon: '🌐', label: '전체 공개',  color: 'text-teal-500' },
+  MEMBER:  { icon: '👥', label: '회원 공개',  color: 'text-blue-500' },
+  PRIVATE: { icon: '🔒', label: '비공개',     color: 'text-gray-500' },
+};
+
 // ── 등록/수정 모달 ────────────────────────────────────────────────────────
 function ScheduleFormModal({ initial, onClose, onSave }) {
   const isEdit = !!initial?.id;
@@ -36,6 +48,7 @@ function ScheduleFormModal({ initial, onClose, onSave }) {
           startDate: initial?.startDate ?? '',
           endDate: initial?.endDate ?? '',
           color: '#3B82F6',
+          visibility: 'PUBLIC',
         }
   );
   const [error, setError] = useState('');
@@ -63,6 +76,7 @@ function ScheduleFormModal({ initial, onClose, onSave }) {
         </div>
 
         <div className="space-y-4">
+          {/* 제목 */}
           <div>
             <label className="block text-xs font-semibold text-gray-500 mb-1">제목 <span className="text-red-400">*</span></label>
             <input value={form.title} onChange={e => set('title', e.target.value)}
@@ -70,6 +84,7 @@ function ScheduleFormModal({ initial, onClose, onSave }) {
               className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-teal-400 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100" />
           </div>
 
+          {/* 날짜 */}
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="block text-xs font-semibold text-gray-500 mb-1">시작일 <span className="text-red-400">*</span></label>
@@ -83,6 +98,7 @@ function ScheduleFormModal({ initial, onClose, onSave }) {
             </div>
           </div>
 
+          {/* 색상 */}
           <div>
             <label className="block text-xs font-semibold text-gray-500 mb-2">색상</label>
             <div className="flex gap-2 flex-wrap">
@@ -94,6 +110,33 @@ function ScheduleFormModal({ initial, onClose, onSave }) {
             </div>
           </div>
 
+          {/* 공개 설정 */}
+          <div>
+            <label className="block text-xs font-semibold text-gray-500 mb-2">공개 설정</label>
+            <div className="flex flex-col gap-2">
+              {VISIBILITY_OPTIONS.map(opt => (
+                <button key={opt.value} onClick={() => set('visibility', opt.value)}
+                  className={`flex items-center gap-3 px-4 py-2.5 rounded-xl border text-left transition-colors ${
+                    form.visibility === opt.value
+                      ? 'border-teal-400 bg-teal-50 dark:bg-teal-950'
+                      : 'border-gray-200 dark:border-gray-600 hover:border-gray-300 bg-white dark:bg-gray-700'
+                  }`}>
+                  <span className="text-base">{opt.label.split(' ')[0]}</span>
+                  <div>
+                    <p className={`text-sm font-medium ${form.visibility === opt.value ? 'text-teal-700 dark:text-teal-300' : 'text-gray-700 dark:text-gray-200'}`}>
+                      {opt.label.split(' ').slice(1).join(' ')}
+                    </p>
+                    <p className="text-xs text-gray-400">{opt.desc}</p>
+                  </div>
+                  {form.visibility === opt.value && (
+                    <span className="ml-auto text-teal-500 text-sm font-bold">✓</span>
+                  )}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* 내용 */}
           <div>
             <label className="block text-xs font-semibold text-gray-500 mb-1">내용 (선택)</label>
             <textarea value={form.content} onChange={e => set('content', e.target.value)}
@@ -122,6 +165,8 @@ function ScheduleFormModal({ initial, onClose, onSave }) {
 // ── 상세 모달 ─────────────────────────────────────────────────────────────
 function ScheduleDetailModal({ event, isAdmin, onClose, onEdit, onDelete }) {
   if (!event) return null;
+  const vis = VISIBILITY_META[event.visibility] ?? VISIBILITY_META.PUBLIC;
+
   return (
     <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50" onClick={onClose}>
       <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl w-[420px] p-8"
@@ -153,6 +198,12 @@ function ScheduleDetailModal({ event, isAdmin, onClose, onEdit, onDelete }) {
               <span className="font-medium text-gray-700 dark:text-gray-200">{event.authorName}</span>
             </div>
           )}
+          <div className="flex justify-between">
+            <span className="text-gray-400">공개 설정</span>
+            <span className={`font-medium text-sm ${vis.color}`}>
+              {vis.icon} {vis.label}
+            </span>
+          </div>
         </div>
 
         {event.content && (
@@ -187,6 +238,19 @@ function ScheduleDetailModal({ event, isAdmin, onClose, onEdit, onDelete }) {
   );
 }
 
+// ── 커스텀 이벤트 렌더러 ─────────────────────────────────────────────────
+function EventItem({ event }) {
+  const icon = event.visibility === 'PRIVATE' ? '🔒'
+             : event.visibility === 'MEMBER'  ? '👥'
+             : null;
+  return (
+    <span className="flex items-center gap-1 truncate">
+      {icon && <span className="shrink-0 text-[11px]">{icon}</span>}
+      <span>{event.title}</span>
+    </span>
+  );
+}
+
 // ── 메인 페이지 ───────────────────────────────────────────────────────────
 export default function SchedulePage() {
   const payload = getTokenPayload();
@@ -195,17 +259,15 @@ export default function SchedulePage() {
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(false);
   const [currentDate, setCurrentDate] = useState(new Date());
-
-  // 모달 상태: null=닫힘
-  const [detailEvent, setDetailEvent] = useState(null);   // 상세 모달
-  const [formInitial, setFormInitial] = useState(null);   // 등록/수정 모달
+  const [detailEvent, setDetailEvent] = useState(null);
+  const [formInitial, setFormInitial] = useState(null);
 
   const fetchSchedules = useCallback(async (date) => {
     setLoading(true);
     const year = date.getFullYear();
     const month = date.getMonth() + 1;
     try {
-      const res = await fetch(`/api/schedules?year=${year}&month=${month}`);
+      const res = await authFetch(`/api/schedules?year=${year}&month=${month}`);
       if (res.ok) {
         const data = await res.json();
         setEvents(data.map(s => ({
@@ -216,7 +278,7 @@ export default function SchedulePage() {
           color: s.color ?? '#3B82F6',
           content: s.content,
           authorName: s.authorName,
-          // 수정용 원본 날짜 보존
+          visibility: s.visibility ?? 'PUBLIC',
           startDate: s.startDate,
           endDate: s.endDate,
           allDay: true,
@@ -227,6 +289,7 @@ export default function SchedulePage() {
     }
   }, []);
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { fetchSchedules(currentDate); }, []);
 
   const handleNavigate = (date) => {
@@ -234,21 +297,15 @@ export default function SchedulePage() {
     fetchSchedules(date);
   };
 
-  // 일정 클릭 → 상세 모달
-  const handleSelectEvent = (event) => {
-    setDetailEvent(event);
-  };
+  const handleSelectEvent = (event) => setDetailEvent(event);
 
-  // 빈 날짜/슬롯 클릭 → 관리자만 등록 모달
   const handleSelectSlot = ({ start, end }) => {
     if (!isAdmin) return;
     const startStr = formatDateStr(start);
-    // react-big-calendar의 slot end는 다음날 0시이므로 -1일
     const endStr = formatDateStr(subDay(end));
     setFormInitial({ startDate: startStr, endDate: endStr < startStr ? startStr : endStr });
   };
 
-  // 저장 (등록/수정 공통)
   const handleSave = async (form, isEdit) => {
     const url    = isEdit ? `/api/schedules/${form.id}` : '/api/schedules';
     const method = isEdit ? 'PUT' : 'POST';
@@ -264,7 +321,6 @@ export default function SchedulePage() {
     }
   };
 
-  // 수정 버튼 (상세→수정 모달 전환)
   const handleEdit = (event) => {
     setDetailEvent(null);
     setFormInitial({
@@ -274,10 +330,10 @@ export default function SchedulePage() {
       startDate: event.startDate,
       endDate: event.endDate,
       color: event.color,
+      visibility: event.visibility ?? 'PUBLIC',
     });
   };
 
-  // 삭제
   const handleDelete = async (event) => {
     if (!window.confirm(`'${event.title}' 일정을 삭제하시겠습니까?`)) return;
     const res = await authFetch(`/api/schedules/${event.id}`, { method: 'DELETE' });
@@ -287,17 +343,26 @@ export default function SchedulePage() {
     }
   };
 
-  const eventStyleGetter = (event) => ({
-    style: {
-      backgroundColor: event.color ?? '#3B82F6',
-      borderColor: event.color ?? '#3B82F6',
-      color: '#fff',
+  const eventStyleGetter = (event) => {
+    const v = event.visibility ?? 'PUBLIC';
+    const base = {
       borderRadius: '6px',
-      border: 'none',
       fontSize: '12px',
       padding: '2px 6px',
-    },
-  });
+      borderWidth: '2px',
+      borderColor: event.color ?? '#3B82F6',
+    };
+    if (v === 'PRIVATE') {
+      // 비공개: 반투명 + 점선
+      return { style: { ...base, backgroundColor: 'transparent', borderStyle: 'dashed', color: event.color ?? '#3B82F6' } };
+    }
+    if (v === 'MEMBER') {
+      // 회원공개: 색상 유지 + 실선
+      return { style: { ...base, backgroundColor: event.color ?? '#3B82F6', borderStyle: 'solid', color: '#fff', opacity: 0.75 } };
+    }
+    // PUBLIC: 기본 solid
+    return { style: { ...base, backgroundColor: event.color ?? '#3B82F6', borderStyle: 'solid', color: '#fff' } };
+  };
 
   return (
     <div className="max-w-5xl mx-auto px-4 py-8">
@@ -317,9 +382,31 @@ export default function SchedulePage() {
         )}
       </div>
 
+      {/* 범례 (관리자만) */}
+      {isAdmin && (
+        <div className="flex gap-4 mb-4 text-xs text-gray-500 dark:text-gray-400">
+          <span className="flex items-center gap-1.5">
+            <span className="inline-block w-6 h-3 rounded" style={{ backgroundColor: '#3B82F6' }} />
+            🌐 전체 공개
+          </span>
+          <span className="flex items-center gap-1.5">
+            <span className="inline-block w-6 h-3 rounded opacity-75" style={{ backgroundColor: '#3B82F6' }} />
+            👥 회원 공개
+          </span>
+          <span className="flex items-center gap-1.5">
+            <span className="inline-block w-6 h-3 rounded border-2 border-dashed border-blue-400" style={{ backgroundColor: 'transparent' }} />
+            🔒 비공개
+          </span>
+        </div>
+      )}
+
       {/* 캘린더 */}
-      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow p-4 min-h-[620px]">
-        {loading && <div className="text-center py-4 text-sm text-gray-400">로딩 중...</div>}
+      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow p-4 min-h-[620px] relative">
+        {loading && (
+          <div className="absolute inset-0 flex items-center justify-center bg-white/60 dark:bg-gray-800/60 rounded-2xl z-10">
+            <div className="text-sm text-gray-400">로딩 중...</div>
+          </div>
+        )}
         <Calendar
           localizer={localizer}
           events={events}
@@ -332,7 +419,8 @@ export default function SchedulePage() {
           onNavigate={handleNavigate}
           onSelectEvent={handleSelectEvent}
           onSelectSlot={handleSelectSlot}
-          selectable={isAdmin}          // 관리자만 슬롯 선택 가능
+          selectable={isAdmin}
+          components={{ event: EventItem }}
           eventPropGetter={eventStyleGetter}
           popup
           messages={{
@@ -345,9 +433,24 @@ export default function SchedulePage() {
             showMore: count => `+${count}개 더보기`,
           }}
         />
+
+        {!loading && events.length === 0 && (
+          <div className="flex flex-col items-center justify-center py-10 text-center text-gray-400 dark:text-gray-500 gap-2">
+            <span className="text-4xl">📭</span>
+            <p className="text-sm font-medium">이 달에 등록된 일정이 없습니다.</p>
+            {isAdmin && (
+              <p className="text-xs">
+                날짜를 클릭하거나{' '}
+                <button onClick={() => setFormInitial({})} className="text-teal-500 hover:underline font-medium">
+                  + 일정 등록
+                </button>
+                {' '}버튼으로 추가해보세요.
+              </p>
+            )}
+          </div>
+        )}
       </div>
 
-      {/* 상세 모달 */}
       <ScheduleDetailModal
         event={detailEvent}
         isAdmin={isAdmin}
@@ -356,7 +459,6 @@ export default function SchedulePage() {
         onDelete={handleDelete}
       />
 
-      {/* 등록/수정 모달 */}
       {formInitial !== null && (
         <ScheduleFormModal
           initial={formInitial}
@@ -373,19 +475,8 @@ function parseLocalDate(str) {
   const [y, m, d] = str.split('-').map(Number);
   return new Date(y, m - 1, d);
 }
-
-function addDay(date) {
-  const d = new Date(date);
-  d.setDate(d.getDate() + 1);
-  return d;
-}
-
-function subDay(date) {
-  const d = new Date(date);
-  d.setDate(d.getDate() - 1);
-  return d;
-}
-
+function addDay(date) { const d = new Date(date); d.setDate(d.getDate() + 1); return d; }
+function subDay(date) { const d = new Date(date); d.setDate(d.getDate() - 1); return d; }
 function formatDateStr(date) {
   const y = date.getFullYear();
   const m = String(date.getMonth() + 1).padStart(2, '0');

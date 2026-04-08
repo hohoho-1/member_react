@@ -257,8 +257,14 @@ const SCHEDULE_COLORS = [
 ];
 
 const SCHEDULE_FORM_DEFAULT = {
-  title: '', content: '', startDate: '', endDate: '', color: '#3B82F6',
+  title: '', content: '', startDate: '', endDate: '', color: '#3B82F6', visibility: 'PUBLIC',
 };
+
+const VISIBILITY_OPTIONS = [
+  { value: 'PUBLIC',  label: '🌐 전체 공개', desc: '비로그인 포함 모두 볼 수 있음' },
+  { value: 'MEMBER',  label: '👥 회원 공개', desc: '로그인한 회원만 볼 수 있음' },
+  { value: 'PRIVATE', label: '🔒 비공개',    desc: '관리자만 볼 수 있음' },
+];
 
 function ScheduleFormModal({ schedule, onClose, onSave }) {
   const isEdit = !!schedule?.id;
@@ -270,6 +276,7 @@ function ScheduleFormModal({ schedule, onClose, onSave }) {
       startDate: schedule.startDate,
       endDate: schedule.endDate,
       color: schedule.color ?? '#3B82F6',
+      visibility: schedule.visibility ?? 'PUBLIC',
     } : { ...SCHEDULE_FORM_DEFAULT }
   );
   const [error, setError] = useState('');
@@ -328,6 +335,32 @@ function ScheduleFormModal({ schedule, onClose, onSave }) {
                   title={c.label}
                   style={{ backgroundColor: c.value }}
                   className={`w-8 h-8 rounded-full transition-transform ${form.color === c.value ? 'scale-125 ring-2 ring-offset-2 ring-gray-400' : 'hover:scale-110'}`} />
+              ))}
+            </div>
+          </div>
+
+          {/* 공개 설정 */}
+          <div>
+            <label className="block text-xs font-semibold text-gray-500 mb-2">공개 설정</label>
+            <div className="flex flex-col gap-2">
+              {VISIBILITY_OPTIONS.map(opt => (
+                <button key={opt.value} onClick={() => set('visibility', opt.value)}
+                  className={`flex items-center gap-3 px-4 py-2.5 rounded-xl border text-left transition-colors ${
+                    form.visibility === opt.value
+                      ? 'border-teal-400 bg-teal-50'
+                      : 'border-gray-200 hover:border-gray-300 bg-white'
+                  }`}>
+                  <span className="text-base">{opt.label.split(' ')[0]}</span>
+                  <div>
+                    <p className={`text-sm font-medium ${form.visibility === opt.value ? 'text-teal-700' : 'text-gray-700'}`}>
+                      {opt.label.split(' ').slice(1).join(' ')}
+                    </p>
+                    <p className="text-xs text-gray-400">{opt.desc}</p>
+                  </div>
+                  {form.visibility === opt.value && (
+                    <span className="ml-auto text-teal-500 text-sm font-bold">✓</span>
+                  )}
+                </button>
               ))}
             </div>
           </div>
@@ -562,6 +595,7 @@ export default function AdminPage() {
   const [keywordInput, setKeywordInput] = useState(keyword);
   
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     if (!isAdmin()) { navigate('/forbidden'); return; }
     if (tab === 'logs') {
@@ -1441,7 +1475,16 @@ export default function AdminPage() {
 
                     {/* 일정 정보 */}
                     <div className="flex-1 min-w-0">
-                      <p className="font-semibold text-sm text-gray-800 truncate">{s.title}</p>
+                      <div className="flex items-center gap-2">
+                        <p className="font-semibold text-sm text-gray-800 truncate">{s.title}</p>
+                        <span className={`shrink-0 text-xs px-2 py-0.5 rounded-full font-medium ${
+                          s.visibility === 'PUBLIC'  ? 'bg-teal-50 text-teal-500' :
+                          s.visibility === 'MEMBER'  ? 'bg-blue-50 text-blue-500' :
+                          'bg-gray-100 text-gray-500'
+                        }`}>
+                          {s.visibility === 'PUBLIC' ? '🌐 전체 공개' : s.visibility === 'MEMBER' ? '👥 회원 공개' : '🔒 비공개'}
+                        </span>
+                      </div>
                       <p className="text-xs text-gray-400 mt-0.5">
                         {s.startDate} ~ {s.endDate}
                         <span className="ml-2 text-gray-300">|</span>
