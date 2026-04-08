@@ -451,6 +451,68 @@ export default function SchedulePage() {
         )}
       </div>
 
+      {/* 이달의 일정 리스트 */}
+      {!loading && events.length > 0 && (() => {
+        const today = formatDateStr(new Date());
+        const sorted = [...events].sort((a, b) => a.startDate.localeCompare(b.startDate));
+        return (
+          <div className="mt-6 bg-white dark:bg-gray-800 rounded-2xl shadow p-6">
+            <h2 className="text-sm font-bold text-gray-600 dark:text-gray-300 mb-4">
+              📋 이달의 일정 <span className="ml-1 text-gray-400 font-normal">({events.length}건)</span>
+            </h2>
+            <ul className="divide-y divide-gray-50 dark:divide-gray-700">
+              {sorted.map(event => {
+                const vis = VISIBILITY_META[event.visibility] ?? VISIBILITY_META.PUBLIC;
+                const isToday = event.startDate <= today && event.endDate >= today;
+                const isPast  = event.endDate < today;
+                return (
+                  <li key={event.id}
+                    onClick={() => setDetailEvent(event)}
+                    className="flex items-center gap-4 py-3 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 rounded-xl px-2 transition-colors group">
+                    {/* 색상 바 */}
+                    <div className="w-1 h-10 rounded-full shrink-0"
+                      style={{ backgroundColor: event.color ?? '#3B82F6', opacity: isPast ? 0.4 : 1 }} />
+                    {/* 날짜 */}
+                    <div className="w-20 shrink-0 text-center">
+                      <p className={`text-xs font-semibold ${isPast ? 'text-gray-300 dark:text-gray-600' : 'text-gray-500 dark:text-gray-400'}`}>
+                        {event.startDate.slice(5).replace('-', '/')}
+                      </p>
+                      {event.startDate !== event.endDate && (
+                        <p className={`text-[10px] ${isPast ? 'text-gray-300 dark:text-gray-600' : 'text-gray-400'}`}>
+                          ~ {event.endDate.slice(5).replace('-', '/')}
+                        </p>
+                      )}
+                    </div>
+                    {/* 제목 */}
+                    <div className="flex-1 min-w-0">
+                      <p className={`text-sm font-medium truncate group-hover:text-blue-600 transition-colors ${
+                        isPast ? 'text-gray-400 dark:text-gray-500 line-through' : 'text-gray-700 dark:text-gray-200'
+                      }`}>
+                        {event.title}
+                      </p>
+                      {event.content && (
+                        <p className="text-xs text-gray-400 truncate mt-0.5">{event.content}</p>
+                      )}
+                    </div>
+                    {/* 뱃지 */}
+                    <div className="flex items-center gap-2 shrink-0">
+                      {isToday && (
+                        <span className="px-2 py-0.5 bg-teal-100 text-teal-600 dark:bg-teal-900 dark:text-teal-300 text-xs font-semibold rounded-full">
+                          오늘
+                        </span>
+                      )}
+                      {isAdmin && (
+                        <span className={`text-xs ${vis.color}`}>{vis.icon}</span>
+                      )}
+                    </div>
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
+        );
+      })()}
+
       <ScheduleDetailModal
         event={detailEvent}
         isAdmin={isAdmin}
