@@ -349,11 +349,33 @@ export default function SchedulePage() {
   const handleNavigate = (date) => { setCurrentDate(date); fetchSchedules(date); };
   const handleSelectEvent = (event) => setDetailEvent(event);
 
-  const handleSelectSlot = ({ start, end }) => {
+  const handleSelectSlot = ({ start, end, action }) => {
     if (!isAdmin) return;
-    const startStr = formatDateStr(start);
-    const endStr = formatDateStr(subDay(end));
-    setFormInitial({ startDate: startStr, endDate: endStr < startStr ? startStr : endStr });
+    const startDateStr = formatDateStr(start);
+    const endDateStr   = formatDateStr(subDay(end));
+
+    // 주간 뷰 드래그: start/end에 시간 정보 포함 (action === 'select')
+    const isWeekDrag = start.getHours() !== 0 || start.getMinutes() !== 0
+                    || end.getHours()   !== 0 || end.getMinutes()   !== 0;
+
+    if (isWeekDrag) {
+      // 시간 지정 모달 — 시작/종료가 같은 날이면 endDate도 같은 날로
+      const adjustedEnd = end.getTime() > start.getTime() ? end : new Date(start.getTime() + 60 * 60 * 1000);
+      setFormInitial({
+        startDate: startDateStr,
+        endDate: formatDateStr(adjustedEnd),
+        startTime: formatTimeStr(start),
+        endTime: formatTimeStr(adjustedEnd),
+        allDay: false,
+      });
+    } else {
+      // 월간 뷰 날짜 클릭/드래그: 종일 모달
+      setFormInitial({
+        startDate: startDateStr,
+        endDate: endDateStr < startDateStr ? startDateStr : endDateStr,
+        allDay: true,
+      });
+    }
   };
 
   const handleSave = async (form, isEdit) => {
@@ -539,4 +561,9 @@ function formatDateStr(date) {
   const m = String(date.getMonth() + 1).padStart(2, '0');
   const d = String(date.getDate()).padStart(2, '0');
   return `${y}-${m}-${d}`;
+}
+function formatTimeStr(date) {
+  const h = String(date.getHours()).padStart(2, '0');
+  const m = String(date.getMinutes()).padStart(2, '0');
+  return `${h}:${m}`;
 }
