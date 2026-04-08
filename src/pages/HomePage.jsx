@@ -309,7 +309,7 @@ export default function HomePage() {
                 const isToday = s.startDate <= today && s.endDate >= today;
                 return (
                   <li key={s.id}
-                    onClick={() => navigate('/schedule')}
+                    onClick={() => navigate(`/schedule?open=${s.id}`)}
                     className="cursor-pointer group flex items-center gap-3 py-1.5 hover:opacity-80 transition-opacity">
                     {/* 색상 바 */}
                     <div className="w-1 h-8 rounded-full shrink-0" style={{ backgroundColor: s.color ?? '#3B82F6' }} />

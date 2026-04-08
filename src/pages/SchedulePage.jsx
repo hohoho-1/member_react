@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { Calendar, dateFnsLocalizer } from 'react-big-calendar';
 import { format, parse, startOfWeek, getDay } from 'date-fns';
 import { ko } from 'date-fns/locale';
+import { useSearchParams } from 'react-router-dom';
 import { authFetch, getTokenPayload } from '../utils/authFetch';
 import 'react-big-calendar/lib/css/react-big-calendar.css';
 
@@ -255,6 +256,7 @@ function EventItem({ event }) {
 export default function SchedulePage() {
   const payload = getTokenPayload();
   const isAdmin = payload?.role === 'ROLE_ADMIN';
+  const [searchParams] = useSearchParams();
 
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -270,7 +272,7 @@ export default function SchedulePage() {
       const res = await authFetch(`/api/schedules?year=${year}&month=${month}`);
       if (res.ok) {
         const data = await res.json();
-        setEvents(data.map(s => ({
+        const mapped = data.map(s => ({
           id: s.id,
           title: s.title,
           start: parseLocalDate(s.startDate),
@@ -282,12 +284,19 @@ export default function SchedulePage() {
           startDate: s.startDate,
           endDate: s.endDate,
           allDay: true,
-        })));
+        }));
+        setEvents(mapped);
+        // 딥링크: ?open=id 파라미터가 있으면 해당 이벤트 모달 자동 오픈
+        const openId = searchParams.get('open');
+        if (openId) {
+          const target = mapped.find(e => String(e.id) === openId);
+          if (target) setDetailEvent(target);
+        }
       }
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [searchParams]);
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { fetchSchedules(currentDate); }, []);
