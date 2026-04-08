@@ -42,7 +42,7 @@ export default function HomePage() {
       const now = new Date();
       const year = now.getFullYear();
       const month = now.getMonth() + 1;
-      const schedRes = await fetch(`/api/schedules?year=${year}&month=${month}`);
+      const schedRes = await authFetch(`/api/schedules?year=${year}&month=${month}`);
       if (schedRes.ok) {
         const schedData = await schedRes.json();
         const today = now.toISOString().slice(0, 10);
