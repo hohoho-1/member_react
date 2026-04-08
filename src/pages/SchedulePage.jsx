@@ -48,9 +48,9 @@ function ScheduleFormModal({ initial, onClose, onSave }) {
           content: '',
           startDate: initial?.startDate ?? '',
           endDate: initial?.endDate ?? '',
-          startTime: '',
-          endTime: '',
-          allDay: true,
+          startTime: initial?.startTime ?? '',
+          endTime: initial?.endTime ?? '',
+          allDay: initial?.allDay ?? true,
           color: '#3B82F6',
           visibility: 'PUBLIC',
         }
