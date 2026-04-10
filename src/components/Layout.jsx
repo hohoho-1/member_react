@@ -49,54 +49,38 @@ export default function Layout({ children }) {
     <div className="min-h-screen bg-gray-100 dark:bg-gray-900 transition-colors">
       {/* 상단 네비게이션 바 */}
       <header className="bg-white dark:bg-gray-800 shadow-sm sticky top-0 z-40 transition-colors">
-        <div className="max-w-6xl mx-auto px-4 h-14 flex items-center justify-between">
+        <div className="max-w-6xl mx-auto px-4 h-14 flex items-center gap-3">
 
-          {/* 좌측: 로고 + 메뉴 */}
-          <div className="flex items-center gap-6">
-            <button onClick={() => navigate('/home')}
-              className="text-lg font-bold text-blue-600 hover:text-blue-700 transition-colors shrink-0">
-              🏠 홈
-            </button>
-            <nav className="flex items-center gap-1">
-              <Link to="/community"
-                className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
-                  isActive('/community') ? 'bg-blue-500 text-white' : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
-                }`}>
-                💬 커뮤니티
-              </Link>
-              <Link to="/support"
-                className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
-                  isActive('/support') ? 'bg-green-500 text-white' : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
-                }`}>
-                🎧 고객센터
-              </Link>
-              <Link to="/schedule"
-                className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
-                  isActive('/schedule') ? 'bg-teal-500 text-white' : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
-                }`}>
-                📅 일정
-              </Link>
-              {isLoggedIn && (
-                <Link to="/mypage"
-                  className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
-                    isActive('/mypage') ? 'bg-blue-500 text-white' : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
-                  }`}>
-                  ⚙️ 마이페이지
-                </Link>
-              )}
-              {isAdmin() && (
-                <Link to="/admin"
-                  className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
-                    isActive('/admin') ? 'bg-purple-500 text-white' : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
-                  }`}>
-                  🛠️ 관리자
-                </Link>
-              )}
-            </nav>
-          </div>
+          {/* 로고 */}
+          <button onClick={() => navigate('/home')}
+            className="text-lg font-bold text-blue-600 hover:text-blue-700 transition-colors shrink-0">
+            🏠
+          </button>
 
-          {/* 중앙: 검색창 */}
-          <div className="flex items-center gap-1 flex-1 max-w-xs mx-4">
+          {/* 메뉴 */}
+          <nav className="flex items-center gap-0.5 shrink-0">
+            {[
+              { to: '/community', label: '커뮤니티', active: 'bg-blue-500' },
+              { to: '/support',   label: '고객센터', active: 'bg-green-500' },
+              { to: '/schedule',  label: '일정',     active: 'bg-teal-500' },
+            { to: '/courses',   label: '강의',     active: 'bg-indigo-500',
+              isMatch: (path) => path.startsWith('/courses') && !path.startsWith('/courses/admin') },
+              ...(isLoggedIn ? [{ to: '/mypage', label: '마이페이지', active: 'bg-blue-500' }] : []),
+              ...(isAdmin()  ? [{ to: '/admin',  label: '관리자',    active: 'bg-purple-500' }] : []),
+            ].map((item) => (
+              <Link key={item.to} to={item.to}
+                className={`px-2.5 py-1.5 rounded-lg text-xs font-medium transition-colors whitespace-nowrap ${
+                  (item.isMatch ? item.isMatch(location.pathname) : isActive(item.to))
+                    ? `${item.active} text-white`
+                    : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
+                }`}>
+                {item.label}
+              </Link>
+            ))}
+          </nav>
+
+          {/* 검색창 */}
+          <div className="flex-1 min-w-0 mx-2">
             <input
               type="text"
               value={searchInput}
@@ -105,13 +89,12 @@ export default function Layout({ children }) {
               onCompositionEnd={() => { isComposing.current = false; }}
               onKeyDown={e => { if (e.key === 'Enter' && !isComposing.current) handleSearch(); }}
               placeholder="🔍 통합검색"
-              className="flex-1 px-3 py-1.5 border border-gray-200 dark:border-gray-600 rounded-lg text-sm focus:outline-none focus:border-blue-400 bg-gray-50 dark:bg-gray-700 dark:text-gray-100 dark:placeholder-gray-400 transition-colors"
+              className="w-full px-3 py-1.5 border border-gray-200 dark:border-gray-600 rounded-lg text-sm focus:outline-none focus:border-blue-400 bg-gray-50 dark:bg-gray-700 dark:text-gray-100 dark:placeholder-gray-400 transition-colors"
             />
           </div>
 
-          {/* 우측: 다크모드 토글 + 프로필 + 알림 + 로그인/로그아웃 */}
-          <div className="flex items-center gap-2">
-            {/* 다크모드 토글 */}
+          {/* 우측: 다크모드 + 알림 + 프로필 + 로그인 */}
+          <div className="flex items-center gap-1.5 shrink-0">
             <button
               onClick={toggleTheme}
               title={isDark ? '라이트 모드로 전환' : '다크 모드로 전환'}
@@ -123,20 +106,20 @@ export default function Layout({ children }) {
               <>
                 <NotificationBell showProfile={false} />
                 <button onClick={() => navigate('/mypage')}
-                  className="flex items-center gap-2 px-2 py-1 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                  className="flex items-center gap-1.5 px-2 py-1 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
                   <UserAvatar profileImageUrl={myProfile?.profileImageUrl} username={myProfile?.username ?? payload?.username} size={7} />
-                  <span className="text-sm font-medium text-gray-600 dark:text-gray-300 hidden sm:block">
+                  <span className="text-xs font-medium text-gray-600 dark:text-gray-300 hidden md:block max-w-[80px] truncate">
                     {myProfile?.username ?? payload?.username}
                   </span>
                 </button>
                 <button onClick={handleLogout}
-                  className="px-3 py-1.5 text-sm text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors">
+                  className="px-2.5 py-1.5 text-xs text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors whitespace-nowrap">
                   로그아웃
                 </button>
               </>
             ) : (
               <button onClick={() => navigate('/login', { state: { from: location } })}
-                className="px-4 py-1.5 bg-blue-500 hover:bg-blue-600 text-white rounded-lg text-sm font-medium transition-colors">
+                className="px-3 py-1.5 bg-blue-500 hover:bg-blue-600 text-white rounded-lg text-xs font-medium transition-colors whitespace-nowrap">
                 로그인
               </button>
             )}

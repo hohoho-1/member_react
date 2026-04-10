@@ -15,6 +15,12 @@ import SupportPage from './pages/SupportPage';
 import PostDetailPage from './pages/PostDetailPage';
 import PostWritePage from './pages/PostWritePage';
 import SchedulePage from './pages/SchedulePage';
+import CourseListPage from './pages/CourseListPage';
+import CourseDetailPage from './pages/CourseDetailPage';
+import CourseLessonPage from './pages/CourseLessonPage';
+import CourseAdminPage from './pages/CourseAdminPage';
+import CourseCurriculumPage from './pages/CourseCurriculumPage';
+import CertificateVerifyPage from './pages/CertificateVerifyPage';
 
 function App() {
   return (
@@ -36,6 +42,14 @@ function App() {
           <Route path="/board/:id" element={<Layout><PostDetailPage /></Layout>} />
           <Route path="/search" element={<Layout><SearchPage /></Layout>} />
           <Route path="/schedule" element={<Layout><SchedulePage /></Layout>} />
+
+          {/* 강의: 비로그인도 목록/상세 열람 가능 */}
+          <Route path="/courses" element={<Layout><CourseListPage /></Layout>} />
+          <Route path="/courses/:courseId" element={<Layout><CourseDetailPage /></Layout>} />
+          <Route path="/courses/:courseId/lessons/:lessonId" element={<PrivateRoute><Layout><CourseLessonPage /></Layout></PrivateRoute>} />
+          <Route path="/courses/admin" element={<PrivateRoute><Layout><CourseAdminPage /></Layout></PrivateRoute>} />
+          <Route path="/courses/admin/:courseId/curriculum" element={<PrivateRoute><Layout><CourseCurriculumPage /></Layout></PrivateRoute>} />
+          <Route path="/courses/certificates/verify/:code" element={<Layout><CertificateVerifyPage /></Layout>} />
 
           {/* 하위호환 리다이렉트 */}
           <Route path="/board" element={<Navigate to="/community?scope=FREE" replace />} />

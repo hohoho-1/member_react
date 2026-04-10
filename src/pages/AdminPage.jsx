@@ -1102,6 +1102,10 @@ export default function AdminPage() {
             className={`flex-1 py-3 text-sm font-semibold transition-colors ${tab === 'schedules' ? 'bg-teal-500 text-white' : 'text-gray-500 hover:bg-gray-50'}`}>
             📅 일정 관리
           </button>
+          <button onClick={() => navigate('/courses/admin')}
+            className="flex-1 py-3 text-sm font-semibold transition-colors text-gray-500 hover:bg-gray-50">
+            📚 강의 관리
+          </button>
         </div>
 
         {/* ── 활동 로그 탭 ── */}

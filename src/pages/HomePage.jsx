@@ -16,6 +16,7 @@ export default function HomePage() {
   const [popularPosts, setPopularPosts]   = useState([]);
   const [galleryPosts, setGalleryPosts]   = useState([]);
   const [upcomingSchedules, setUpcomingSchedules] = useState([]);
+  const [upcomingCourses, setUpcomingCourses]     = useState([]);
   const [loading, setLoading]       = useState(true);
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -52,11 +53,17 @@ export default function HomePage() {
           .slice(0, 5);
         setUpcomingSchedules(filtered);
       }
+
+      // 접수 중이거나 교육 예정인 강의 (공개된 강의 최근 4개)
+      const courseRes = await fetch('/api/courses?size=4');
+      if (courseRes.ok) {
+        const courseData = await courseRes.json();
+        setUpcomingCourses(courseData.content ?? []);
+      }
       setLoading(false);
     };
     init();
   }, []);
-
   const timeAgo = (dateStr) => {
     const diff = Date.now() - new Date(dateStr).getTime();
     const min  = Math.floor(diff / 60000);
@@ -360,6 +367,50 @@ export default function HomePage() {
                   <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 transition-all rounded-xl" />
                 </div>
               ))}
+            </div>
+          </div>
+        )}
+
+        {/* ── 강의 위젯 ── */}
+        {upcomingCourses.length > 0 && (
+          <div className="bg-white rounded-2xl shadow p-6">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="font-bold text-gray-700">📚 강의</h3>
+              <button onClick={() => navigate('/courses')}
+                className="text-xs text-blue-400 hover:text-blue-600">더보기 →</button>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              {upcomingCourses.map(course => {
+                const today = new Date().toISOString().slice(0, 10);
+                const isRecruiting = course.registrationStartDate && course.registrationEndDate
+                  && today >= course.registrationStartDate && today <= course.registrationEndDate;
+                return (
+                  <div key={course.id}
+                    onClick={() => navigate(`/courses/${course.id}`)}
+                    className="cursor-pointer rounded-xl border border-gray-100 overflow-hidden hover:shadow-md hover:-translate-y-0.5 transition-all">
+                    <div className="aspect-video bg-gradient-to-br from-blue-400 to-indigo-500 flex items-center justify-center overflow-hidden">
+                      {course.thumbnailUrl
+                        ? <img src={course.thumbnailUrl} alt={course.title} className="w-full h-full object-contain bg-gray-900" />
+                        : <span className="text-3xl">📚</span>
+                      }
+                    </div>
+                    <div className="p-2.5">
+                      <p className="text-xs font-semibold text-gray-800 truncate">{course.title}</p>
+                      <div className="flex items-center gap-1.5 mt-1 flex-wrap">
+                        {isRecruiting && (
+                          <span className="text-[10px] px-1.5 py-0.5 bg-green-100 text-green-700 rounded-full font-medium">접수중</span>
+                        )}
+                        {course.instructor && (
+                          <span className="text-[10px] text-gray-400">👨‍🏫 {course.instructor}</span>
+                        )}
+                        {course.educationStartDate && (
+                          <span className="text-[10px] text-gray-400">📅 {course.educationStartDate}</span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           </div>
         )}

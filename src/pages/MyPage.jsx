@@ -3,11 +3,13 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { authFetch, logout } from '../utils/authFetch';
 
 const TABS = [
-  { key: 'posts',     label: '📝 내 글' },
-  { key: 'comments',  label: '💬 내 댓글' },
-  { key: 'bookmarks', label: '🔖 북마크' },
-  { key: 'likes',     label: '❤️ 좋아요' },
-  { key: 'answers',   label: '📬 받은 답변' },
+  { key: 'posts',       label: '📝 내 글' },
+  { key: 'comments',    label: '💬 내 댓글' },
+  { key: 'bookmarks',   label: '🔖 북마크' },
+  { key: 'likes',       label: '❤️ 좋아요' },
+  { key: 'answers',     label: '📬 받은 답변' },
+  { key: 'courses',     label: '📚 수강 현황' },
+  { key: 'certificates',label: '🎓 수료증' },
 ];
 
 const getBadgeClass = (code) => {
@@ -80,6 +82,11 @@ export default function MyPage() {
   const [myAnswersTotalPages, setMyAnswersTotalPages] = useState(0);
   const [myAnswersLoading, setMyAnswersLoading]       = useState(false);
 
+  const [myEnrollments, setMyEnrollments]     = useState([]);
+  const [myEnrollmentsLoading, setMyEnrollmentsLoading] = useState(false);
+  const [myCertificates, setMyCertificates]   = useState([]);
+  const [myCertificatesLoading, setMyCertificatesLoading] = useState(false);
+
   useEffect(() => {
     authFetch('/api/users/me')
       .then(res => res.ok ? res.json() : null)
@@ -95,6 +102,8 @@ export default function MyPage() {
     if (tab === 'bookmarks') loadBookmarks(0);
     if (tab === 'likes')     loadMyLikes(0);
     if (tab === 'answers')   loadMyAnswers(0);
+    if (tab === 'courses')     loadMyEnrollments();
+    if (tab === 'certificates') loadMyCertificates();
   }, [tab]);
 
   const loadMyPosts = async (page) => {
@@ -126,6 +135,29 @@ export default function MyPage() {
     const res = await authFetch(`/api/users/me/answers?page=${page}&size=10`);
     if (res.ok) { const d = await res.json(); setMyAnswers(d.answers); setMyAnswersTotalPages(d.totalPages); setMyAnswersPage(page); }
     setMyAnswersLoading(false);
+  };
+
+  const loadMyEnrollments = async () => {
+    setMyEnrollmentsLoading(true);
+    const res = await authFetch('/api/courses/my/enrollments');
+    if (res.ok) setMyEnrollments(await res.json());
+    setMyEnrollmentsLoading(false);
+  };
+
+  const handleCancelEnrollment = async (courseId, courseTitle) => {
+    if (!window.confirm(`'${courseTitle}' 수강을 취소하시겠습니까?\n진도 및 학습 기록이 모두 삭제됩니다.`)) return;
+    const res = await authFetch(`/api/courses/${courseId}/enroll`, { method: 'DELETE' });
+    if (res.ok) {
+      setMyEnrollments(prev => prev.filter(e => e.courseId !== courseId));
+    } else {
+      alert('수강 취소에 실패했습니다.');
+    }
+  };
+  const loadMyCertificates = async () => {
+    setMyCertificatesLoading(true);
+    const res = await authFetch('/api/courses/my/certificates');
+    if (res.ok) setMyCertificates(await res.json());
+    setMyCertificatesLoading(false);
   };
 
   const handleUpdate = async (e) => {
@@ -530,6 +562,113 @@ export default function MyPage() {
               </div>
             )}
             {myAnswersTotalPages > 1 && <Pagination page={myAnswersPage} totalPages={myAnswersTotalPages} onPageChange={loadMyAnswers} />}
+          </div>
+        )}
+
+        {/* ── 수강 현황 ────────────────────────────────────────────── */}
+        {tab === 'courses' && (
+          <div className="bg-white rounded-2xl shadow overflow-hidden">
+            {myEnrollmentsLoading ? (
+              <div className="text-center py-12 text-gray-400">로딩 중...</div>
+            ) : myEnrollments.length === 0 ? (
+              <div className="text-center py-12 text-gray-400">
+                <p className="text-3xl mb-3">📭</p>
+                <p>수강 중인 강의가 없습니다.</p>
+                <button onClick={() => navigate('/courses')}
+                  className="mt-3 px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg text-sm font-medium transition-colors">
+                  강의 둘러보기
+                </button>
+              </div>
+            ) : (
+              <div className="divide-y divide-gray-100">
+                {myEnrollments.map(e => (
+                  <div key={e.id}
+                    className="px-5 py-4 hover:bg-gray-50 cursor-pointer transition-colors"
+                    onClick={() => navigate(`/courses/${e.courseId}`)}>
+                    <div className="flex items-center gap-4">
+                      <div className="w-14 h-10 rounded-lg bg-gradient-to-br from-blue-400 to-indigo-500 flex items-center justify-center shrink-0 overflow-hidden">
+                        {e.courseThumbnailUrl
+                          ? <img src={e.courseThumbnailUrl} alt="" className="w-full h-full object-cover" />
+                          : <span className="text-lg">📚</span>
+                        }
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className="font-medium text-sm text-gray-800 truncate">{e.courseTitle}</span>
+                          {e.isCompleted && (
+                            <span className="shrink-0 text-xs px-1.5 py-0.5 bg-green-100 text-green-700 rounded-full font-medium">🎓 수료</span>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <div className="flex-1 bg-gray-200 rounded-full h-1.5">
+                            <div className="bg-blue-500 h-1.5 rounded-full transition-all" style={{ width: `${e.progressRate}%` }} />
+                          </div>
+                          <span className="text-xs text-blue-600 font-semibold shrink-0">{e.progressRate}%</span>
+                        </div>
+                        <div className="flex gap-3 mt-1 text-xs text-gray-400">
+                          <span>📅 {new Date(e.enrolledAt).toLocaleDateString('ko-KR')}</span>
+                          <span>⏱️ {Math.floor(e.totalStudySeconds / 60)}분 학습</span>
+                        </div>
+                      </div>
+                      <button
+                        onClick={ev => { ev.stopPropagation(); handleCancelEnrollment(e.courseId, e.courseTitle); }}
+                        className="shrink-0 px-2.5 py-1 text-xs border border-red-200 text-red-400 rounded-lg hover:bg-red-50 transition-colors">
+                        취소
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* ── 수료증 ───────────────────────────────────────────────── */}
+        {tab === 'certificates' && (
+          <div className="bg-white rounded-2xl shadow overflow-hidden">
+            {myCertificatesLoading ? (
+              <div className="text-center py-12 text-gray-400">로딩 중...</div>
+            ) : myCertificates.length === 0 ? (
+              <div className="text-center py-12 text-gray-400">
+                <p className="text-3xl mb-3">🎓</p>
+                <p>아직 발급된 수료증이 없습니다.</p>
+                <p className="text-xs text-gray-300 mt-1">강의를 100% 완료하면 자동으로 발급됩니다.</p>
+              </div>
+            ) : (
+              <div className="divide-y divide-gray-100">
+                {myCertificates.map(cert => (
+                  <div key={cert.id} className="px-5 py-4">
+                    <div className="flex items-center justify-between gap-4">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-full bg-yellow-100 flex items-center justify-center text-xl shrink-0">
+                          🎓
+                        </div>
+                        <div>
+                          <p className="font-medium text-sm text-gray-800">{cert.courseTitle}</p>
+                          <div className="flex gap-3 mt-0.5 text-xs text-gray-400">
+                            <span>📅 {new Date(cert.issuedAt).toLocaleDateString('ko-KR')} 발급</span>
+                            <span>⏱️ 총 {Math.floor(cert.totalStudySeconds / 60)}분 학습</span>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2 shrink-0">
+                        <span className="text-xs text-gray-300 font-mono hidden sm:block">{cert.code.slice(0, 8)}...</span>
+                        <button
+                          onClick={() => navigate(`/courses/certificates/verify/${cert.code}`)}
+                          className="px-3 py-1.5 text-xs border border-indigo-200 text-indigo-500 rounded-lg hover:bg-indigo-50 transition-colors">
+                          검증
+                        </button>
+                        <button
+                          onClick={() => navigate(`/courses/${cert.courseId}`)}
+                          className="px-3 py-1.5 text-xs border border-blue-200 text-blue-500 rounded-lg hover:bg-blue-50 transition-colors">
+                          강의 보기
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         )}
 
