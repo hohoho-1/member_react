@@ -55,6 +55,24 @@ export default function CourseDetailPage() {
     setEnrolling(false);
   };
 
+  const handleDownload = async (fileId, originalName) => {
+    try {
+      const res = await authFetch(`/api/courses/files/${fileId}/download`);
+      if (!res.ok) { alert('다운로드에 실패했습니다.'); return; }
+      const blob = await res.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = originalName;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(url);
+    } catch {
+      alert('다운로드 중 오류가 발생했습니다.');
+    }
+  };
+
   const handleCancelEnroll = async () => {
     if (!window.confirm('수강을 취소하시겠습니까?\n진도 및 학습 기록이 모두 삭제됩니다.')) return;
     const res = await authFetch(`/api/courses/${courseId}/enroll`, { method: 'DELETE' });
@@ -266,13 +284,11 @@ export default function CourseDetailPage() {
                   <p className="text-sm text-gray-700 dark:text-gray-300 truncate">{file.originalName}</p>
                   <p className="text-xs text-gray-400">{formatBytes(file.fileSize)}</p>
                 </div>
-                <a
-                  href={`/api/courses/files/${file.id}/download`}
-                  target="_blank"
-                  rel="noreferrer"
+                <button
+                  onClick={() => handleDownload(file.id, file.originalName)}
                   className="shrink-0 px-3 py-1.5 text-xs border border-blue-200 dark:border-blue-700 text-blue-500 dark:text-blue-400 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors">
                   다운로드
-                </a>
+                </button>
               </div>
             ))}
           </div>

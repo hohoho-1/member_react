@@ -86,6 +86,24 @@ export default function CourseCurriculumPage() {
     else alert('파일 삭제에 실패했습니다.');
   };
 
+  const handleDownload = async (fileId, originalName) => {
+    try {
+      const res = await authFetch(`/api/courses/files/${fileId}/download`);
+      if (!res.ok) { alert('다운로드에 실패했습니다.'); return; }
+      const blob = await res.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = originalName;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(url);
+    } catch {
+      alert('다운로드 중 오류가 발생했습니다.');
+    }
+  };
+
   // ── 섹션 ──────────────────────────────────────────────────
 
   const openCreateSection = () => {
@@ -380,13 +398,11 @@ export default function CourseCurriculumPage() {
                   <p className="text-sm text-gray-700 dark:text-gray-300 truncate">{file.originalName}</p>
                   <p className="text-xs text-gray-400">{formatBytes(file.fileSize)}</p>
                 </div>
-                <a
-                  href={`/api/courses/files/${file.id}/download`}
-                  target="_blank"
-                  rel="noreferrer"
+                <button
+                  onClick={() => handleDownload(file.id, file.originalName)}
                   className="px-2.5 py-1 text-xs border border-gray-200 dark:border-gray-600 text-gray-500 dark:text-gray-400 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors shrink-0">
                   다운로드
-                </a>
+                </button>
                 <button
                   onClick={() => handleDeleteFile(file.id)}
                   className="px-2.5 py-1 text-xs border border-red-200 dark:border-red-700 text-red-400 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors shrink-0">
