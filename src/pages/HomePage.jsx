@@ -394,19 +394,30 @@ export default function HomePage() {
                         : <span className="text-3xl">📚</span>
                       }
                     </div>
-                    <div className="p-2.5">
+                    <div className="p-2.5 space-y-1.5">
                       <p className="text-xs font-semibold text-gray-800 truncate">{course.title}</p>
-                      <div className="flex items-center gap-1.5 mt-1 flex-wrap">
-                        {isRecruiting && (
-                          <span className="text-[10px] px-1.5 py-0.5 bg-green-100 text-green-700 rounded-full font-medium">접수중</span>
-                        )}
-                        {course.instructor && (
-                          <span className="text-[10px] text-gray-400">👨‍🏫 {course.instructor}</span>
-                        )}
-                        {course.educationStartDate && (
-                          <span className="text-[10px] text-gray-400">📅 {course.educationStartDate}</span>
-                        )}
-                      </div>
+                      {course.instructor && (
+                        <p className="text-[10px] text-gray-400">👨‍🏫 {course.instructor}</p>
+                      )}
+                      {(course.registrationStartDate || course.registrationEndDate) && (
+                        <div className="flex items-center gap-1">
+                          <span className="text-[10px] px-1.5 py-0.5 bg-amber-100 text-amber-700 rounded font-medium shrink-0">접수</span>
+                          <span className="text-[10px] text-gray-500 truncate">
+                            {course.registrationStartDate ?? '?'} ~ {course.registrationEndDate ?? '?'}
+                          </span>
+                        </div>
+                      )}
+                      {(course.educationStartDate || course.educationEndDate) && (
+                        <div className="flex items-center gap-1">
+                          <span className="text-[10px] px-1.5 py-0.5 bg-blue-100 text-blue-700 rounded font-medium shrink-0">교육</span>
+                          <span className="text-[10px] text-gray-500 truncate">
+                            {course.educationStartDate ?? '?'} ~ {course.educationEndDate ?? '?'}
+                          </span>
+                        </div>
+                      )}
+                      {isRecruiting && (
+                        <span className="inline-block text-[10px] px-1.5 py-0.5 bg-green-100 text-green-700 rounded-full font-medium">🟢 접수중</span>
+                      )}
                     </div>
                   </div>
                 );
