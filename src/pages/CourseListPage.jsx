@@ -116,6 +116,7 @@ export default function CourseListPage() {
             {[
               { key: 'latest',    label: '최신순' },
               { key: 'viewCount', label: '조회순' },
+              { key: 'likeCount', label: '좋아요순' },
             ].map(s => (
               <button key={s.key}
                 onClick={() => handleFilterChange(setSort, s.key)}
@@ -185,9 +186,14 @@ export default function CourseListPage() {
                       <span className="text-[11px] text-gray-300 dark:text-gray-600">
                         {new Date(course.createdAt).toLocaleDateString()}
                       </span>
-                      {course.viewCount > 0 && (
-                        <span className="text-[11px] text-gray-400">👁 {course.viewCount.toLocaleString()}</span>
-                      )}
+                      <div className="flex items-center gap-2">
+                        {course.likeCount > 0 && (
+                          <span className="text-[11px] text-red-400">❤️ {course.likeCount.toLocaleString()}</span>
+                        )}
+                        {course.viewCount > 0 && (
+                          <span className="text-[11px] text-gray-400">👁 {course.viewCount.toLocaleString()}</span>
+                        )}
+                      </div>
                     </div>
                   </div>
                 </div>

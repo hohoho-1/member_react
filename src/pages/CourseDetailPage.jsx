@@ -15,6 +15,9 @@ export default function CourseDetailPage() {
   const [loading, setLoading] = useState(true);
   const [enrolling, setEnrolling] = useState(false);
   const [openSections, setOpenSections] = useState({});
+  const [liked, setLiked] = useState(false);
+  const [likeCount, setLikeCount] = useState(0);
+  const [liking, setLiking] = useState(false);
 
   useEffect(() => {
     fetchCourse();
@@ -24,9 +27,13 @@ export default function CourseDetailPage() {
 
   const fetchCourse = async () => {
     setLoading(true);
-    const res = await fetch(`/api/courses/${courseId}`);
-    if (res.ok) setCourse(await res.json());
-    // 교육자료 파일 목록
+    const res = await authFetch(`/api/courses/${courseId}`);
+    if (res.ok) {
+      const data = await res.json();
+      setCourse(data);
+      setLiked(data.likedByMe ?? false);
+      setLikeCount(data.likeCount ?? 0);
+    }
     const filesRes = await fetch(`/api/courses/${courseId}/files`);
     if (filesRes.ok) setCourseFiles(await filesRes.json());
     setLoading(false);
@@ -71,6 +78,19 @@ export default function CourseDetailPage() {
     } catch {
       alert('다운로드 중 오류가 발생했습니다.');
     }
+  };
+
+  const handleLike = async () => {
+    if (!isLoggedIn()) { navigate('/login'); return; }
+    if (liking) return;
+    setLiking(true);
+    const res = await authFetch(`/api/courses/${courseId}/like`, { method: 'POST' });
+    if (res.ok) {
+      const data = await res.json();
+      setLiked(data.liked);
+      setLikeCount(data.likeCount);
+    }
+    setLiking(false);
   };
 
   const handleCancelEnroll = async () => {
@@ -221,6 +241,21 @@ export default function CourseDetailPage() {
             <div className="flex items-center gap-3 text-xs text-gray-400 dark:text-gray-500 border-t border-gray-100 dark:border-gray-700 pt-3">
               <span>📚 총 {totalLessons}개 레슨</span>
               <span>🗂️ {course.sections?.length || 0}개 섹션</span>
+              {course.viewCount > 0 && <span>👁 {course.viewCount.toLocaleString()}</span>}
+            </div>
+
+            {/* 좋아요 버튼 */}
+            <div className="flex items-center gap-2">
+              <button
+                onClick={handleLike}
+                disabled={liking}
+                className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium border transition-colors ${
+                  liked
+                    ? 'bg-red-50 dark:bg-red-900/20 border-red-300 dark:border-red-700 text-red-500'
+                    : 'bg-white dark:bg-gray-700 border-gray-200 dark:border-gray-600 text-gray-500 dark:text-gray-400 hover:border-red-300 hover:text-red-400'
+                }`}>
+                {liked ? '❤️' : '🤍'} {likeCount > 0 ? likeCount.toLocaleString() : '좋아요'}
+              </button>
             </div>
 
             {/* 교육 정보 */}
