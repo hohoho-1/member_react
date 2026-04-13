@@ -51,6 +51,9 @@ export default function CourseLessonPage() {
       const enrollments = await enrollRes.json();
       const found = enrollments.find(e => String(e.courseId) === String(courseId));
       setEnrollment(found || null);
+      if (found?.completedLessonIds) {
+        setCompletedIds(new Set(found.completedLessonIds));
+      }
     }
   };
 
@@ -278,12 +281,17 @@ export default function CourseLessonPage() {
                     </div>
                   );
                 })}
-                {!quizResults && (
+                {!quizResults && !isCompleted && (
                   <button
                     onClick={handleQuizSubmit}
                     className="w-full py-2.5 bg-blue-500 hover:bg-blue-600 text-white rounded-lg text-sm font-medium transition-colors">
                     제출하기
                   </button>
+                )}
+                {isCompleted && !quizResults && (
+                  <div className="text-center p-3 rounded-lg text-sm font-medium bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400">
+                    ✅ 이미 완료한 퀴즈입니다
+                  </div>
                 )}
                 {quizResults && (
                   <div className={`text-center p-3 rounded-lg text-sm font-medium ${

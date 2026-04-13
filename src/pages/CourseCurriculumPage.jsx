@@ -268,7 +268,7 @@ export default function CourseCurriculumPage() {
   if (loading) return <div className="flex justify-center py-20 text-gray-400">불러오는 중...</div>;
 
   return (
-    <div className="max-w-3xl mx-auto px-4 py-8">
+    <div className="max-w-6xl mx-auto px-4 py-8">
       {/* 헤더 */}
       <div className="flex items-center justify-between mb-6">
         <div>

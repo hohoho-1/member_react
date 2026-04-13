@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from 'react';
-import { useNavigate, useSearchParams, useLocation } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { authFetch, getTokenPayload } from '../utils/authFetch';
 import GalleryLightbox from './GalleryLightbox';
 
@@ -50,7 +50,6 @@ function FaqItem({ post, defaultOpen = false }) {
  */
 export default function BoardListPage({ groupKey, groupLabel, groupEmoji, boards, basePath }) {
   const navigate = useNavigate();
-  const location = useLocation();
   const [searchParams, setSearchParams] = useSearchParams();
 
   const scope       = searchParams.get('scope') ?? boards[0]?.code ?? 'ALL';
@@ -166,7 +165,7 @@ export default function BoardListPage({ groupKey, groupLabel, groupEmoji, boards
 
   return (
     <div className="bg-gray-100 p-6">
-      <div className="max-w-4xl mx-auto">
+      <div className="max-w-6xl mx-auto">
 
         {/* 헤더 */}
         <div className="flex justify-between items-center mb-6">

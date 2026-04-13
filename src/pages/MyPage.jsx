@@ -103,7 +103,7 @@ export default function MyPage() {
     if (tab === 'likes')     loadMyLikes(0);
     if (tab === 'answers')   loadMyAnswers(0);
     if (tab === 'courses')     loadMyEnrollments();
-    if (tab === 'certificates') loadMyCertificates();
+    if (tab === 'certificates') { loadMyCertificates(); loadMyEnrollments(); }
   }, [tab]);
 
   const loadMyPosts = async (page) => {
@@ -231,7 +231,7 @@ export default function MyPage() {
 
   return (
     <div className="bg-gray-100 py-8 px-4">
-      <div className="max-w-4xl mx-auto">
+      <div className="max-w-6xl mx-auto">
 
         <h2 className="text-2xl font-bold text-gray-700 mb-6">👤 마이페이지</h2>
 
@@ -595,8 +595,11 @@ export default function MyPage() {
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-1">
                           <span className="font-medium text-sm text-gray-800 truncate">{e.courseTitle}</span>
-                          {e.isCompleted && (
-                            <span className="shrink-0 text-xs px-1.5 py-0.5 bg-green-100 text-green-700 rounded-full font-medium">🎓 수료</span>
+                          {(e.completed || e.isCompleted) && (
+                            <span className="shrink-0 text-xs px-1.5 py-0.5 bg-green-100 text-green-700 rounded-full font-medium">🎓 수료완료</span>
+                          )}
+                          {e.pendingApproval && (
+                            <span className="shrink-0 text-xs px-1.5 py-0.5 bg-amber-100 text-amber-700 rounded-full font-medium">⏳ 수료대기</span>
                           )}
                         </div>
                         <div className="flex items-center gap-3">
@@ -632,11 +635,17 @@ export default function MyPage() {
               <div className="text-center py-12 text-gray-400">
                 <p className="text-3xl mb-3">🎓</p>
                 <p>아직 발급된 수료증이 없습니다.</p>
-                <p className="text-xs text-gray-300 mt-1">강의를 100% 완료하면 자동으로 발급됩니다.</p>
+                <p className="text-xs text-gray-300 mt-1">강의를 100% 완료하면 관리자 승인 후 발급됩니다.</p>
               </div>
             ) : (
               <div className="divide-y divide-gray-100">
-                {myCertificates.map(cert => (
+                {myCertificates.map(cert => {
+                  // 같은 강의를 현재 수강 중이면서 아직 수료 완료가 아닌 경우 → 재수강 중
+                  const activeEnrollment = myEnrollments.find(
+                    e => String(e.courseId) === String(cert.courseId)
+                      && !e.completed && !e.isCompleted
+                  );
+                  return (
                   <div key={cert.id} className="px-5 py-4">
                     <div className="flex items-center justify-between gap-4">
                       <div className="flex items-center gap-3">
@@ -644,7 +653,12 @@ export default function MyPage() {
                           🎓
                         </div>
                         <div>
-                          <p className="font-medium text-sm text-gray-800">{cert.courseTitle}</p>
+                          <div className="flex items-center gap-2">
+                            <p className="font-medium text-sm text-gray-800">{cert.courseTitle}</p>
+                            {activeEnrollment && (
+                              <span className="text-xs px-1.5 py-0.5 bg-blue-100 text-blue-600 rounded-full font-medium">📖 재수강 중</span>
+                            )}
+                          </div>
                           <div className="flex gap-3 mt-0.5 text-xs text-gray-400">
                             <span>📅 {new Date(cert.issuedAt).toLocaleDateString('ko-KR')} 발급</span>
                             <span>⏱️ 총 {Math.floor(cert.totalStudySeconds / 60)}분 학습</span>
@@ -666,7 +680,8 @@ export default function MyPage() {
                       </div>
                     </div>
                   </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </div>

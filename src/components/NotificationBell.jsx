@@ -4,11 +4,12 @@ import { authFetch, getTokenPayload } from '../utils/authFetch';
 import UserAvatar from './UserAvatar';
 
 const TYPE_ICON = {
-  COMMENT:      '💬',
-  REPLY:        '↩️',
-  POST_LIKE:    '❤️',
-  COMMENT_LIKE: '❤️',
-  ANSWER:       '💡',
+  COMMENT:                  '💬',
+  REPLY:                    '↩️',
+  POST_LIKE:                '❤️',
+  COMMENT_LIKE:             '❤️',
+  ANSWER:                   '💡',
+  COURSE_COMPLETE_PENDING:  '🎓',
 };
 
 function timeAgo(dateStr) {
@@ -85,6 +86,11 @@ export default function NotificationBell({ showProfile = true }) {
       setUnreadCount(prev => Math.max(0, prev - 1));
     }
     setOpen(false);
+    // 수료 대기 알림은 해당 강의 수강자 모달로 이동
+    if (noti.type === 'COURSE_COMPLETE_PENDING') {
+      navigate(noti.postId ? `/courses/admin?courseId=${noti.postId}` : '/courses/admin', { replace: true });
+      return;
+    }
     if (noti.postId) {
       // 게시판 그룹별 목록 경로 결정
       const returnTo = (() => {

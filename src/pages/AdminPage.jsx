@@ -641,7 +641,7 @@ export default function AdminPage() {
     } else {
       loadUsers(currentPage, keyword, tab);
     }
-  }, [searchParams.toString()]);
+  }, [searchParams]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const loadAiInsights = async (days) => {
     setAiLoading(true);
@@ -967,7 +967,7 @@ export default function AdminPage() {
           onSave={handleSaveSchedule}
         />
       )}
-      <div className="max-w-4xl mx-auto">
+      <div className="max-w-6xl mx-auto">
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-2xl font-bold text-gray-700">🛠️ 관리자 페이지</h2>
         </div>

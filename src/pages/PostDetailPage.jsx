@@ -251,7 +251,9 @@ export default function PostDetailPage() {
   const allowComment    = post?.boardAllowComment ?? true;
   const allowAttachment = post?.boardAllowAttachment ?? true;
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { loadPost(); loadComments(); loadFiles(); }, [id]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { loadAdjacent(); }, [id, boardScope, boardKeyword, boardSort]);
 
   const loadPost = async () => {
@@ -418,47 +420,9 @@ export default function PostDetailPage() {
     </div>
   );
 
-  // 답변 섹션 공통 렌더러
-  const renderAnswerSection = (scheme, borderColor, labelColor, labelText, emptyBgColor, inputBorderColor, inputBgColor, btnColor, btnDisabledColor) => (
-    <div className={`bg-white rounded-2xl shadow p-8 mt-4 border-l-4 ${borderColor}`}>
-      <h2 className="text-base font-bold text-gray-700 mb-5">
-        {scheme === 'amber' ? '💡' : '💬'} 답변{' '}
-        <span className={labelColor}>{answers.length}</span>
-      </h2>
-      {answers.length === 0 ? (
-        <p className={`text-sm text-gray-400 text-center py-6 ${emptyBgColor} rounded-xl`}>
-          아직 등록된 답변이 없습니다.
-        </p>
-      ) : (
-        <div className="space-y-4 mb-6">
-          {answers.map(answer => (
-            <AnswerItem key={answer.id} answer={answer} isAdmin={isAdmin}
-              onEdit={handleEditAnswer} onDelete={handleDeleteAnswer} colorScheme={scheme} />
-          ))}
-        </div>
-      )}
-      {answerError && <p className="text-sm text-red-500 mb-3">⚠️ {answerError}</p>}
-      {isAdmin && (
-        <div className={`mt-4 pt-4 border-t ${inputBorderColor.replace('border-', 'border-').replace('-300', '-100')}`}>
-          <p className={`text-xs ${labelColor} font-medium mb-2`}>{labelText}</p>
-          <div className="flex gap-3">
-            <textarea value={answerInput} onChange={e => setAnswerInput(e.target.value)}
-              onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSubmitAnswer(); } }}
-              placeholder="답변을 입력하세요... (Shift+Enter 줄바꿈)"
-              className={`flex-1 px-4 py-3 border ${inputBorderColor} rounded-xl text-sm focus:outline-none resize-none ${inputBgColor}`} rows={3} />
-            <button onClick={handleSubmitAnswer} disabled={answerLoading || !answerInput.trim()}
-              className={`px-5 py-2 ${btnColor} ${btnDisabledColor} text-white rounded-xl text-sm font-medium transition-colors self-end`}>
-              {answerLoading ? '...' : '등록'}
-            </button>
-          </div>
-        </div>
-      )}
-    </div>
-  );
-
   return (
     <div className="bg-gray-100 p-6">
-      <div className="max-w-3xl mx-auto">
+      <div className="max-w-6xl mx-auto">
 
         {/* 상단 버튼 영역 */}
         <div className="flex justify-between items-center mb-6">
