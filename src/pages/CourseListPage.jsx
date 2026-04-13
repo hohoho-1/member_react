@@ -167,12 +167,23 @@ export default function CourseListPage() {
             return (
               <div key={course.id} onClick={() => navigate(`/courses/${course.id}`)}
                 className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden cursor-pointer hover:shadow-md hover:-translate-y-0.5 transition-all flex flex-col">
-                <div className="aspect-video bg-gradient-to-br from-blue-400 to-indigo-500 flex items-center justify-center overflow-hidden shrink-0">
+                {/* 썸네일 - 하트 버튼 오버레이 */}
+                <div className="relative aspect-video bg-gradient-to-br from-blue-400 to-indigo-500 flex items-center justify-center overflow-hidden shrink-0">
                   {course.thumbnailUrl ? (
                     <img src={course.thumbnailUrl} alt={course.title} className="w-full h-full object-contain bg-gray-900" />
                   ) : (
                     <span className="text-4xl">📚</span>
                   )}
+                  {/* 좋아요 버튼 - 우측 상단 */}
+                  <button
+                    onClick={e => handleLike(e, course.id)}
+                    className={`absolute top-2 right-2 w-8 h-8 rounded-full flex items-center justify-center text-base shadow-md transition-all ${
+                      likeMap[course.id]?.liked
+                        ? 'bg-white text-red-500 scale-110'
+                        : 'bg-black/30 text-white hover:bg-white hover:text-red-400'
+                    }`}>
+                    {likeMap[course.id]?.liked ? '❤️' : '🤍'}
+                  </button>
                 </div>
                 <div className="p-4 flex flex-col flex-1">
                   <div className="flex items-start gap-1.5 mb-1">
@@ -204,18 +215,9 @@ export default function CourseListPage() {
                         {new Date(course.createdAt).toLocaleDateString()}
                       </span>
                       <div className="flex items-center gap-2">
-                        <button
-                          onClick={e => handleLike(e, course.id)}
-                          className={`flex items-center gap-0.5 text-[11px] transition-colors ${
-                            likeMap[course.id]?.liked
-                              ? 'text-red-500'
-                              : 'text-gray-400 hover:text-red-400'
-                          }`}>
-                          {likeMap[course.id]?.liked ? '❤️' : '🤍'}
-                          {(likeMap[course.id]?.likeCount > 0) && (
-                            <span>{likeMap[course.id].likeCount.toLocaleString()}</span>
-                          )}
-                        </button>
+                        {(likeMap[course.id]?.likeCount > 0) && (
+                          <span className="text-[11px] text-red-400">❤️ {likeMap[course.id].likeCount.toLocaleString()}</span>
+                        )}
                         {course.viewCount > 0 && (
                           <span className="text-[11px] text-gray-400">👁 {course.viewCount.toLocaleString()}</span>
                         )}
