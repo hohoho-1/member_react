@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { isAdmin } from '../utils/authFetch';
+import { authFetch, isAdmin, isLoggedIn } from '../utils/authFetch';
 
 export default function CourseListPage() {
   const navigate = useNavigate();
@@ -14,6 +14,7 @@ export default function CourseListPage() {
   const [page, setPage] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
   const [loading, setLoading] = useState(false);
+  const [likeMap, setLikeMap] = useState({}); // { courseId: { liked, likeCount } }
   const isComposing = useRef(false);
 
   useEffect(() => {
@@ -27,11 +28,17 @@ export default function CourseListPage() {
     if (recruitingOnly) params.set('recruitingOnly', 'true');
     if (dateFrom) params.set('dateFrom', dateFrom);
     if (dateTo)   params.set('dateTo',   dateTo);
-    const res = await fetch(`/api/courses?${params}`);
+    const res = await authFetch(`/api/courses?${params}`);
     if (res.ok) {
       const data = await res.json();
       setCourses(data.content);
       setTotalPages(data.totalPages);
+      // likeMap 초기화
+      const map = {};
+      data.content.forEach(c => {
+        map[c.id] = { liked: c.likedByMe ?? false, likeCount: c.likeCount ?? 0 };
+      });
+      setLikeMap(map);
     }
     setLoading(false);
   };
@@ -44,6 +51,16 @@ export default function CourseListPage() {
   const handleFilterChange = (setter, value) => {
     setter(value);
     setPage(0);
+  };
+
+  const handleLike = async (e, courseId) => {
+    e.stopPropagation(); // 카드 클릭(상세 이동) 방지
+    if (!isLoggedIn()) { navigate('/login'); return; }
+    const res = await authFetch(`/api/courses/${courseId}/like`, { method: 'POST' });
+    if (res.ok) {
+      const data = await res.json();
+      setLikeMap(prev => ({ ...prev, [courseId]: { liked: data.liked, likeCount: data.likeCount } }));
+    }
   };
 
   const today = new Date().toISOString().slice(0, 10);
@@ -187,9 +204,18 @@ export default function CourseListPage() {
                         {new Date(course.createdAt).toLocaleDateString()}
                       </span>
                       <div className="flex items-center gap-2">
-                        {course.likeCount > 0 && (
-                          <span className="text-[11px] text-red-400">❤️ {course.likeCount.toLocaleString()}</span>
-                        )}
+                        <button
+                          onClick={e => handleLike(e, course.id)}
+                          className={`flex items-center gap-0.5 text-[11px] transition-colors ${
+                            likeMap[course.id]?.liked
+                              ? 'text-red-500'
+                              : 'text-gray-400 hover:text-red-400'
+                          }`}>
+                          {likeMap[course.id]?.liked ? '❤️' : '🤍'}
+                          {(likeMap[course.id]?.likeCount > 0) && (
+                            <span>{likeMap[course.id].likeCount.toLocaleString()}</span>
+                          )}
+                        </button>
                         {course.viewCount > 0 && (
                           <span className="text-[11px] text-gray-400">👁 {course.viewCount.toLocaleString()}</span>
                         )}
