@@ -20,7 +20,7 @@ function FaqItem({ post, defaultOpen = false, canEdit = false, onDelete, onUpdat
     const res = await authFetch(`/api/posts/${post.id}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ title: editForm.title, content: editForm.content }),
+      body: JSON.stringify({ boardCode: post.boardCode, title: editForm.title, content: editForm.content, isPinned: false }),
     });
     setSaving(false);
     if (res.ok) {
