@@ -606,15 +606,6 @@ export default function AdminPage() {
   const [scheduleLoading, setScheduleLoading] = useState(false);
   const [scheduleFormTarget, setScheduleFormTarget] = useState(null);
 
-  // FAQ 관리 상태
-  const [faqPosts, setFaqPosts] = useState([]);
-  const [faqLoading, setFaqLoading] = useState(false);
-  const [faqPage, setFaqPage] = useState(0);
-  const [faqTotalPages, setFaqTotalPages] = useState(0);
-  const [faqTotalElements, setFaqTotalElements] = useState(0);
-  const [faqEditTarget, setFaqEditTarget] = useState(null); // { id, title, content } | null
-  const [faqEditForm, setFaqEditForm] = useState({ title: '', content: '' });
-
   const dndSensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
@@ -647,8 +638,6 @@ export default function AdminPage() {
       loadBoards();
     } else if (tab === 'schedules') {
       loadSchedules();
-    } else if (tab === 'faq') {
-      loadFaqPosts(0);
     } else {
       loadUsers(currentPage, keyword, tab);
     }
@@ -948,53 +937,6 @@ export default function AdminPage() {
     }
   };
 
-  // ── FAQ 관리 ──────────────────────────────────────────────────────────
-  const loadFaqPosts = async (page) => {
-    setFaqLoading(true);
-    const res = await authFetch(`/api/posts?scope=FAQ&page=${page}&size=20`);
-    if (res.ok) {
-      const data = await res.json();
-      setFaqPosts(data.posts);
-      setFaqTotalPages(data.totalPages);
-      setFaqTotalElements(data.totalElements ?? data.posts.length);
-      setFaqPage(page);
-    }
-    setFaqLoading(false);
-  };
-
-  const handleFaqDelete = async (id, title) => {
-    if (!window.confirm(`'${title}' FAQ를 삭제하시겠습니까?`)) return;
-    const res = await authFetch(`/api/posts/${id}`, { method: 'DELETE' });
-    if (res.ok) {
-      showSuccess(`'${title}' FAQ가 삭제되었습니다.`);
-      loadFaqPosts(faqPosts.length === 1 && faqPage > 0 ? faqPage - 1 : faqPage);
-    } else {
-      showError('FAQ 삭제에 실패했습니다.');
-    }
-  };
-
-  const handleFaqEditOpen = (post) => {
-    setFaqEditTarget(post);
-    setFaqEditForm({ title: post.title, content: post.content ?? '' });
-  };
-
-  const handleFaqEditSave = async () => {
-    if (!faqEditForm.title.trim()) { showError('제목을 입력하세요.'); return; }
-    const res = await authFetch(`/api/posts/${faqEditTarget.id}`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ title: faqEditForm.title, content: faqEditForm.content }),
-    });
-    if (res.ok) {
-      showSuccess('FAQ가 수정되었습니다.');
-      setFaqEditTarget(null);
-      loadFaqPosts(faqPage);
-    } else {
-      const data = await res.json().catch(() => ({}));
-      showError(data.message || 'FAQ 수정에 실패했습니다.');
-    }
-  };
-
   const pageNumbers = Array.from({ length: totalPages }, (_, i) => i);
 
   return (
@@ -1125,7 +1067,7 @@ export default function AdminPage() {
         </div>
 
         {/* 회원 수 카드 (로그/삭제게시글/게시판관리 탭 제외) */}
-        {tab !== 'logs' && tab !== 'deletedPosts' && tab !== 'boards' && tab !== 'schedules' && tab !== 'faq' && (
+        {tab !== 'logs' && tab !== 'deletedPosts' && tab !== 'boards' && tab !== 'schedules' && (
           <div className="bg-white rounded-2xl shadow p-6 mb-6 text-center">
             <p className="text-4xl font-bold text-blue-500">{totalElements}</p>
             <p className="text-sm text-gray-400 mt-1">
@@ -1159,10 +1101,6 @@ export default function AdminPage() {
           <button onClick={() => switchTab('schedules')}
             className={`flex-1 py-3 text-sm font-semibold transition-colors ${tab === 'schedules' ? 'bg-teal-500 text-white' : 'text-gray-500 hover:bg-gray-50'}`}>
             📅 일정 관리
-          </button>
-          <button onClick={() => switchTab('faq')}
-            className={`flex-1 py-3 text-sm font-semibold transition-colors ${tab === 'faq' ? 'bg-green-500 text-white' : 'text-gray-500 hover:bg-gray-50'}`}>
-            ❓ FAQ 관리
           </button>
           <button onClick={() => navigate('/courses/admin')}
             className="flex-1 py-3 text-sm font-semibold transition-colors text-gray-500 hover:bg-gray-50">
@@ -1435,114 +1373,7 @@ export default function AdminPage() {
         )}
 
         {/* ── 활성/탈퇴 회원 탭 ── */}
-        {/* ── FAQ 관리 탭 ── */}
-        {tab === 'faq' && (
-          <div className="bg-white rounded-2xl shadow overflow-hidden">
-            {/* FAQ 수정 인라인 폼 */}
-            {faqEditTarget && (
-              <div className="px-6 py-5 bg-green-50 border-b border-green-100">
-                <p className="text-sm font-semibold text-green-700 mb-3">✏️ FAQ 수정</p>
-                <div className="space-y-3">
-                  <input
-                    value={faqEditForm.title}
-                    onChange={e => setFaqEditForm(f => ({ ...f, title: e.target.value }))}
-                    placeholder="질문 (제목)"
-                    className="w-full px-3 py-2 border border-green-200 rounded-lg text-sm focus:outline-none focus:border-green-400"
-                  />
-                  <textarea
-                    value={faqEditForm.content}
-                    onChange={e => setFaqEditForm(f => ({ ...f, content: e.target.value }))}
-                    placeholder="답변 (내용)"
-                    rows={4}
-                    className="w-full px-3 py-2 border border-green-200 rounded-lg text-sm focus:outline-none focus:border-green-400 resize-none"
-                  />
-                  <div className="flex gap-2">
-                    <button onClick={handleFaqEditSave}
-                      className="px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded-lg text-sm font-medium transition-colors">
-                      저장
-                    </button>
-                    <button onClick={() => setFaqEditTarget(null)}
-                      className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-600 rounded-lg text-sm font-medium transition-colors">
-                      취소
-                    </button>
-                  </div>
-                </div>
-              </div>
-            )}
-            <div className="flex justify-between items-center px-6 py-4 border-b border-gray-100">
-              <span className="font-semibold text-gray-700">
-                FAQ 목록
-                <span className="ml-2 text-sm text-gray-400">({faqTotalElements}건)</span>
-              </span>
-              <button onClick={() => loadFaqPosts(faqPage)}
-                className="px-3 py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-600 rounded-lg text-sm transition-colors">
-                새로고침
-              </button>
-            </div>
-            {faqLoading ? (
-              <div className="text-center py-10 text-gray-400">로딩 중...</div>
-            ) : faqPosts.length === 0 ? (
-              <div className="text-center py-10 text-gray-400">
-                <p className="text-3xl mb-3">❓</p>
-                <p>등록된 FAQ가 없습니다.</p>
-              </div>
-            ) : (
-              <>
-                <div className="divide-y divide-gray-100">
-                  {faqPosts.map(post => (
-                    <div key={post.id} className="px-6 py-4">
-                      <div className="flex items-start justify-between gap-4">
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2 mb-1">
-                            <span className="text-xs font-bold text-green-600 bg-green-50 px-2 py-0.5 rounded">Q</span>
-                            <p className="text-sm font-medium text-gray-800 truncate">{post.title}</p>
-                          </div>
-                          {post.content && (
-                            <div className="flex items-start gap-2 mt-1">
-                              <span className="text-xs font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded shrink-0">A</span>
-                              <p className="text-sm text-gray-500 line-clamp-2">{post.content}</p>
-                            </div>
-                          )}
-                          <div className="flex gap-3 mt-2 text-xs text-gray-400">
-                            <span>✍️ {post.authorName}</span>
-                            <span>📅 {new Date(post.createdAt).toLocaleDateString('ko-KR')}</span>
-                            <span>👁️ {post.viewCount}</span>
-                          </div>
-                        </div>
-                        <div className="flex gap-1.5 shrink-0">
-                          <button onClick={() => handleFaqEditOpen(post)}
-                            className="px-3 py-1.5 bg-blue-50 hover:bg-blue-100 text-blue-600 rounded-lg text-xs font-medium transition-colors">
-                            수정
-                          </button>
-                          <button onClick={() => handleFaqDelete(post.id, post.title)}
-                            className="px-3 py-1.5 bg-red-50 hover:bg-red-100 text-red-500 rounded-lg text-xs font-medium transition-colors">
-                            삭제
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-                {faqTotalPages > 1 && (
-                  <div className="flex justify-center gap-1 px-6 py-4 border-t border-gray-100">
-                    <button onClick={() => loadFaqPosts(faqPage - 1)} disabled={faqPage === 0}
-                      className="px-3 py-1.5 rounded-lg text-sm text-gray-500 hover:bg-gray-100 disabled:text-gray-300">‹</button>
-                    {Array.from({ length: faqTotalPages }, (_, i) => i).map(n => (
-                      <button key={n} onClick={() => loadFaqPosts(n)}
-                        className={`px-3 py-1.5 rounded-lg text-sm font-medium ${n === faqPage ? 'bg-green-500 text-white' : 'text-gray-500 hover:bg-gray-100'}`}>
-                        {n + 1}
-                      </button>
-                    ))}
-                    <button onClick={() => loadFaqPosts(faqPage + 1)} disabled={faqPage >= faqTotalPages - 1}
-                      className="px-3 py-1.5 rounded-lg text-sm text-gray-500 hover:bg-gray-100 disabled:text-gray-300">›</button>
-                  </div>
-                )}
-              </>
-            )}
-          </div>
-        )}
-
-        {tab !== 'logs' && tab !== 'deletedPosts' && tab !== 'boards' && tab !== 'schedules' && tab !== 'faq' && (
+        {tab !== 'logs' && tab !== 'deletedPosts' && tab !== 'boards' && tab !== 'schedules' && (
           <div className="bg-white rounded-2xl shadow overflow-hidden">
             <div className="flex justify-between items-center px-6 py-4 border-b border-gray-100">
               <span className="font-semibold text-gray-700">
