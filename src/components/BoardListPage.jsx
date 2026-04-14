@@ -6,15 +6,42 @@ import GalleryLightbox from './GalleryLightbox';
 const PAGE_SIZE = 10;
 
 // ─── FAQ 아코디언 아이템 ──────────────────────────────────────────────────────
-function FaqItem({ post, defaultOpen = false }) {
+function FaqItem({ post, defaultOpen = false, canEdit = false, onDelete, onUpdated }) {
   const [open, setOpen] = useState(defaultOpen);
+  const [editing, setEditing] = useState(false);
+  const [editForm, setEditForm] = useState({ title: post.title, content: post.content ?? '' });
+  const [saving, setSaving] = useState(false);
   const isNew = (Date.now() - new Date(post.createdAt).getTime()) < 24 * 60 * 60 * 1000;
+
+  const handleEditSave = async (e) => {
+    e.stopPropagation();
+    if (!editForm.title.trim()) return;
+    setSaving(true);
+    const res = await authFetch(`/api/posts/${post.id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ title: editForm.title, content: editForm.content }),
+    });
+    setSaving(false);
+    if (res.ok) {
+      setEditing(false);
+      onUpdated?.();
+    }
+  };
+
+  const handleDelete = async (e) => {
+    e.stopPropagation();
+    if (!window.confirm(`'${post.title}' FAQ를 삭제하시겠습니까?`)) return;
+    const res = await authFetch(`/api/posts/${post.id}`, { method: 'DELETE' });
+    if (res.ok) onDelete?.();
+  };
 
   return (
     <div className={`border rounded-xl overflow-hidden transition-all ${open ? 'border-green-300 shadow-sm' : 'border-gray-200'}`}>
-      <button
-        onClick={() => setOpen(v => !v)}
-        className={`w-full flex items-start justify-between gap-3 px-5 py-4 text-left transition-colors ${open ? 'bg-green-50 dark:bg-green-950' : 'bg-white hover:bg-gray-50'}`}
+      {/* 헤더 */}
+      <div
+        onClick={() => { if (!editing) setOpen(v => !v); }}
+        className={`w-full flex items-start justify-between gap-3 px-5 py-4 text-left transition-colors cursor-pointer ${open ? 'bg-green-50 dark:bg-green-950' : 'bg-white hover:bg-gray-50'}`}
       >
         <div className="flex items-start gap-3 flex-1 min-w-0">
           <span className="shrink-0 mt-0.5 w-6 h-6 rounded-full bg-green-500 text-white text-xs font-bold flex items-center justify-center">Q</span>
@@ -25,15 +52,66 @@ function FaqItem({ post, defaultOpen = false }) {
         </div>
         <div className="flex items-center gap-2 shrink-0">
           <span className="text-xs text-gray-400">{new Date(post.createdAt).toLocaleDateString('ko-KR')}</span>
+          {/* 수정/삭제 버튼 — 관리자 or 작성자 본인 */}
+          {canEdit && (
+            <>
+              <button
+                onClick={e => { e.stopPropagation(); setEditing(v => !v); setOpen(true); }}
+                className="px-2 py-0.5 text-xs bg-blue-50 hover:bg-blue-100 text-blue-500 rounded transition-colors">
+                수정
+              </button>
+              <button
+                onClick={handleDelete}
+                className="px-2 py-0.5 text-xs bg-red-50 hover:bg-red-100 text-red-400 rounded transition-colors">
+                삭제
+              </button>
+            </>
+          )}
           <span className={`text-green-500 text-lg transition-transform duration-200 ${open ? 'rotate-180' : ''}`}>⌄</span>
         </div>
-      </button>
+      </div>
+
+      {/* 답변 영역 */}
       {open && (
         <div className="bg-white dark:bg-gray-800 border-t border-green-100 dark:border-green-900">
-          <div className="flex items-start gap-3 px-5 py-4">
-            <span className="shrink-0 mt-0.5 w-6 h-6 rounded-full bg-gray-200 text-gray-500 text-xs font-bold flex items-center justify-center">A</span>
-            <p className="text-sm text-gray-600 whitespace-pre-wrap leading-relaxed">{post.content}</p>
-          </div>
+          {editing ? (
+            /* 인라인 수정 폼 */
+            <div className="px-5 py-4 space-y-3" onClick={e => e.stopPropagation()}>
+              <div>
+                <label className="block text-xs font-semibold text-gray-500 mb-1">질문 (제목)</label>
+                <input
+                  value={editForm.title}
+                  onChange={e => setEditForm(f => ({ ...f, title: e.target.value }))}
+                  className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-green-400"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-gray-500 mb-1">답변 (내용)</label>
+                <textarea
+                  value={editForm.content}
+                  onChange={e => setEditForm(f => ({ ...f, content: e.target.value }))}
+                  rows={4}
+                  className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-green-400 resize-none"
+                />
+              </div>
+              <div className="flex gap-2">
+                <button onClick={handleEditSave} disabled={saving}
+                  className="px-4 py-1.5 bg-green-500 hover:bg-green-600 disabled:bg-green-300 text-white rounded-lg text-sm font-medium transition-colors">
+                  {saving ? '저장 중...' : '저장'}
+                </button>
+                <button onClick={e => { e.stopPropagation(); setEditing(false); }}
+                  className="px-4 py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-600 rounded-lg text-sm font-medium transition-colors">
+                  취소
+                </button>
+              </div>
+            </div>
+          ) : (
+            /* 일반 답변 표시 */
+            <div className="flex items-start gap-3 px-5 py-4">
+              <span className="shrink-0 mt-0.5 w-6 h-6 rounded-full bg-gray-200 text-gray-500 text-xs font-bold flex items-center justify-center">A</span>
+              <p className="text-sm text-gray-600 whitespace-pre-wrap leading-relaxed">{post.content}</p>
+            </div>
+          )}
         </div>
       )}
     </div>
@@ -230,7 +308,14 @@ export default function BoardListPage({ groupKey, groupLabel, groupEmoji, boards
             ) : (
               <div className="p-5 space-y-3">
                 {posts.map(post => (
-                  <FaqItem key={post.id} post={post} defaultOpen={openPostId === post.id} />
+                  <FaqItem
+                    key={post.id}
+                    post={post}
+                    defaultOpen={openPostId === post.id}
+                    canEdit={isAdmin || payload?.userId === post.authorId}
+                    onDelete={loadPosts}
+                    onUpdated={loadPosts}
+                  />
                 ))}
               </div>
             )}
