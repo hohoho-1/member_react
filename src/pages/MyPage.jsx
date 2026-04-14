@@ -3,13 +3,14 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { authFetch, logout } from '../utils/authFetch';
 
 const TABS = [
-  { key: 'posts',       label: '📝 내 글' },
-  { key: 'comments',    label: '💬 내 댓글' },
-  { key: 'bookmarks',   label: '🔖 북마크' },
-  { key: 'likes',       label: '❤️ 좋아요' },
-  { key: 'answers',     label: '📬 받은 답변' },
-  { key: 'courses',     label: '📚 수강 현황' },
-  { key: 'certificates',label: '🎓 수료증' },
+  { key: 'posts',        label: '📝 내 글' },
+  { key: 'comments',     label: '💬 내 댓글' },
+  { key: 'bookmarks',    label: '🔖 북마크' },
+  { key: 'likes',        label: '❤️ 좋아요' },
+  { key: 'answers',      label: '📬 받은 답변' },
+  { key: 'courses',      label: '📚 수강 현황' },
+  { key: 'courseLikes',  label: '❤️ 강의 좋아요' },
+  { key: 'certificates', label: '🎓 수료증' },
 ];
 
 const getBadgeClass = (code) => {
@@ -77,6 +78,9 @@ export default function MyPage() {
   const [myLikesTotalPages, setMyLikesTotalPages] = useState(0);
   const [myLikesLoading, setMyLikesLoading]       = useState(false);
 
+  const [myCourseLikes, setMyCourseLikes]   = useState([]);
+  const [myCourseLikesLoading, setMyCourseLikesLoading] = useState(false);
+
   const [myAnswers, setMyAnswers]           = useState([]);
   const [myAnswersPage, setMyAnswersPage]   = useState(0);
   const [myAnswersTotalPages, setMyAnswersTotalPages] = useState(0);
@@ -103,6 +107,7 @@ export default function MyPage() {
     if (tab === 'likes')     loadMyLikes(0);
     if (tab === 'answers')   loadMyAnswers(0);
     if (tab === 'courses')     loadMyEnrollments();
+    if (tab === 'courseLikes') loadMyCourseLikes();
     if (tab === 'certificates') { loadMyCertificates(); loadMyEnrollments(); }
   }, [tab]);
 
@@ -142,6 +147,13 @@ export default function MyPage() {
     const res = await authFetch('/api/courses/my/enrollments');
     if (res.ok) setMyEnrollments(await res.json());
     setMyEnrollmentsLoading(false);
+  };
+
+  const loadMyCourseLikes = async () => {
+    setMyCourseLikesLoading(true);
+    const res = await authFetch('/api/courses/my/likes');
+    if (res.ok) setMyCourseLikes(await res.json());
+    setMyCourseLikesLoading(false);
   };
 
   const handleCancelEnrollment = async (courseId, courseTitle) => {
@@ -617,6 +629,65 @@ export default function MyPage() {
                         onClick={ev => { ev.stopPropagation(); handleCancelEnrollment(e.courseId, e.courseTitle); }}
                         className="shrink-0 px-2.5 py-1 text-xs border border-red-200 text-red-400 rounded-lg hover:bg-red-50 transition-colors">
                         취소
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* ── 강의 좋아요 ──────────────────────────────────────────── */}
+        {tab === 'courseLikes' && (
+          <div className="bg-white rounded-2xl shadow overflow-hidden">
+            {myCourseLikesLoading ? (
+              <div className="text-center py-12 text-gray-400">로딩 중...</div>
+            ) : myCourseLikes.length === 0 ? (
+              <div className="text-center py-12 text-gray-400">
+                <p className="text-3xl mb-3">🤍</p>
+                <p>좋아요한 강의가 없습니다.</p>
+                <button onClick={() => navigate('/courses')}
+                  className="mt-3 px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg text-sm font-medium transition-colors">
+                  강의 둘러보기
+                </button>
+              </div>
+            ) : (
+              <div className="divide-y divide-gray-100">
+                {myCourseLikes.map(course => (
+                  <div key={course.id}
+                    className="px-5 py-4 hover:bg-gray-50 cursor-pointer transition-colors"
+                    onClick={() => navigate(`/courses/${course.id}`)}>
+                    <div className="flex items-center gap-4">
+                      {/* 썸네일 */}
+                      <div className="w-14 h-10 rounded-lg bg-gradient-to-br from-rose-400 to-pink-500 flex items-center justify-center shrink-0 overflow-hidden">
+                        {course.thumbnailUrl
+                          ? <img src={course.thumbnailUrl} alt="" className="w-full h-full object-cover" />
+                          : <span className="text-lg">📚</span>
+                        }
+                      </div>
+                      {/* 정보 */}
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-0.5">
+                          <span className="font-medium text-sm text-gray-800 truncate">{course.title}</span>
+                          {course.isPublished === false && (
+                            <span className="shrink-0 text-xs px-1.5 py-0.5 bg-gray-100 text-gray-400 rounded-full">비공개</span>
+                          )}
+                        </div>
+                        <div className="flex flex-wrap gap-x-3 gap-y-0.5 text-xs text-gray-400">
+                          {course.instructor && <span>👨‍🏫 {course.instructor}</span>}
+                          {course.educationStartDate && (
+                            <span>📅 {course.educationStartDate} ~ {course.educationEndDate}</span>
+                          )}
+                          <span className="text-rose-400">❤️ {course.likeCount}</span>
+                          <span>👁️ {course.viewCount}</span>
+                        </div>
+                      </div>
+                      {/* 바로가기 버튼 */}
+                      <button
+                        onClick={ev => { ev.stopPropagation(); navigate(`/courses/${course.id}`); }}
+                        className="shrink-0 px-3 py-1.5 text-xs border border-blue-200 text-blue-500 rounded-lg hover:bg-blue-50 transition-colors">
+                        강의 보기
                       </button>
                     </div>
                   </div>
