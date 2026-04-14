@@ -88,7 +88,7 @@ export default function Layout({ children }) {
               onCompositionStart={() => { isComposing.current = true; }}
               onCompositionEnd={() => { isComposing.current = false; }}
               onKeyDown={e => { if (e.key === 'Enter' && !isComposing.current) handleSearch(); }}
-              placeholder="🔍 통합검색"
+              placeholder="🔍 제목, 작성자로 검색"
               className="w-full px-3 py-1.5 border border-gray-200 dark:border-gray-600 rounded-lg text-sm focus:outline-none focus:border-blue-400 bg-gray-50 dark:bg-gray-700 dark:text-gray-100 dark:placeholder-gray-400 transition-colors"
             />
           </div>

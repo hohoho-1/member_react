@@ -203,7 +203,7 @@ export default function SearchPage() {
               onKeyDown={(e) => {
                 if (e.key === 'Enter' && !isComposing.current) handleSearch(inputValue);
               }}
-              placeholder="검색어를 입력하세요..."
+              placeholder="제목, 작성자로 검색..."
               className="flex-1 px-4 py-2.5 border border-gray-300 rounded-xl text-sm focus:outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
             />
             <button
