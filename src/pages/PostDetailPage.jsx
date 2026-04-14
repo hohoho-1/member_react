@@ -410,6 +410,33 @@ export default function PostDetailPage() {
     setPinLoading(false);
   };
 
+  const [reportModalOpen, setReportModalOpen] = useState(false);
+  const [reportReason, setReportReason] = useState('');       // 라디오 선택값
+  const [reportCustom, setReportCustom] = useState('');       // 직접 입력값
+  const [reporting, setReporting] = useState(false);
+
+  const reportFinalReason = reportReason === '__custom__' ? reportCustom : reportReason;
+
+  const handleReport = async () => {
+    if (!reportFinalReason.trim()) { alert('신고 사유를 입력해주세요.'); return; }
+    setReporting(true);
+    const res = await authFetch(`/api/reports/posts/${id}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ reason: reportFinalReason.trim() }),
+    });
+    setReporting(false);
+    if (res.ok) {
+      alert('신고가 접수되었습니다.');
+      setReportModalOpen(false);
+      setReportReason('');
+      setReportCustom('');
+    } else {
+      const d = await res.json().catch(() => ({}));
+      alert(d.message || '신고에 실패했습니다.');
+    }
+  };
+
   if (loading) return <div className="min-h-screen bg-gray-100 flex items-center justify-center text-gray-400">로딩 중...</div>;
   if (errorMsg) return (
     <div className="min-h-screen bg-gray-100 flex items-center justify-center">
@@ -431,6 +458,13 @@ export default function PostDetailPage() {
             ← 목록으로
           </button>
           <div className="flex items-center gap-2">
+            {/* 신고 버튼 - 본인 글·관리자 제외, 로그인 필요 */}
+            {isLoggedIn && !isAuthor && !isAdmin && !isFAQ && (
+              <button onClick={() => setReportModalOpen(true)}
+                className="px-4 py-2 text-sm text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors border border-gray-200 hover:border-red-200">
+                🚨 신고
+              </button>
+            )}
             {isAdmin && post.boardAdminOnly && (
               <button onClick={handleTogglePin} disabled={pinLoading}
                 className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
@@ -706,6 +740,55 @@ export default function PostDetailPage() {
         )}
 
       </div>
+
+      {/* 신고 모달 */}
+      {reportModalOpen && (
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl w-full max-w-md p-6">
+            <h3 className="text-base font-bold text-gray-800 dark:text-white mb-1">🚨 게시글 신고</h3>
+            <p className="text-xs text-gray-400 mb-4">신고 내용은 관리자가 검토 후 처리합니다.</p>
+            <div className="space-y-2 mb-4">
+              {['스팸/광고', '욕설/혐오', '음란물', '개인정보 노출', '불법 정보'].map(r => (
+                <label key={r} className="flex items-center gap-2 cursor-pointer">
+                  <input type="radio" name="reason" value={r}
+                    checked={reportReason === r}
+                    onChange={e => setReportReason(e.target.value)}
+                    className="accent-red-500" />
+                  <span className="text-sm text-gray-700 dark:text-gray-300">{r}</span>
+                </label>
+              ))}
+              {/* 기타 - 직접 입력 */}
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input type="radio" name="reason" value="__custom__"
+                  checked={reportReason === '__custom__'}
+                  onChange={() => setReportReason('__custom__')}
+                  className="accent-red-500" />
+                <span className="text-sm text-gray-700 dark:text-gray-300">기타</span>
+              </label>
+              {reportReason === '__custom__' && (
+                <input
+                  type="text"
+                  placeholder="신고 사유를 직접 입력해주세요."
+                  value={reportCustom}
+                  onChange={e => setReportCustom(e.target.value)}
+                  autoFocus
+                  className="w-full mt-1 px-3 py-2 border border-gray-200 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-red-300"
+                />
+              )}
+            </div>
+            <div className="flex gap-2 justify-end">
+              <button onClick={() => { setReportModalOpen(false); setReportReason(''); setReportCustom(''); }}
+                className="px-4 py-2 text-sm text-gray-500 border border-gray-200 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+                취소
+              </button>
+              <button onClick={handleReport} disabled={reporting || !reportReason.trim()}
+                className="px-4 py-2 text-sm bg-red-500 hover:bg-red-600 disabled:bg-red-300 text-white rounded-lg font-medium transition-colors">
+                {reporting ? '신고 중...' : '신고하기'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

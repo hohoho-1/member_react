@@ -1067,7 +1067,7 @@ export default function AdminPage() {
         </div>
 
         {/* 회원 수 카드 (로그/삭제게시글/게시판관리 탭 제외) */}
-        {tab !== 'logs' && tab !== 'deletedPosts' && tab !== 'boards' && tab !== 'schedules' && (
+        {tab !== 'logs' && tab !== 'deletedPosts' && tab !== 'boards' && tab !== 'schedules' && tab !== 'reports' && tab !== 'stats' && (
           <div className="bg-white rounded-2xl shadow p-6 mb-6 text-center">
             <p className="text-4xl font-bold text-blue-500">{totalElements}</p>
             <p className="text-sm text-gray-400 mt-1">
@@ -1102,8 +1102,15 @@ export default function AdminPage() {
             className={`flex-1 py-3 text-sm font-semibold transition-colors ${tab === 'schedules' ? 'bg-teal-500 text-white' : 'text-gray-500 hover:bg-gray-50'}`}>
             📅 일정 관리
           </button>
-          <button onClick={() => navigate('/courses/admin')}
-            className="flex-1 py-3 text-sm font-semibold transition-colors text-gray-500 hover:bg-gray-50">
+          <button onClick={() => switchTab('reports')}
+            className={`flex-1 py-3 text-sm font-semibold transition-colors ${tab === 'reports' ? 'bg-red-500 text-white' : 'text-gray-500 hover:bg-gray-50'}`}>
+            🚨 신고 관리
+          </button>
+          <button onClick={() => switchTab('stats')}
+            className={`flex-1 py-3 text-sm font-semibold transition-colors ${tab === 'stats' ? 'bg-emerald-500 text-white' : 'text-gray-500 hover:bg-gray-50'}`}>
+            📊 통계
+          </button>
+          <button onClick={() => navigate('/courses/admin')}            className="flex-1 py-3 text-sm font-semibold transition-colors text-gray-500 hover:bg-gray-50">
             📚 강의 관리
           </button>
         </div>
@@ -1373,7 +1380,7 @@ export default function AdminPage() {
         )}
 
         {/* ── 활성/탈퇴 회원 탭 ── */}
-        {tab !== 'logs' && tab !== 'deletedPosts' && tab !== 'boards' && tab !== 'schedules' && (
+        {tab !== 'logs' && tab !== 'deletedPosts' && tab !== 'boards' && tab !== 'schedules' && tab !== 'reports' && tab !== 'stats' && (
           <div className="bg-white rounded-2xl shadow overflow-hidden">
             <div className="flex justify-between items-center px-6 py-4 border-b border-gray-100">
               <span className="font-semibold text-gray-700">
@@ -1547,7 +1554,506 @@ export default function AdminPage() {
           </div>
         )}
 
+        {/* ── 신고 관리 탭 ── */}
+        {tab === 'reports' && (
+          <ReportsTab showSuccess={showSuccess} showError={showError} />
+        )}
+
+        {/* ── 통계 탭 ── */}
+        {tab === 'stats' && (
+          <StatsTab />
+        )}
+
       </div>
+    </div>
+  );
+}
+
+// ── 통계 탭 컴포넌트 ──────────────────────────────────────────────────────
+function StatsTab() {
+  const [overview, setOverview] = useState(null);
+  const [dailyUsers, setDailyUsers] = useState([]);
+  const [dailyPosts, setDailyPosts] = useState([]);
+  const [dailyEnrollments, setDailyEnrollments] = useState([]);
+  const [courseStats, setCourseStats] = useState([]);
+  const [pageViewStats, setPageViewStats] = useState(null);
+  const [topPages, setTopPages] = useState([]);
+  const [days, setDays] = useState(30);
+  const [pvDays, setPvDays] = useState(7);
+  const [loading, setLoading] = useState(true);
+  const [chartTab, setChartTab] = useState('users');
+
+  useEffect(() => { loadAll(days); }, [days]);
+  useEffect(() => { loadPageViews(pvDays); }, [pvDays]);
+
+  const loadAll = async (d) => {
+    setLoading(true);
+    try {
+      const [ov, du, dp, de, cs] = await Promise.all([
+        authFetch('/api/admin/stats/overview').then(r => r.ok ? r.json() : null),
+        authFetch(`/api/admin/stats/users/daily?days=${d}`).then(r => r.ok ? r.json() : []),
+        authFetch(`/api/admin/stats/posts/daily?days=${d}`).then(r => r.ok ? r.json() : []),
+        authFetch(`/api/admin/stats/enrollments/daily?days=${d}`).then(r => r.ok ? r.json() : []),
+        authFetch('/api/admin/stats/courses').then(r => r.ok ? r.json() : []),
+      ]);
+      setOverview(ov);
+      setDailyUsers(du);
+      setDailyPosts(dp);
+      setDailyEnrollments(de);
+      setCourseStats(cs);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const loadPageViews = async (d) => {
+    const [pv, tp] = await Promise.all([
+      authFetch(`/api/admin/stats/pageviews/daily?days=${d}`).then(r => r.ok ? r.json() : null),
+      authFetch(`/api/admin/stats/pageviews/top?days=${d}&limit=10`).then(r => r.ok ? r.json() : []),
+    ]);
+    setPageViewStats(pv);
+    setTopPages(tp);
+  };
+
+  // 간단한 SVG 라인차트
+  const LineChart = ({ data, color = '#3B82F6', label }) => {
+    if (!data || data.length === 0) return <div className="text-center text-gray-400 text-sm py-8">데이터 없음</div>;
+    const values = data.map(d => d.count);
+    const max = Math.max(...values, 1);
+    const w = 600, h = 120, padL = 30, padR = 10, padT = 10, padB = 24;
+    const innerW = w - padL - padR;
+    const innerH = h - padT - padB;
+    const points = data.map((d, i) => {
+      const x = padL + (i / (data.length - 1 || 1)) * innerW;
+      const y = padT + innerH - (d.count / max) * innerH;
+      return `${x},${y}`;
+    });
+    // x축 라벨 (7개만)
+    const labelIdxs = data.length <= 7
+      ? data.map((_, i) => i)
+      : [0, Math.floor(data.length / 6), Math.floor(data.length / 6 * 2),
+         Math.floor(data.length / 6 * 3), Math.floor(data.length / 6 * 4),
+         Math.floor(data.length / 6 * 5), data.length - 1];
+
+    return (
+      <div>
+        <p className="text-xs text-gray-400 mb-1">{label}</p>
+        <svg viewBox={`0 0 ${w} ${h}`} className="w-full" style={{ height: 120 }}>
+          {/* 격자 */}
+          {[0, 0.25, 0.5, 0.75, 1].map(t => (
+            <line key={t}
+              x1={padL} y1={padT + innerH * (1 - t)}
+              x2={w - padR} y2={padT + innerH * (1 - t)}
+              stroke="#e5e7eb" strokeWidth="1" />
+          ))}
+          {/* 라인 */}
+          <polyline points={points.join(' ')} fill="none" stroke={color} strokeWidth="2" strokeLinejoin="round" />
+          {/* 점 (데이터 적을 때) */}
+          {data.length <= 14 && data.map((d, i) => {
+            const x = padL + (i / (data.length - 1 || 1)) * innerW;
+            const y = padT + innerH - (d.count / max) * innerH;
+            return <circle key={i} cx={x} cy={y} r="3" fill={color} />;
+          })}
+          {/* x축 라벨 */}
+          {labelIdxs.map(i => {
+            const x = padL + (i / (data.length - 1 || 1)) * innerW;
+            return (
+              <text key={i} x={x} y={h - 4} textAnchor="middle"
+                fontSize="9" fill="#9ca3af">{data[i]?.date}</text>
+            );
+          })}
+          {/* y축 최대값 */}
+          <text x={padL - 2} y={padT + 4} textAnchor="end" fontSize="9" fill="#9ca3af">{max}</text>
+          <text x={padL - 2} y={padT + innerH + 4} textAnchor="end" fontSize="9" fill="#9ca3af">0</text>
+        </svg>
+      </div>
+    );
+  };
+
+  const chartData = chartTab === 'users' ? dailyUsers
+    : chartTab === 'posts' ? dailyPosts
+    : dailyEnrollments;
+  const chartColor = chartTab === 'users' ? '#3B82F6'
+    : chartTab === 'posts' ? '#8B5CF6'
+    : '#10B981';
+  const chartLabel = chartTab === 'users' ? '일별 신규 가입자'
+    : chartTab === 'posts' ? '일별 새 게시글'
+    : '일별 수강 신청';
+
+  if (loading) return <div className="text-center py-12 text-gray-400">통계 로딩 중...</div>;
+
+  return (
+    <div className="space-y-5">
+      {/* 핵심 지표 카드 */}
+      {overview && (
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+          {[
+            { label: '총 회원', value: overview.totalUsers, sub: `오늘 +${overview.todaySignups}`, color: 'blue' },
+            { label: '총 게시글', value: overview.totalPosts, sub: `오늘 +${overview.todayPosts}`, color: 'purple' },
+            { label: '총 수강신청', value: overview.totalEnrollments, sub: `수료 ${overview.totalCompletions}`, color: 'emerald' },
+            { label: '공개 강의', value: overview.publishedCourses, sub: `전체 ${overview.totalCourses}개`, color: 'amber' },
+            { label: '처리대기 신고', value: overview.pendingReports, sub: '미처리 신고', color: 'red' },
+          ].map(({ label, value, sub, color }) => (
+            <div key={label} className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-4 text-center">
+              <p className={`text-2xl font-bold text-${color}-500`}>{value?.toLocaleString()}</p>
+              <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mt-0.5">{label}</p>
+              <p className="text-xs text-gray-400 mt-0.5">{sub}</p>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* 추이 차트 */}
+      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-5">
+        <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
+          <h3 className="font-bold text-gray-800 dark:text-white">📈 추이 차트</h3>
+          <div className="flex gap-2">
+            {/* 차트 종류 */}
+            <div className="flex gap-1">
+              {[
+                { key: 'users', label: '가입자', color: 'blue' },
+                { key: 'posts', label: '게시글', color: 'purple' },
+                { key: 'enrollments', label: '수강신청', color: 'emerald' },
+              ].map(({ key, label, color }) => (
+                <button key={key} onClick={() => setChartTab(key)}
+                  className={`px-2.5 py-1 text-xs font-medium rounded-lg transition-colors ${
+                    chartTab === key
+                      ? `bg-${color}-500 text-white`
+                      : 'bg-gray-100 dark:bg-gray-700 text-gray-500 hover:bg-gray-200'
+                  }`}>
+                  {label}
+                </button>
+              ))}
+            </div>
+            {/* 기간 */}
+            <div className="flex gap-1">
+              {[7, 14, 30].map(d => (
+                <button key={d} onClick={() => setDays(d)}
+                  className={`px-2.5 py-1 text-xs font-medium rounded-lg transition-colors ${
+                    days === d
+                      ? 'bg-gray-700 text-white'
+                      : 'bg-gray-100 dark:bg-gray-700 text-gray-500 hover:bg-gray-200'
+                  }`}>
+                  {d}일
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+        <LineChart data={chartData} color={chartColor} label={chartLabel} />
+        {/* 합계 */}
+        <p className="text-xs text-gray-400 text-right mt-1">
+          기간 합계: <span className="font-semibold text-gray-600 dark:text-gray-300">
+            {chartData.reduce((s, d) => s + d.count, 0).toLocaleString()}
+          </span>
+        </p>
+      </div>
+
+      {/* 강의별 수강/수료 현황 */}
+      {courseStats.length > 0 && (
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-5">
+          <h3 className="font-bold text-gray-800 dark:text-white mb-4">🎓 강의별 수강/수료 현황</h3>
+          <div className="space-y-3">
+            {courseStats.map(c => {
+              const rate = c.enrollments > 0
+                ? Math.round((c.completions / c.enrollments) * 100) : 0;
+              return (
+                <div key={c.courseId}>
+                  <div className="flex items-center justify-between text-sm mb-1">
+                    <span className="text-gray-700 dark:text-gray-300 truncate max-w-xs">{c.courseTitle}</span>
+                    <span className="text-xs text-gray-400 shrink-0 ml-2">
+                      수강 {c.enrollments} / 수료 {c.completions} ({rate}%)
+                    </span>
+                  </div>
+                  <div className="w-full bg-gray-100 dark:bg-gray-700 rounded-full h-2">
+                    <div
+                      className="bg-emerald-500 h-2 rounded-full transition-all"
+                      style={{ width: `${rate}%` }}
+                    />
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* 페이지 접속 로그 */}
+      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-5">
+        <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
+          <div>
+            <h3 className="font-bold text-gray-800 dark:text-white">👁 페이지 접속 통계</h3>
+            {pageViewStats && (
+              <p className="text-xs text-gray-400 mt-0.5">
+                기간 내 총 {pageViewStats.totalViews?.toLocaleString()}회 방문 /
+                유니크 방문자 {pageViewStats.uniqueVisitors?.toLocaleString()}명
+              </p>
+            )}
+          </div>
+          <div className="flex gap-1">
+            {[7, 14, 30].map(d => (
+              <button key={d} onClick={() => setPvDays(d)}
+                className={`px-2.5 py-1 text-xs font-medium rounded-lg transition-colors ${
+                  pvDays === d ? 'bg-gray-700 text-white' : 'bg-gray-100 dark:bg-gray-700 text-gray-500 hover:bg-gray-200'
+                }`}>
+                {d}일
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* 일별 방문 차트 */}
+        {pageViewStats?.daily && (
+          <div className="mb-5">
+            <LineChart data={pageViewStats.daily} color="#F59E0B" label="일별 페이지뷰" />
+          </div>
+        )}
+
+        {/* 인기 페이지 TOP 10 */}
+        {topPages.length > 0 ? (
+          <div>
+            <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-3">🔥 인기 페이지 TOP {topPages.length}</p>
+            <div className="space-y-2">
+              {topPages.map((p, i) => {
+                const max = topPages[0]?.count || 1;
+                const pct = Math.round((p.count / max) * 100);
+
+                // path 기반 라벨 생성
+                const getLabel = (pageName, path) => {
+                  if (/^\/courses\/\d+\/lessons\/\d+/.test(pageName)) {
+                    const [,, courseId,, lessonId] = pageName.split('/');
+                    return `강의 수강 (강의 #${courseId} / 레슨 #${lessonId})`;
+                  }
+                  if (/^\/courses\/\d+/.test(pageName)) {
+                    const courseId = pageName.split('/')[2];
+                    return `강의 상세 (#${courseId})`;
+                  }
+                  if (/^\/board\/\d+\/edit/.test(pageName)) {
+                    const postId = pageName.split('/')[2];
+                    return `게시글 수정 (#${postId})`;
+                  }
+                  if (/^\/board\/\d+/.test(pageName)) {
+                    const postId = pageName.split('/')[2];
+                    return `게시글 상세 (#${postId})`;
+                  }
+                  return pageName;
+                };
+
+                const label = getLabel(p.pageName, p.path);
+                const isLink = /^\//.test(p.pageName); // path 형태면 링크 가능
+
+                return (
+                  <div key={i} className="flex items-center gap-3">
+                    <span className={`shrink-0 w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold ${
+                      i === 0 ? 'bg-yellow-400 text-white' :
+                      i === 1 ? 'bg-gray-300 text-gray-700' :
+                      i === 2 ? 'bg-amber-600 text-white' :
+                      'bg-gray-100 dark:bg-gray-700 text-gray-500'
+                    }`}>{i + 1}</span>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between mb-0.5">
+                        <div className="flex items-center gap-1.5 min-w-0">
+                          {isLink ? (
+                            <a href={p.pageName} target="_blank" rel="noreferrer"
+                              className="text-sm text-blue-600 dark:text-blue-400 hover:underline truncate">
+                              {label}
+                            </a>
+                          ) : (
+                            <span className="text-sm text-gray-700 dark:text-gray-300 truncate">{label}</span>
+                          )}
+                        </div>
+                        <span className="text-xs text-gray-400 shrink-0 ml-2 font-medium">{p.count?.toLocaleString()}회</span>
+                      </div>
+                      <div className="w-full bg-gray-100 dark:bg-gray-700 rounded-full h-1.5">
+                        <div className="bg-amber-400 h-1.5 rounded-full transition-all"
+                          style={{ width: `${pct}%` }} />
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        ) : (
+          <div className="text-center py-6 text-gray-400 text-sm">
+            아직 접속 데이터가 없습니다. 페이지를 둘러보면 데이터가 쌓입니다.
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ── 신고 관리 탭 컴포넌트 ─────────────────────────────────────────────────
+function ReportsTab({ showSuccess, showError }) {
+  const navigate = useNavigate();
+  const [reports, setReports] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [statusFilter, setStatusFilter] = useState('ALL');
+  const [page, setPage] = useState(0);
+  const [totalPages, setTotalPages] = useState(0);
+  const [totalElements, setTotalElements] = useState(0);
+  const [memoMap, setMemoMap] = useState({});  // { reportId: memoText }
+
+  useEffect(() => {
+    loadReports(0, statusFilter);
+    // eslint-disable-next-line
+  }, [statusFilter]);
+
+  const loadReports = async (p, status) => {
+    setLoading(true);
+    const res = await authFetch(`/api/reports?status=${status}&page=${p}&size=15`);
+    if (res.ok) {
+      const data = await res.json();
+      setReports(data.content);
+      setTotalPages(data.totalPages);
+      setTotalElements(data.totalElements);
+      setPage(p);
+    }
+    setLoading(false);
+  };
+
+  const handleResolve = async (reportId) => {
+    if (!window.confirm('신고를 승인하고 게시글을 삭제하시겠습니까?')) return;
+    const memo = memoMap[reportId] || '';
+    const res = await authFetch(`/api/reports/${reportId}/resolve`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ memo }),
+    });
+    if (res.ok) {
+      showSuccess('신고가 처리되었습니다. (게시글 삭제됨)');
+      loadReports(page, statusFilter);
+    } else {
+      const d = await res.json().catch(() => ({}));
+      showError(d.message || '처리에 실패했습니다.');
+    }
+  };
+
+  const handleDismiss = async (reportId) => {
+    if (!window.confirm('신고를 기각하시겠습니까?')) return;
+    const memo = memoMap[reportId] || '';
+    const res = await authFetch(`/api/reports/${reportId}/dismiss`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ memo }),
+    });
+    if (res.ok) {
+      showSuccess('신고가 기각되었습니다.');
+      loadReports(page, statusFilter);
+    } else {
+      showError('기각 처리에 실패했습니다.');
+    }
+  };
+
+  const STATUS_STYLE = {
+    PENDING:   'bg-yellow-100 text-yellow-700',
+    RESOLVED:  'bg-green-100 text-green-700',
+    DISMISSED: 'bg-gray-100 text-gray-500',
+  };
+  const STATUS_LABEL = { PENDING: '⏳ 대기', RESOLVED: '✅ 처리됨', DISMISSED: '❌ 기각됨' };
+
+  return (
+    <div className="bg-white rounded-2xl shadow overflow-hidden">
+      <div className="flex flex-wrap justify-between items-center px-6 py-4 border-b border-gray-100 gap-3">
+        <span className="font-semibold text-gray-700">
+          신고 목록
+          <span className="ml-2 text-sm text-gray-400">({totalElements}건)</span>
+        </span>
+        <div className="flex gap-1">
+          {['ALL', 'PENDING', 'RESOLVED', 'DISMISSED'].map(s => (
+            <button key={s}
+              onClick={() => setStatusFilter(s)}
+              className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+                statusFilter === s
+                  ? s === 'PENDING' ? 'bg-yellow-500 text-white'
+                  : s === 'RESOLVED' ? 'bg-green-500 text-white'
+                  : s === 'DISMISSED' ? 'bg-gray-400 text-white'
+                  : 'bg-red-500 text-white'
+                  : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
+              }`}>
+              {s === 'ALL' ? '전체' : STATUS_LABEL[s]}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {loading ? (
+        <div className="text-center py-10 text-gray-400">로딩 중...</div>
+      ) : reports.length === 0 ? (
+        <div className="text-center py-10 text-gray-400">신고 내역이 없습니다.</div>
+      ) : (
+        <>
+          <div className="divide-y divide-gray-50">
+            {reports.map(r => (
+              <div key={r.id} className="px-6 py-4 hover:bg-gray-50 transition-colors">
+                <div className="flex items-start justify-between gap-4">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap mb-1">
+                      <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${STATUS_STYLE[r.status]}`}>
+                        {STATUS_LABEL[r.status]}
+                      </span>
+                      <span className="text-xs text-gray-400">{new Date(r.createdAt).toLocaleString('ko-KR')}</span>
+                    </div>
+                    {/* 게시글 제목 - 클릭 시 이동 */}
+                    <button
+                      onClick={() => navigate(`/board/${r.postId}`)}
+                      className="text-sm font-medium text-blue-600 hover:underline truncate block max-w-xs text-left">
+                      📄 {r.postTitle}
+                    </button>
+                    <div className="flex items-center gap-3 mt-1 text-xs text-gray-400">
+                      <span>🚨 신고자: {r.reporterName}</span>
+                      <span>사유: <span className="text-gray-600 font-medium">{r.reason}</span></span>
+                    </div>
+                    {r.adminMemo && (
+                      <p className="mt-1 text-xs text-gray-400">메모: {r.adminMemo}</p>
+                    )}
+                  </div>
+
+                  {/* 처리 버튼 (대기 상태만) */}
+                  {r.status === 'PENDING' && (
+                    <div className="flex flex-col gap-2 shrink-0 min-w-[160px]">
+                      <input
+                        type="text"
+                        placeholder="처리 메모 (선택)"
+                        value={memoMap[r.id] || ''}
+                        onChange={e => setMemoMap(prev => ({ ...prev, [r.id]: e.target.value }))}
+                        className="px-2 py-1 text-xs border border-gray-200 rounded-lg focus:outline-none focus:border-red-300 w-full"
+                      />
+                      <div className="flex gap-1">
+                        <button
+                          onClick={() => handleResolve(r.id)}
+                          className="flex-1 px-2 py-1.5 bg-red-500 hover:bg-red-600 text-white rounded-lg text-xs font-medium transition-colors">
+                          승인 (삭제)
+                        </button>
+                        <button
+                          onClick={() => handleDismiss(r.id)}
+                          className="flex-1 px-2 py-1.5 bg-gray-200 hover:bg-gray-300 text-gray-600 rounded-lg text-xs font-medium transition-colors">
+                          기각
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* 페이지네이션 */}
+          {totalPages > 1 && (
+            <div className="flex justify-center gap-1 px-6 py-4 border-t border-gray-100">
+              {Array.from({ length: totalPages }, (_, i) => (
+                <button key={i} onClick={() => loadReports(i, statusFilter)}
+                  className={`w-8 h-8 rounded-lg text-xs transition-colors ${
+                    page === i ? 'bg-red-500 text-white' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
+                  }`}>
+                  {i + 1}
+                </button>
+              ))}
+            </div>
+          )}
+        </>
+      )}
     </div>
   );
 }

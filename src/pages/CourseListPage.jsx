@@ -14,13 +14,19 @@ export default function CourseListPage() {
   const [page, setPage] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
   const [loading, setLoading] = useState(false);
-  const [likeMap, setLikeMap] = useState({}); // { courseId: { liked, likeCount } }
+  const [likeMap, setLikeMap] = useState({});       // { courseId: { liked, likeCount } }
+  const [enrollMap, setEnrollMap] = useState({});   // { courseId: { progressRate, completed, pendingApproval } }
   const isComposing = useRef(false);
 
   useEffect(() => {
     fetchCourses();
     // eslint-disable-next-line
   }, [page, keyword, recruitingOnly, dateFrom, dateTo, sort]);
+
+  // 로그인 시 내 수강 목록 1회 로드
+  useEffect(() => {
+    if (isLoggedIn()) fetchMyEnrollments();
+  }, []);
 
   const fetchCourses = async () => {
     setLoading(true);
@@ -33,7 +39,6 @@ export default function CourseListPage() {
       const data = await res.json();
       setCourses(data.content);
       setTotalPages(data.totalPages);
-      // likeMap 초기화
       const map = {};
       data.content.forEach(c => {
         map[c.id] = { liked: c.likedByMe ?? false, likeCount: c.likeCount ?? 0 };
@@ -41,6 +46,22 @@ export default function CourseListPage() {
       setLikeMap(map);
     }
     setLoading(false);
+  };
+
+  const fetchMyEnrollments = async () => {
+    const res = await authFetch('/api/courses/my/enrollments');
+    if (res.ok) {
+      const data = await res.json();
+      const map = {};
+      data.forEach(e => {
+        map[e.courseId] = {
+          progressRate: e.progressRate ?? 0,
+          completed: e.completed || e.isCompleted,
+          pendingApproval: e.pendingApproval,
+        };
+      });
+      setEnrollMap(map);
+    }
   };
 
   const handleSearch = () => {
@@ -167,14 +188,14 @@ export default function CourseListPage() {
             return (
               <div key={course.id} onClick={() => navigate(`/courses/${course.id}`)}
                 className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden cursor-pointer hover:shadow-md hover:-translate-y-0.5 transition-all flex flex-col">
-                {/* 썸네일 - 하트 버튼 오버레이 */}
+                {/* 썸네일 - 하트 버튼 + 진도율 오버레이 */}
                 <div className="relative aspect-video bg-gradient-to-br from-blue-400 to-indigo-500 flex items-center justify-center overflow-hidden shrink-0">
                   {course.thumbnailUrl ? (
                     <img src={course.thumbnailUrl} alt={course.title} className="w-full h-full object-contain bg-gray-900" />
                   ) : (
                     <span className="text-4xl">📚</span>
                   )}
-                  {/* 좋아요 버튼 - 우측 상단 */}
+                  {/* 좋아요 버튼 */}
                   <button
                     onClick={e => handleLike(e, course.id)}
                     className={`absolute top-2 right-2 w-8 h-8 rounded-full flex items-center justify-center text-base shadow-md transition-all ${
@@ -184,6 +205,27 @@ export default function CourseListPage() {
                     }`}>
                     {likeMap[course.id]?.liked ? '❤️' : '🤍'}
                   </button>
+                  {/* 수강 중 배지 */}
+                  {enrollMap[course.id] && !enrollMap[course.id].completed && (
+                    <div className="absolute top-2 left-2 px-2 py-0.5 bg-blue-500/90 text-white text-[10px] font-semibold rounded-full">
+                      수강중
+                    </div>
+                  )}
+                  {/* 수료 배지 */}
+                  {enrollMap[course.id]?.completed && (
+                    <div className="absolute top-2 left-2 px-2 py-0.5 bg-green-500/90 text-white text-[10px] font-semibold rounded-full">
+                      🎓 수료완료
+                    </div>
+                  )}
+                  {/* 진도율 바 (수강 중인 경우만) */}
+                  {enrollMap[course.id] && !enrollMap[course.id].completed && (
+                    <div className="absolute bottom-0 left-0 right-0 h-1.5 bg-black/30">
+                      <div
+                        className="h-full bg-blue-400 transition-all"
+                        style={{ width: `${enrollMap[course.id].progressRate}%` }}
+                      />
+                    </div>
+                  )}
                 </div>
                 <div className="p-4 flex flex-col flex-1">
                   <div className="flex items-start gap-1.5 mb-1">
@@ -215,6 +257,14 @@ export default function CourseListPage() {
                         {new Date(course.createdAt).toLocaleDateString()}
                       </span>
                       <div className="flex items-center gap-2">
+                        {enrollMap[course.id] && !enrollMap[course.id].completed && (
+                          <span className="text-[11px] text-blue-500 font-semibold">
+                            {enrollMap[course.id].progressRate}%
+                          </span>
+                        )}
+                        {course.reviewCount > 0 && (
+                          <span className="text-[11px] text-yellow-500">⭐ {course.avgRating?.toFixed(1)} ({course.reviewCount})</span>
+                        )}
                         {(likeMap[course.id]?.likeCount > 0) && (
                           <span className="text-[11px] text-red-400">❤️ {likeMap[course.id].likeCount.toLocaleString()}</span>
                         )}

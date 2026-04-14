@@ -4,6 +4,7 @@ import { useEffect, useState, useRef } from 'react';
 import NotificationBell from './NotificationBell';
 import UserAvatar from './UserAvatar';
 import { useTheme } from '../context/ThemeContext';
+import { usePageView } from '../hooks/usePageView';
 
 export default function Layout({ children }) {
   const navigate = useNavigate();
@@ -14,6 +15,8 @@ export default function Layout({ children }) {
   const [searchInput, setSearchInput] = useState('');
   const isComposing = useRef(false);
   const { isDark, toggleTheme } = useTheme();
+
+  usePageView(); // 페이지뷰 자동 기록
 
   useEffect(() => {
     if (isLoggedIn) {
