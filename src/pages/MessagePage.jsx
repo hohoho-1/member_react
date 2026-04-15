@@ -26,7 +26,6 @@ function ComposeModal({ onClose, onSent, initialReceiver = null }) {
   const [error, setError] = useState('');
   const searchRef = useRef(null);
 
-  // 회원 목록 검색 (debounce)
   useEffect(() => {
     if (!receiverSearch.trim() || selectedReceiver) { setUsers([]); setShowUserList(false); return; }
     const timer = setTimeout(async () => {
@@ -37,13 +36,7 @@ function ComposeModal({ onClose, onSent, initialReceiver = null }) {
         setShowUserList(true);
       }
     }, 300);
-    const handleMarkAllRead = async () => {
-    const unreadIds = messages.filter(m => !m.readByReceiver).map(m => m.id);
-    await Promise.all(unreadIds.map(id => authFetch(`/api/messages/${id}`, { method: 'GET' })));
-    setMessages(prev => prev.map(m => ({ ...m, readByReceiver: true })));
-  };
-
-  return () => clearTimeout(timer);
+    return () => clearTimeout(timer);
   }, [receiverSearch, selectedReceiver]);
 
   const handleSend = async () => {
@@ -61,12 +54,6 @@ function ComposeModal({ onClose, onSent, initialReceiver = null }) {
     else { const d = await res.json(); setError(d.message || '발송에 실패했습니다.'); }
   };
 
-  const handleMarkAllRead = async () => {
-    const unreadIds = messages.filter(m => !m.readByReceiver).map(m => m.id);
-    await Promise.all(unreadIds.map(id => authFetch(`/api/messages/${id}`, { method: 'GET' })));
-    setMessages(prev => prev.map(m => ({ ...m, readByReceiver: true })));
-  };
-
   return (
     <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4" onClick={onClose}>
       <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl w-full max-w-lg p-6" onClick={e => e.stopPropagation()}>
@@ -74,7 +61,6 @@ function ComposeModal({ onClose, onSent, initialReceiver = null }) {
           <h3 className="text-base font-bold text-gray-800 dark:text-gray-100">✉️ 쪽지 보내기</h3>
           <button onClick={onClose} className="text-gray-400 hover:text-gray-600 text-xl font-bold leading-none">×</button>
         </div>
-
         <div className="space-y-4">
           {/* 수신자 */}
           <div className="relative">
@@ -87,13 +73,9 @@ function ComposeModal({ onClose, onSent, initialReceiver = null }) {
               </div>
             ) : (
               <div ref={searchRef}>
-                <input
-                  type="text"
-                  value={receiverSearch}
-                  onChange={e => setReceiverSearch(e.target.value)}
+                <input type="text" value={receiverSearch} onChange={e => setReceiverSearch(e.target.value)}
                   placeholder="회원 이름으로 검색..."
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-xl text-sm bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 focus:outline-none focus:border-blue-400"
-                />
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-xl text-sm bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 focus:outline-none focus:border-blue-400" />
                 {showUserList && users.length > 0 && (
                   <div className="absolute z-10 left-0 right-0 mt-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl shadow-lg overflow-hidden max-h-48 overflow-y-auto">
                     {users.map(u => (
@@ -111,7 +93,6 @@ function ComposeModal({ onClose, onSent, initialReceiver = null }) {
               </div>
             )}
           </div>
-
           {/* 제목 */}
           <div>
             <label className="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">제목</label>
@@ -119,7 +100,6 @@ function ComposeModal({ onClose, onSent, initialReceiver = null }) {
               placeholder="제목을 입력하세요"
               className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-xl text-sm bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 focus:outline-none focus:border-blue-400" />
           </div>
-
           {/* 내용 */}
           <div>
             <label className="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">내용</label>
@@ -127,9 +107,7 @@ function ComposeModal({ onClose, onSent, initialReceiver = null }) {
               placeholder="내용을 입력하세요"
               className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-xl text-sm bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 focus:outline-none focus:border-blue-400 resize-none" />
           </div>
-
           {error && <p className="text-sm text-red-500">⚠️ {error}</p>}
-
           <div className="flex gap-2 justify-end pt-1">
             <button onClick={onClose} className="px-4 py-2 text-sm text-gray-500 border border-gray-200 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">취소</button>
             <button onClick={handleSend} disabled={sending}
@@ -148,22 +126,13 @@ function DetailModal({ message, myId, onClose, onDelete, onReply }) {
   if (!message) return null;
   const isSender = message.senderId === myId;
 
-  const handleMarkAllRead = async () => {
-    const unreadIds = messages.filter(m => !m.readByReceiver).map(m => m.id);
-    await Promise.all(unreadIds.map(id => authFetch(`/api/messages/${id}`, { method: 'GET' })));
-    setMessages(prev => prev.map(m => ({ ...m, readByReceiver: true })));
-  };
-
   return (
     <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4" onClick={onClose}>
       <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl w-full max-w-lg" onClick={e => e.stopPropagation()}>
-        {/* 헤더 */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 dark:border-gray-700">
           <h3 className="font-bold text-gray-800 dark:text-gray-100 truncate flex-1 mr-2">{message.title}</h3>
           <button onClick={onClose} className="text-gray-400 hover:text-gray-600 text-xl font-bold leading-none shrink-0">×</button>
         </div>
-
-        {/* 발신/수신 정보 */}
         <div className="px-6 py-3 bg-gray-50 dark:bg-gray-700 flex items-center justify-between text-sm">
           <div className="flex items-center gap-2">
             <UserAvatar
@@ -185,13 +154,9 @@ function DetailModal({ message, myId, onClose, onDelete, onReply }) {
             )}
           </div>
         </div>
-
-        {/* 본문 */}
         <div className="px-6 py-5 min-h-[120px]">
           <p className="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap leading-relaxed">{message.content}</p>
         </div>
-
-        {/* 버튼 */}
         <div className="flex items-center justify-between px-6 py-4 border-t border-gray-100 dark:border-gray-700">
           <button onClick={() => { onDelete(message.id); onClose(); }}
             className="px-3 py-1.5 text-xs text-red-400 border border-red-200 rounded-lg hover:bg-red-50 dark:hover:bg-red-950 transition-colors">
@@ -223,14 +188,14 @@ export default function MessagePage() {
   const [page, setPage] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
 
-  const [selectedMessage, setSelectedMessage] = useState(null); // 상세 모달
+  const [selectedMessage, setSelectedMessage] = useState(null);
   const [composeOpen, setComposeOpen] = useState(false);
-  const [replyTarget, setReplyTarget] = useState(null); // 답장 시 초기 수신자
+  const [replyTarget, setReplyTarget] = useState(null);
 
   useEffect(() => {
     if (!payload) { navigate('/login'); return; }
     loadMessages(0);
-  }, [tab]);
+  }, [tab]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const loadMessages = async (p) => {
     setLoading(true);
@@ -248,12 +213,10 @@ export default function MessagePage() {
   };
 
   const handleOpenDetail = async (msg) => {
-    // 상세 조회 API 호출 (읽음 처리 포함)
     const res = await authFetch(`/api/messages/${msg.id}`);
     if (res.ok) {
       const detail = await res.json();
       setSelectedMessage(detail);
-      // 인박스에서 읽음 처리 후 로컬 상태 갱신
       if (tab === 'inbox') {
         setMessages(prev => prev.map(m => m.id === msg.id ? { ...m, readByReceiver: true } : m));
       }
@@ -263,13 +226,11 @@ export default function MessagePage() {
   const handleDelete = async (messageId) => {
     if (!window.confirm('이 쪽지를 삭제하시겠습니까?')) return;
     const res = await authFetch(`/api/messages/${messageId}`, { method: 'DELETE' });
-    if (res.ok) {
-      setMessages(prev => prev.filter(m => m.id !== messageId));
-    }
+    if (res.ok) setMessages(prev => prev.filter(m => m.id !== messageId));
   };
 
-  const handleReply = (message) => {
-    setReplyTarget({ id: message.senderId, username: message.senderName, profileImageUrl: message.senderProfileImageUrl });
+  const handleReply = (msg) => {
+    setReplyTarget({ id: msg.senderId, username: msg.senderName, profileImageUrl: msg.senderProfileImageUrl });
     setComposeOpen(true);
   };
 
@@ -282,7 +243,6 @@ export default function MessagePage() {
   return (
     <div className="bg-gray-100 dark:bg-gray-900 min-h-screen py-8 px-4">
       <div className="max-w-3xl mx-auto">
-
         {/* 헤더 */}
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-2xl font-bold text-gray-700 dark:text-gray-100">✉️ 쪽지함</h2>
@@ -302,10 +262,7 @@ export default function MessagePage() {
 
         {/* 탭 */}
         <div className="flex mb-4 bg-white dark:bg-gray-800 rounded-2xl shadow overflow-hidden">
-          {[
-            { key: 'inbox',  label: '📥 받은 쪽지함' },
-            { key: 'outbox', label: '📤 보낸 쪽지함' },
-          ].map(t => (
+          {[{ key: 'inbox', label: '📥 받은 쪽지함' }, { key: 'outbox', label: '📤 보낸 쪽지함' }].map(t => (
             <button key={t.key} onClick={() => setSearchParams({ tab: t.key })}
               className={`flex-1 py-3 text-sm font-semibold transition-colors ${
                 tab === t.key ? 'bg-blue-500 text-white' : 'text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700'
@@ -315,7 +272,7 @@ export default function MessagePage() {
           ))}
         </div>
 
-        {/* 쪽지 목록 */}
+        {/* 목록 */}
         <div className="bg-white dark:bg-gray-800 rounded-2xl shadow overflow-hidden">
           {loading ? (
             <div className="text-center py-16 text-gray-400">불러오는 중...</div>
@@ -330,36 +287,23 @@ export default function MessagePage() {
                 const isUnread = tab === 'inbox' && !msg.readByReceiver;
                 const counterpart = tab === 'inbox' ? msg.senderName : msg.receiverName;
                 const counterpartImg = tab === 'inbox' ? msg.senderProfileImageUrl : msg.receiverProfileImageUrl;
-                const handleMarkAllRead = async () => {
-    const unreadIds = messages.filter(m => !m.readByReceiver).map(m => m.id);
-    await Promise.all(unreadIds.map(id => authFetch(`/api/messages/${id}`, { method: 'GET' })));
-    setMessages(prev => prev.map(m => ({ ...m, readByReceiver: true })));
-  };
-
-  return (
-                  <div key={msg.id}
-                    onClick={() => handleOpenDetail(msg)}
+                return (
+                  <div key={msg.id} onClick={() => handleOpenDetail(msg)}
                     className={`flex items-center gap-4 px-5 py-4 cursor-pointer transition-colors hover:bg-gray-50 dark:hover:bg-gray-700 ${
                       isUnread ? 'bg-blue-50/40 dark:bg-blue-950/20' : ''
                     }`}>
-                    {/* 아바타 */}
                     <div className="shrink-0">
                       <UserAvatar profileImageUrl={counterpartImg} username={counterpart} size={10} />
                     </div>
-                    {/* 내용 */}
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-0.5">
                         <span className={`text-sm font-semibold ${isUnread ? 'text-gray-900 dark:text-white' : 'text-gray-600 dark:text-gray-300'}`}>
                           {counterpart}
                         </span>
-                        {isUnread && (
-                          <span className="shrink-0 w-2 h-2 rounded-full bg-blue-500" />
-                        )}
+                        {isUnread && <span className="shrink-0 w-2 h-2 rounded-full bg-blue-500" />}
                         {tab === 'outbox' && (
                           <span className={`shrink-0 text-xs px-1.5 py-0.5 rounded-full ${
-                            msg.readByReceiver
-                              ? 'bg-gray-100 dark:bg-gray-700 text-gray-400'
-                              : 'bg-blue-100 text-blue-600'
+                            msg.readByReceiver ? 'bg-gray-100 dark:bg-gray-700 text-gray-400' : 'bg-blue-100 text-blue-600'
                           }`}>
                             {msg.readByReceiver ? '읽음' : '안 읽음'}
                           </span>
@@ -370,13 +314,8 @@ export default function MessagePage() {
                       </p>
                       <p className="text-xs text-gray-400 dark:text-gray-500 truncate mt-0.5">{msg.content}</p>
                     </div>
-                    {/* 시간 */}
-                    <div className="shrink-0 text-xs text-gray-400 dark:text-gray-500">
-                      {timeAgo(msg.sentAt)}
-                    </div>
-                    {/* 삭제 버튼 */}
-                    <button
-                      onClick={e => { e.stopPropagation(); handleDelete(msg.id); }}
+                    <div className="shrink-0 text-xs text-gray-400 dark:text-gray-500">{timeAgo(msg.sentAt)}</div>
+                    <button onClick={e => { e.stopPropagation(); handleDelete(msg.id); }}
                       className="shrink-0 p-1 text-gray-300 hover:text-red-400 transition-colors rounded">
                       🗑️
                     </button>
@@ -406,7 +345,7 @@ export default function MessagePage() {
         </div>
       </div>
 
-      {/* 쪽지 작성 모달 */}
+      {/* 모달 */}
       {composeOpen && (
         <ComposeModal
           onClose={() => { setComposeOpen(false); setReplyTarget(null); }}
@@ -414,8 +353,6 @@ export default function MessagePage() {
           initialReceiver={replyTarget}
         />
       )}
-
-      {/* 쪽지 상세 모달 */}
       {selectedMessage && (
         <DetailModal
           message={selectedMessage}
