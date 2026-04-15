@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { authFetch, isAdmin, getTokenPayload } from '../utils/authFetch';
+import { SkeletonMyPageList, SkeletonPage } from '../components/SkeletonLoader';
 import {
   DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, DragOverlay,
 } from '@dnd-kit/core';
@@ -940,7 +941,7 @@ export default function AdminPage() {
   const pageNumbers = Array.from({ length: totalPages }, (_, i) => i);
 
   return (
-    <div className="bg-gray-100 p-6">
+    <div className="bg-gray-100 dark:bg-gray-900 p-6">
       <DeletedUserModal
         user={selectedUser}
         onClose={() => setSelectedUser(null)}
@@ -1156,7 +1157,7 @@ export default function AdminPage() {
             </div>
 
             {logLoading ? (
-              <div className="text-center py-10 text-gray-400">로딩 중...</div>
+              <SkeletonMyPageList count={5} />
             ) : logs.length === 0 ? (
               <div className="text-center py-10 text-gray-400">활동 로그가 없습니다.</div>
             ) : (
@@ -1237,7 +1238,7 @@ export default function AdminPage() {
             </div>
 
             {deletedPostLoading ? (
-              <div className="text-center py-10 text-gray-400">로딩 중...</div>
+              <SkeletonMyPageList count={5} />
             ) : deletedPosts.length === 0 ? (
               <div className="text-center py-10 text-gray-400">삭제된 게시글이 없습니다.</div>
             ) : (
@@ -1330,7 +1331,7 @@ export default function AdminPage() {
             </div>
 
             {boardLoading ? (
-              <div className="text-center py-10 text-gray-400">로딩 중...</div>
+              <SkeletonMyPageList count={5} />
             ) : boards.length === 0 ? (
               <div className="text-center py-10 text-gray-400">게시판이 없습니다.</div>
             ) : (
@@ -1403,7 +1404,7 @@ export default function AdminPage() {
             </div>
 
             {loading ? (
-              <div className="text-center py-10 text-gray-400">로딩 중...</div>
+              <SkeletonMyPageList count={5} />
             ) : (
               <>
                 <table className="w-full">
@@ -1504,7 +1505,7 @@ export default function AdminPage() {
             </div>
 
             {scheduleLoading ? (
-              <div className="text-center py-10 text-gray-400">로딩 중...</div>
+              <SkeletonMyPageList count={5} />
             ) : schedules.length === 0 ? (
               <div className="text-center py-10 text-gray-400">등록된 일정이 없습니다.</div>
             ) : (
@@ -1680,7 +1681,7 @@ function StatsTab() {
     : chartTab === 'posts' ? '일별 새 게시글'
     : '일별 수강 신청';
 
-  if (loading) return <div className="text-center py-12 text-gray-400">통계 로딩 중...</div>;
+  if (loading) return <SkeletonPage />;
 
   return (
     <div className="space-y-5">
@@ -1979,7 +1980,9 @@ function ReportsTab({ showSuccess, showError }) {
       </div>
 
       {loading ? (
-        <div className="text-center py-10 text-gray-400">로딩 중...</div>
+        <div className="text-center py-10 text-gray-400">
+              <SkeletonMyPageList count={5} />
+            </div>
       ) : reports.length === 0 ? (
         <div className="text-center py-10 text-gray-400">신고 내역이 없습니다.</div>
       ) : (

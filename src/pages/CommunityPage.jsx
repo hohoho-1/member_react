@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { authFetch } from '../utils/authFetch';
 import BoardListPage from '../components/BoardListPage';
+import { SkeletonPage } from '../components/SkeletonLoader';
 
 export default function CommunityPage() {
   const [boards, setBoards] = useState([]);
@@ -12,7 +13,7 @@ export default function CommunityPage() {
   }, []);
 
   if (boards.length === 0) {
-    return <div className="min-h-screen bg-gray-100 flex items-center justify-center text-gray-400">로딩 중...</div>;
+    return <SkeletonPage />;
   }
 
   return (

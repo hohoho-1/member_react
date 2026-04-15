@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate, useParams, useSearchParams, useLocation } from 'react-router-dom';
 import { authFetch, getTokenPayload } from '../utils/authFetch';
 import UserAvatar from '../components/UserAvatar';
+import { SkeletonPage } from '../components/SkeletonLoader';
 
 // ─── 재귀 댓글 컴포넌트 ──────────────────────────────────────────────────────
 function CommentItem({
@@ -24,8 +25,8 @@ function CommentItem({
           <div className="flex items-center gap-2 mb-1 flex-wrap">
             {depth > 0 && <span className="text-blue-400 text-xs">↳</span>}
             <UserAvatar profileImageUrl={comment.authorProfileImageUrl} username={comment.authorName} size={6} />
-            <span className="text-sm font-semibold text-gray-700">{comment.authorName}</span>
-            <span className="text-xs text-gray-400">{new Date(comment.createdAt).toLocaleString('ko-KR')}</span>
+            <span className="text-sm font-semibold text-gray-700 dark:text-gray-200">{comment.authorName}</span>
+            <span className="text-xs text-gray-400 dark:text-gray-500">{new Date(comment.createdAt).toLocaleString('ko-KR')}</span>
             {comment.updatedAt !== comment.createdAt && !comment.deleted && (
               <span className="text-xs text-gray-400">(수정됨)</span>
             )}
@@ -34,24 +35,24 @@ function CommentItem({
           {isEditing ? (
             <div className="flex gap-2 mt-1">
               <textarea value={editingContent} onChange={e => setEditingContent(e.target.value)}
-                className="flex-1 px-3 py-2 border border-blue-300 rounded-lg text-sm focus:outline-none resize-none" rows={2} />
+                className="flex-1 px-3 py-2 border border-blue-300 dark:border-blue-700 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 focus:outline-none resize-none" rows={2} />
               <div className="flex flex-col gap-1">
                 <button onClick={() => onEdit(comment.id)} className="px-3 py-1 bg-blue-500 hover:bg-blue-600 text-white rounded-lg text-xs font-medium">저장</button>
-                <button onClick={() => { setEditingCommentId(null); setEditingContent(''); }} className="px-3 py-1 bg-gray-100 hover:bg-gray-200 text-gray-600 rounded-lg text-xs">취소</button>
+                <button onClick={() => { setEditingCommentId(null); setEditingContent(''); }} className="px-3 py-1 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-600 dark:text-gray-300 rounded-lg text-xs">취소</button>
               </div>
             </div>
           ) : (
-            <p className={`text-sm whitespace-pre-wrap ${comment.deleted ? 'text-gray-400 italic' : 'text-gray-600'}`}>{comment.content}</p>
+            <p className={`text-sm whitespace-pre-wrap ${comment.deleted ? 'text-gray-400 dark:text-gray-500 italic' : 'text-gray-600 dark:text-gray-300'}`}>{comment.content}</p>
           )}
 
           {isReplying && (
             <div className="flex gap-2 mt-2">
               <textarea value={replyInput} onChange={e => setReplyInput(e.target.value)}
                 placeholder="답글을 입력하세요..." autoFocus
-                className="flex-1 px-3 py-2 border border-blue-300 rounded-lg text-sm focus:outline-none resize-none" rows={2} />
+                className="flex-1 px-3 py-2 border border-blue-300 dark:border-blue-700 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 focus:outline-none resize-none" rows={2} />
               <div className="flex flex-col gap-1">
                 <button onClick={() => onReply(comment.id)} className="px-3 py-1 bg-blue-500 hover:bg-blue-600 text-white rounded-lg text-xs font-medium">등록</button>
-                <button onClick={() => { setReplyingToId(null); setReplyInput(''); }} className="px-3 py-1 bg-gray-100 hover:bg-gray-200 text-gray-600 rounded-lg text-xs">취소</button>
+                <button onClick={() => { setReplyingToId(null); setReplyInput(''); }} className="px-3 py-1 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-600 dark:text-gray-300 rounded-lg text-xs">취소</button>
               </div>
             </div>
           )}
@@ -60,7 +61,7 @@ function CommentItem({
         {!isEditing && !comment.deleted && (
           <div className="flex items-center gap-1 shrink-0">
             <button onClick={() => onLike(comment.id)}
-              className={`flex items-center gap-1 px-2 py-1 rounded-lg text-xs transition-colors ${comment.likedByMe ? 'text-red-500 bg-red-50 hover:bg-red-100' : 'text-gray-400 hover:bg-gray-100'}`}>
+              className={`flex items-center gap-1 px-2 py-1 rounded-lg text-xs transition-colors ${comment.likedByMe ? 'text-red-500 bg-red-50 hover:bg-red-100' : 'text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'}`}>
               <span>{comment.likedByMe ? '❤️' : '🤍'}</span>
               {comment.likeCount > 0 && <span className="font-medium">{comment.likeCount}</span>}
             </button>
@@ -112,19 +113,19 @@ function FaqAccordion({ title, content }) {
     <div className={`border rounded-xl overflow-hidden transition-all ${open ? 'border-green-300 shadow-sm' : 'border-gray-200'}`}>
       <button
         onClick={() => setOpen(v => !v)}
-        className={`w-full flex items-start justify-between gap-3 px-5 py-4 text-left transition-colors ${open ? 'bg-green-50 dark:bg-green-950' : 'bg-white hover:bg-gray-50'}`}
+                className={`w-full flex items-start justify-between gap-3 px-5 py-4 text-left transition-colors ${open ? 'bg-green-50 dark:bg-green-950' : 'bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700'}`}
       >
         <div className="flex items-start gap-3">
           <span className="shrink-0 mt-0.5 w-6 h-6 rounded-full bg-green-500 text-white text-xs font-bold flex items-center justify-center">Q</span>
-          <span className="text-sm font-semibold text-gray-700 leading-relaxed">{title}</span>
+          <span className="text-sm font-semibold text-gray-700 dark:text-gray-200 leading-relaxed">{title}</span>
         </div>
         <span className={`shrink-0 text-green-500 text-lg transition-transform duration-200 ${open ? 'rotate-180' : ''}`}>⌄</span>
       </button>
       {open && (
         <div className="px-5 py-4 bg-white dark:bg-gray-800 border-t border-green-100 dark:border-green-900">
           <div className="flex items-start gap-3">
-            <span className="shrink-0 mt-0.5 w-6 h-6 rounded-full bg-gray-200 text-gray-500 text-xs font-bold flex items-center justify-center">A</span>
-            <p className="text-sm text-gray-600 whitespace-pre-wrap leading-relaxed">{content}</p>
+            <span className="shrink-0 mt-0.5 w-6 h-6 rounded-full bg-gray-200 dark:bg-gray-600 text-gray-500 dark:text-gray-300 text-xs font-bold flex items-center justify-center">A</span>
+            <p className="text-sm text-gray-600 dark:text-gray-300 whitespace-pre-wrap leading-relaxed">{content}</p>
           </div>
         </div>
       )}
@@ -168,9 +169,9 @@ function AnswerItem({ answer, isAdmin, onEdit, onDelete, colorScheme = 'amber' }
           <div className="flex items-center gap-2 mb-3 flex-wrap">
             <span className={`px-2 py-0.5 ${c.badge} text-white text-xs font-bold rounded-full`}>관리자 답변</span>
             <UserAvatar profileImageUrl={answer.authorProfileImageUrl} username={answer.authorName} size={6} />
-            <span className="text-sm font-semibold text-gray-700">{answer.authorName}</span>
-            <span className="text-xs text-gray-400">{new Date(answer.createdAt).toLocaleString('ko-KR')}</span>
-            {answer.updatedAt !== answer.createdAt && <span className="text-xs text-gray-400">(수정됨)</span>}
+                <span className="text-sm font-semibold text-gray-700 dark:text-gray-200">{answer.authorName}</span>
+            <span className="text-xs text-gray-400 dark:text-gray-500">{new Date(answer.createdAt).toLocaleString('ko-KR')}</span>
+            {answer.updatedAt !== answer.createdAt && <span className="text-xs text-gray-400 dark:text-gray-500">(수정됨)</span>}
           </div>
           {isEditing ? (
             <div className="flex gap-2">
@@ -179,11 +180,11 @@ function AnswerItem({ answer, isAdmin, onEdit, onDelete, colorScheme = 'amber' }
               <div className="flex flex-col gap-1 shrink-0">
                 <button onClick={handleSave} className={`px-3 py-1 ${c.saveBg} text-white rounded-lg text-xs font-medium`}>저장</button>
                 <button onClick={() => { setIsEditing(false); setEditContent(answer.content); }}
-                  className="px-3 py-1 bg-gray-100 hover:bg-gray-200 text-gray-600 rounded-lg text-xs">취소</button>
+                  className="px-3 py-1 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-600 dark:text-gray-300 rounded-lg text-xs">취소</button>
               </div>
             </div>
           ) : (
-            <p className="text-sm text-gray-700 whitespace-pre-wrap leading-relaxed">{answer.content}</p>
+            <p className="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap leading-relaxed">{answer.content}</p>
           )}
         </div>
         {isAdmin && !isEditing && (
@@ -437,9 +438,9 @@ export default function PostDetailPage() {
     }
   };
 
-  if (loading) return <div className="min-h-screen bg-gray-100 flex items-center justify-center text-gray-400">로딩 중...</div>;
+  if (loading) return <SkeletonPage />;
   if (errorMsg) return (
-    <div className="min-h-screen bg-gray-100 flex items-center justify-center">
+    <div className="min-h-screen bg-gray-100 dark:bg-gray-900 flex items-center justify-center">
       <div className="text-center">
         <p className="text-gray-500 mb-4">{errorMsg}</p>
         <button onClick={() => navigate('/board')} className="px-4 py-2 bg-blue-500 text-white rounded-lg text-sm">목록으로</button>
@@ -448,13 +449,13 @@ export default function PostDetailPage() {
   );
 
   return (
-    <div className="bg-gray-100 p-6">
+    <div className="bg-gray-100 dark:bg-gray-900 p-6">
       <div className="max-w-6xl mx-auto">
 
         {/* 상단 버튼 영역 */}
         <div className="flex justify-between items-center mb-6">
           <button onClick={() => navigate(returnTo)}
-            className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-600 rounded-lg text-sm transition-colors">
+            className="px-4 py-2 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-600 dark:text-gray-300 rounded-lg text-sm transition-colors">
             ← 목록으로
           </button>
           <div className="flex items-center gap-2">
@@ -485,7 +486,7 @@ export default function PostDetailPage() {
         </div>
 
         {/* 게시글 본문 */}
-        <div className="bg-white rounded-2xl shadow p-8">
+        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow p-8">
           <div className="mb-6">
             <span className={`px-2 py-1 rounded-full text-xs font-medium mr-2 ${
               post.boardCode === 'NOTICE'     ? 'bg-red-100 text-red-600' :
@@ -505,9 +506,9 @@ export default function PostDetailPage() {
                 {answers.length > 0 ? `✅ 답변완료 (${answers.length})` : '⏳ 답변대기'}
               </span>
             )}
-            <h1 className="text-2xl font-bold text-gray-800 mt-3">{post.title}</h1>
+            <h1 className="text-2xl font-bold text-gray-800 dark:text-gray-100 mt-3">{post.title}</h1>
           </div>
-          <div className="flex items-center gap-4 text-sm text-gray-400 pb-6 border-b border-gray-100 flex-wrap">
+          <div className="flex items-center gap-4 text-sm text-gray-400 dark:text-gray-500 pb-6 border-b border-gray-100 dark:border-gray-700 flex-wrap">
             <span>✍️ {post.authorName}</span>
             <span>📅 {new Date(post.createdAt).toLocaleString('ko-KR')}</span>
             {post.updatedAt !== post.createdAt && (
@@ -523,7 +524,7 @@ export default function PostDetailPage() {
 
           {/* FAQ는 본문 숨기고 아코디언만 표시 */}
           {!isFAQ && (
-            <div className="pt-6 text-gray-700 leading-relaxed whitespace-pre-wrap">{post.content}</div>
+            <div className="pt-6 text-gray-700 dark:text-gray-300 leading-relaxed whitespace-pre-wrap">{post.content}</div>
           )}
 
           {/* 좋아요 + 북마크 (FAQ 제외) */}
@@ -548,22 +549,22 @@ export default function PostDetailPage() {
 
           {/* 이전/다음 글 */}
           {(adjacent.prev || adjacent.next) && (
-            <div className="mt-6 pt-5 border-t border-gray-100">
+            <div className="mt-6 pt-5 border-t border-gray-100 dark:border-gray-700">
               <div className="flex flex-col divide-y divide-gray-100 text-sm">
                 {adjacent.prev && (
                   <button
                     onClick={() => navigate(`/board/${adjacent.prev.id}?scope=${boardScope}&keyword=${encodeURIComponent(boardKeyword)}&sort=${boardSort}&returnTo=${encodeURIComponent(returnTo)}`)}
                     className="flex items-center gap-3 py-2.5 text-left hover:bg-gray-50 rounded-lg px-2 transition-colors group">
-                    <span className="text-gray-400 shrink-0">▲ 이전 글</span>
-                    <span className="text-gray-600 group-hover:text-blue-500 truncate transition-colors">{adjacent.prev.title}</span>
+                    <span className="text-gray-400 dark:text-gray-500 shrink-0">▲ 이전 글</span>
+                    <span className="text-gray-600 dark:text-gray-300 group-hover:text-blue-500 truncate transition-colors">{adjacent.prev.title}</span>
                   </button>
                 )}
                 {adjacent.next && (
                   <button
                     onClick={() => navigate(`/board/${adjacent.next.id}?scope=${boardScope}&keyword=${encodeURIComponent(boardKeyword)}&sort=${boardSort}&returnTo=${encodeURIComponent(returnTo)}`)}
                     className="flex items-center gap-3 py-2.5 text-left hover:bg-gray-50 rounded-lg px-2 transition-colors group">
-                    <span className="text-gray-400 shrink-0">▼ 다음 글</span>
-                    <span className="text-gray-600 group-hover:text-blue-500 truncate transition-colors">{adjacent.next.title}</span>
+                    <span className="text-gray-400 dark:text-gray-500 shrink-0">▼ 다음 글</span>
+                    <span className="text-gray-600 dark:text-gray-300 group-hover:text-blue-500 truncate transition-colors">{adjacent.next.title}</span>
                   </button>
                 )}
               </div>
@@ -696,14 +697,12 @@ export default function PostDetailPage() {
         {/* ── 댓글 영역 (FAQ 제외, allowComment인 경우만) ────────────────────────────────────── */}
         {!isFAQ && allowComment && (
           <div className="bg-white rounded-2xl shadow p-8 mt-4">
-            <h2 className="text-base font-bold text-gray-700 mb-5">
-              💬 댓글 <span className="text-blue-500">{countAllComments(comments)}</span>
-            </h2>
+            <h2 className="text-base font-bold text-gray-700 dark:text-gray-100 mb-5">💬 댓글 <span className="text-blue-500">{countAllComments(comments)}</span></h2>
 
             {comments.length === 0 ? (
               <p className="text-sm text-gray-400 text-center py-6">첫 번째 댓글을 남겨보세요!</p>
             ) : (
-              <ul className="divide-y divide-gray-100 mb-6">
+              <ul className="divide-y divide-gray-100 dark:divide-gray-700 mb-6">
                 {comments.map(comment => (
                   <CommentItem key={comment.id} comment={comment} depth={0} postId={id}
                     payload={payload} isAdmin={isAdmin}
@@ -724,7 +723,7 @@ export default function PostDetailPage() {
                 <textarea value={commentInput} onChange={e => setCommentInput(e.target.value)}
                   onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSubmitComment(); } }}
                   placeholder="댓글을 입력하세요... (Shift+Enter 줄바꿈)"
-                  className="flex-1 px-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-blue-400 resize-none" rows={2} />
+                  className="flex-1 px-4 py-3 border border-gray-200 dark:border-gray-600 rounded-xl text-sm bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 focus:outline-none focus:border-blue-400 resize-none" rows={2} />
                 <button onClick={handleSubmitComment} disabled={commentLoading || !commentInput.trim()}
                   className="px-5 py-2 bg-blue-500 hover:bg-blue-600 disabled:bg-blue-200 text-white rounded-xl text-sm font-medium transition-colors self-end">
                   {commentLoading ? '...' : '등록'}

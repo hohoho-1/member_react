@@ -21,6 +21,7 @@ import CourseLessonPage from './pages/CourseLessonPage';
 import CourseAdminPage from './pages/CourseAdminPage';
 import CourseCurriculumPage from './pages/CourseCurriculumPage';
 import CertificateVerifyPage from './pages/CertificateVerifyPage';
+import MessagePage from './pages/MessagePage';
 
 function App() {
   return (
@@ -60,6 +61,9 @@ function App() {
 
           {/* 마이페이지: 로그인 필요 */}
           <Route path="/mypage" element={<PrivateRoute><Layout><MyPage /></Layout></PrivateRoute>} />
+
+          {/* 쪽지함: 로그인 필요 */}
+          <Route path="/messages" element={<PrivateRoute><Layout><MessagePage /></Layout></PrivateRoute>} />
 
           {/* 관리자: 로그인 필요 */}
           <Route path="/admin" element={<PrivateRoute><Layout><AdminPage /></Layout></PrivateRoute>} />

@@ -6,6 +6,35 @@ import UserAvatar from './UserAvatar';
 import { useTheme } from '../context/ThemeContext';
 import { usePageView } from '../hooks/usePageView';
 
+// ── 쪽지 뱃지 버튼 ─────────────────────────────────────────────────────────
+function MessageBell() {
+  const navigate = useNavigate();
+  const [unread, setUnread] = useState(0);
+
+  useEffect(() => {
+    const fetchUnread = async () => {
+      const res = await authFetch('/api/messages/unread-count');
+      if (res.ok) { const d = await res.json(); setUnread(d.count ?? 0); }
+    };
+    fetchUnread();
+    const interval = setInterval(fetchUnread, 30000);
+    return () => clearInterval(interval);
+  }, []);
+
+  return (
+    <button onClick={() => navigate('/messages')}
+      title="쪽지함"
+      className="relative w-8 h-8 flex items-center justify-center rounded-lg text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors text-base">
+      ✉️
+      {unread > 0 && (
+        <span className="absolute -top-0.5 -right-0.5 min-w-[16px] h-[16px] bg-blue-500 text-white text-[9px] font-bold rounded-full flex items-center justify-center px-0.5">
+          {unread > 99 ? '99+' : unread}
+        </span>
+      )}
+    </button>
+  );
+}
+
 export default function Layout({ children }) {
   const navigate = useNavigate();
   const location = useLocation();
@@ -107,6 +136,8 @@ export default function Layout({ children }) {
 
             {isLoggedIn ? (
               <>
+                {/* 쪽지 아이콘 */}
+                <MessageBell />
                 <NotificationBell showProfile={false} />
                 <button onClick={() => navigate('/mypage')}
                   className="flex items-center gap-1.5 px-2 py-1 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">

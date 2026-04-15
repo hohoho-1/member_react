@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { authFetch, isAdmin, isLoggedIn } from '../utils/authFetch';
+import { SkeletonCourseGrid } from '../components/SkeletonLoader';
 
 export default function CourseListPage() {
   const navigate = useNavigate();
@@ -172,9 +173,7 @@ export default function CourseListPage() {
 
       {/* 강의 목록 */}
       {loading ? (
-        <div className="flex justify-center py-20">
-          <div className="text-gray-400 dark:text-gray-500">불러오는 중...</div>
-        </div>
+        <SkeletonCourseGrid count={6} />
       ) : courses.length === 0 ? (
         <div className="text-center py-20 text-gray-400 dark:text-gray-500">
           <div className="text-5xl mb-3">📭</div>

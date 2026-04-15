@@ -124,7 +124,7 @@ export default function GalleryLightbox({ posts, index, onClose, onNavigate, onG
         {/* 이미지 영역 */}
         <div className="relative bg-black flex items-center justify-center" style={{ minHeight: '55vh' }}>
           {imgLoading ? (
-            <div className="text-gray-500 text-sm">로딩 중...</div>
+            <div className="text-gray-500 text-sm animate-pulse">이미지를 불러오는 중...</div>
           ) : currentImage ? (
             <img
               key={currentImage.id}

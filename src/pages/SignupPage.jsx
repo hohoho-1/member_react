@@ -17,7 +17,6 @@ export default function SignupPage() {
   const handleChange = (e) => {
     const { name, value } = e.target;
     setForm({ ...form, [name]: value });
-
     if (name === 'username' && value.trim()) {
       debounce(async () => {
         const res = await fetch(`/api/users/check-username?username=${encodeURIComponent(value)}`);
@@ -33,7 +32,6 @@ export default function SignupPage() {
     } else if (name === 'password') {
       setChecks(c => ({ ...c, password: value.length >= 6 }));
     }
-
     if (!value.trim()) setChecks(c => ({ ...c, [name]: null }));
   };
 
@@ -47,7 +45,7 @@ export default function SignupPage() {
       const res = await fetch('/api/users/signup', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(form)
+        body: JSON.stringify(form),
       });
       const data = await res.json();
       if (res.ok) {
@@ -63,60 +61,56 @@ export default function SignupPage() {
     }
   };
 
+  const inputClass = (status) => {
+    const base = 'w-full px-4 py-2.5 border rounded-lg text-sm focus:outline-none focus:ring-2 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500';
+    if (status === false) return `${base} border-red-400 focus:ring-red-100 dark:focus:ring-red-900`;
+    if (status === true)  return `${base} border-green-400 focus:ring-green-100 dark:focus:ring-green-900`;
+    return `${base} border-gray-300 dark:border-gray-600 focus:border-green-400 focus:ring-green-100 dark:focus:ring-green-900`;
+  };
+
   const hint = (status, okText, errText) => {
     if (status === null) return null;
     return (
-      <p className={`text-xs mt-1 ${status ? 'text-green-600' : 'text-red-500'}`}>
+      <p className={`text-xs mt-1 ${status ? 'text-green-600 dark:text-green-400' : 'text-red-500 dark:text-red-400'}`}>
         {status ? `✅ ${okText}` : `❌ ${errText}`}
       </p>
     );
   };
 
   return (
-    <div className="min-h-screen bg-gray-100 flex items-center justify-center">
-      <div className="bg-white p-10 rounded-2xl shadow-lg w-96">
-        <h2 className="text-2xl font-bold text-center text-gray-700 mb-6">📝 회원가입</h2>
+    <div className="min-h-screen bg-gray-100 dark:bg-gray-900 flex items-center justify-center">
+      <div className="bg-white dark:bg-gray-800 p-10 rounded-2xl shadow-lg w-96">
+        <h2 className="text-2xl font-bold text-center text-gray-700 dark:text-gray-100 mb-6">📝 회원가입</h2>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-600 mb-1">이름</label>
-            <input
-              type="text" name="username" value={form.username} onChange={handleChange}
-              placeholder="홍길동"
-              className={`w-full px-4 py-2.5 border rounded-lg text-sm focus:outline-none focus:ring-2 ${checks.username === false ? 'border-red-400 focus:ring-red-100' : checks.username ? 'border-green-400 focus:ring-green-100' : 'border-gray-300 focus:border-green-400 focus:ring-green-100'}`}
-            />
+            <label className="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">이름</label>
+            <input type="text" name="username" value={form.username} onChange={handleChange}
+              placeholder="홍길동" className={inputClass(checks.username)} />
             {hint(checks.username, '사용 가능한 이름입니다.', '이미 사용 중인 이름입니다.')}
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-600 mb-1">이메일</label>
-            <input
-              type="email" name="email" value={form.email} onChange={handleChange}
-              placeholder="example@email.com"
-              className={`w-full px-4 py-2.5 border rounded-lg text-sm focus:outline-none focus:ring-2 ${checks.email === false ? 'border-red-400 focus:ring-red-100' : checks.email ? 'border-green-400 focus:ring-green-100' : 'border-gray-300 focus:border-green-400 focus:ring-green-100'}`}
-            />
+            <label className="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">이메일</label>
+            <input type="email" name="email" value={form.email} onChange={handleChange}
+              placeholder="example@email.com" className={inputClass(checks.email)} />
             {hint(checks.email, '사용 가능한 이메일입니다.', '이미 사용 중인 이메일입니다.')}
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-600 mb-1">비밀번호</label>
-            <input
-              type="password" name="password" value={form.password} onChange={handleChange}
-              placeholder="6자 이상 입력"
-              className={`w-full px-4 py-2.5 border rounded-lg text-sm focus:outline-none focus:ring-2 ${checks.password === false ? 'border-red-400 focus:ring-red-100' : checks.password ? 'border-green-400 focus:ring-green-100' : 'border-gray-300 focus:border-green-400 focus:ring-green-100'}`}
-            />
+            <label className="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">비밀번호</label>
+            <input type="password" name="password" value={form.password} onChange={handleChange}
+              placeholder="6자 이상 입력" className={inputClass(checks.password)} />
             {hint(checks.password, '사용 가능한 비밀번호입니다.', '6자 이상 입력해주세요.')}
           </div>
           {message && (
-            <div className="text-sm text-center px-3 py-2 rounded-lg bg-blue-50 text-blue-700">
+            <div className="text-sm text-center px-3 py-2 rounded-lg bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300">
               {message}
             </div>
           )}
-          <button
-            type="submit" disabled={loading}
-            className="w-full py-3 bg-green-500 hover:bg-green-600 disabled:bg-green-300 text-white font-medium rounded-lg transition-colors"
-          >
+          <button type="submit" disabled={loading}
+            className="w-full py-3 bg-green-500 hover:bg-green-600 disabled:bg-green-300 text-white font-medium rounded-lg transition-colors">
             {loading ? '처리 중...' : '회원가입'}
           </button>
         </form>
-        <p className="text-center text-sm text-gray-500 mt-4">
+        <p className="text-center text-sm text-gray-500 dark:text-gray-400 mt-4">
           이미 계정이 있으신가요?{' '}
           <Link to="/login" className="text-green-500 hover:underline">로그인</Link>
         </p>
