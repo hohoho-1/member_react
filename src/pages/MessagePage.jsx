@@ -37,7 +37,13 @@ function ComposeModal({ onClose, onSent, initialReceiver = null }) {
         setShowUserList(true);
       }
     }, 300);
-    return () => clearTimeout(timer);
+    const handleMarkAllRead = async () => {
+    const unreadIds = messages.filter(m => !m.readByReceiver).map(m => m.id);
+    await Promise.all(unreadIds.map(id => authFetch(`/api/messages/${id}`, { method: 'GET' })));
+    setMessages(prev => prev.map(m => ({ ...m, readByReceiver: true })));
+  };
+
+  return () => clearTimeout(timer);
   }, [receiverSearch, selectedReceiver]);
 
   const handleSend = async () => {
@@ -53,6 +59,12 @@ function ComposeModal({ onClose, onSent, initialReceiver = null }) {
     setSending(false);
     if (res.ok) { onSent?.(); onClose(); }
     else { const d = await res.json(); setError(d.message || '발송에 실패했습니다.'); }
+  };
+
+  const handleMarkAllRead = async () => {
+    const unreadIds = messages.filter(m => !m.readByReceiver).map(m => m.id);
+    await Promise.all(unreadIds.map(id => authFetch(`/api/messages/${id}`, { method: 'GET' })));
+    setMessages(prev => prev.map(m => ({ ...m, readByReceiver: true })));
   };
 
   return (
@@ -135,6 +147,12 @@ function ComposeModal({ onClose, onSent, initialReceiver = null }) {
 function DetailModal({ message, myId, onClose, onDelete, onReply }) {
   if (!message) return null;
   const isSender = message.senderId === myId;
+
+  const handleMarkAllRead = async () => {
+    const unreadIds = messages.filter(m => !m.readByReceiver).map(m => m.id);
+    await Promise.all(unreadIds.map(id => authFetch(`/api/messages/${id}`, { method: 'GET' })));
+    setMessages(prev => prev.map(m => ({ ...m, readByReceiver: true })));
+  };
 
   return (
     <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4" onClick={onClose}>
@@ -255,6 +273,12 @@ export default function MessagePage() {
     setComposeOpen(true);
   };
 
+  const handleMarkAllRead = async () => {
+    const unreadIds = messages.filter(m => !m.readByReceiver).map(m => m.id);
+    await Promise.all(unreadIds.map(id => authFetch(`/api/messages/${id}`, { method: 'GET' })));
+    setMessages(prev => prev.map(m => ({ ...m, readByReceiver: true })));
+  };
+
   return (
     <div className="bg-gray-100 dark:bg-gray-900 min-h-screen py-8 px-4">
       <div className="max-w-3xl mx-auto">
@@ -262,10 +286,18 @@ export default function MessagePage() {
         {/* 헤더 */}
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-2xl font-bold text-gray-700 dark:text-gray-100">✉️ 쪽지함</h2>
-          <button onClick={() => { setReplyTarget(null); setComposeOpen(true); }}
-            className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg text-sm font-medium transition-colors">
-            ✏️ 쪽지 쓰기
-          </button>
+          <div className="flex items-center gap-2">
+            {tab === 'inbox' && messages.some(m => !m.readByReceiver) && (
+              <button onClick={handleMarkAllRead}
+                className="px-3 py-1.5 text-xs text-blue-500 border border-blue-200 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-950 transition-colors">
+                전체 읽음
+              </button>
+            )}
+            <button onClick={() => { setReplyTarget(null); setComposeOpen(true); }}
+              className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg text-sm font-medium transition-colors">
+              ✏️ 쪽지 쓰기
+            </button>
+          </div>
         </div>
 
         {/* 탭 */}
@@ -298,7 +330,13 @@ export default function MessagePage() {
                 const isUnread = tab === 'inbox' && !msg.readByReceiver;
                 const counterpart = tab === 'inbox' ? msg.senderName : msg.receiverName;
                 const counterpartImg = tab === 'inbox' ? msg.senderProfileImageUrl : msg.receiverProfileImageUrl;
-                return (
+                const handleMarkAllRead = async () => {
+    const unreadIds = messages.filter(m => !m.readByReceiver).map(m => m.id);
+    await Promise.all(unreadIds.map(id => authFetch(`/api/messages/${id}`, { method: 'GET' })));
+    setMessages(prev => prev.map(m => ({ ...m, readByReceiver: true })));
+  };
+
+  return (
                   <div key={msg.id}
                     onClick={() => handleOpenDetail(msg)}
                     className={`flex items-center gap-4 px-5 py-4 cursor-pointer transition-colors hover:bg-gray-50 dark:hover:bg-gray-700 ${

@@ -22,6 +22,7 @@ import CourseAdminPage from './pages/CourseAdminPage';
 import CourseCurriculumPage from './pages/CourseCurriculumPage';
 import CertificateVerifyPage from './pages/CertificateVerifyPage';
 import MessagePage from './pages/MessagePage';
+import NotFoundPage from './pages/NotFoundPage';
 
 function App() {
   return (
@@ -68,6 +69,9 @@ function App() {
           {/* 관리자: 로그인 필요 */}
           <Route path="/admin" element={<PrivateRoute><Layout><AdminPage /></Layout></PrivateRoute>} />
           <Route path="/admin/users/:id" element={<PrivateRoute><Layout><AdminUserDetailPage /></Layout></PrivateRoute>} />
+
+          {/* 404 */}
+          <Route path="*" element={<NotFoundPage />} />
         </Routes>
       </BrowserRouter>
     </ThemeProvider>

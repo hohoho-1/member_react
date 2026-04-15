@@ -8,6 +8,7 @@ export default function SignupPage() {
   const [message, setMessage] = useState('');
   const [loading, setLoading] = useState(false);
   const [debounceTimer, setDebounceTimer] = useState(null);
+  const [showPw, setShowPw] = useState(false);
 
   const debounce = (fn, delay) => {
     if (debounceTimer) clearTimeout(debounceTimer);
@@ -96,8 +97,14 @@ export default function SignupPage() {
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">비밀번호</label>
-            <input type="password" name="password" value={form.password} onChange={handleChange}
-              placeholder="6자 이상 입력" className={inputClass(checks.password)} />
+            <div className="relative">
+              <input type={showPw ? 'text' : 'password'} name="password" value={form.password} onChange={handleChange}
+                placeholder="6자 이상 입력" className={`${inputClass(checks.password)} pr-10`} />
+              <button type="button" onClick={() => setShowPw(v => !v)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 text-sm">
+                {showPw ? '🙈' : '👁️'}
+              </button>
+            </div>
             {hint(checks.password, '사용 가능한 비밀번호입니다.', '6자 이상 입력해주세요.')}
           </div>
           {message && (

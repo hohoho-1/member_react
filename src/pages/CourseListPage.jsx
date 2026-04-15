@@ -6,6 +6,18 @@ import { SkeletonCourseGrid } from '../components/SkeletonLoader';
 export default function CourseListPage() {
   const navigate = useNavigate();
   const [courses, setCourses] = useState([]);
+
+  // 스크롤 위치 복원
+  useEffect(() => {
+    const saved = sessionStorage.getItem('courseListScroll');
+    if (saved) { window.scrollTo(0, parseInt(saved)); sessionStorage.removeItem('courseListScroll'); }
+  }, []);
+
+  // 강의 카드 클릭 시 스크롤 위치 저장
+  const handleCourseClick = (courseId) => {
+    sessionStorage.setItem('courseListScroll', String(window.scrollY));
+    navigate(`/courses/${courseId}`);
+  };
   const [searchInput, setSearchInput] = useState('');
   const [keyword, setKeyword] = useState('');
   const [recruitingOnly, setRecruitingOnly] = useState(false);
@@ -185,7 +197,7 @@ export default function CourseListPage() {
             const isRecruiting = course.registrationStartDate && course.registrationEndDate
               && today >= course.registrationStartDate && today <= course.registrationEndDate;
             return (
-              <div key={course.id} onClick={() => navigate(`/courses/${course.id}`)}
+              <div key={course.id} onClick={() => handleCourseClick(course.id)}
                 className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden cursor-pointer hover:shadow-md hover:-translate-y-0.5 transition-all flex flex-col">
                 {/* 썸네일 - 하트 버튼 + 진도율 오버레이 */}
                 <div className="relative aspect-video bg-gradient-to-br from-blue-400 to-indigo-500 flex items-center justify-center overflow-hidden shrink-0">
