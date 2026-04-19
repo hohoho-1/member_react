@@ -18,7 +18,12 @@ function MessageBell() {
     };
     fetchUnread();
     const interval = setInterval(fetchUnread, 30000);
-    return () => clearInterval(interval);
+
+    // MessagePage에서 쪽지를 읽으면 즉시 갱신
+    const handleRead = () => fetchUnread();
+    window.addEventListener('message-read', handleRead);
+
+    return () => { clearInterval(interval); window.removeEventListener('message-read', handleRead); };
   }, []);
 
   return (

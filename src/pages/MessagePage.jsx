@@ -224,6 +224,7 @@ export default function MessagePage() {
       setSelectedMessage(detail);
       if (tab === 'inbox') {
         setMessages(prev => prev.map(m => m.id === msg.id ? { ...m, readByReceiver: true } : m));
+        window.dispatchEvent(new Event('message-read')); // MessageBell 즉시 갱신
       }
     }
   };
@@ -244,6 +245,7 @@ export default function MessagePage() {
     const unreadIds = messages.filter(m => !m.readByReceiver).map(m => m.id);
     await Promise.all(unreadIds.map(id => authFetch(`/api/messages/${id}`, { method: 'GET' })));
     setMessages(prev => prev.map(m => ({ ...m, readByReceiver: true })));
+    window.dispatchEvent(new Event('message-read')); // MessageBell 즉시 갱신
   };
 
   return (
