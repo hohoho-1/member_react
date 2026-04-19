@@ -224,6 +224,7 @@ export default function MyPage() {
   if (!user) return <SkeletonMyPage />;
 
   return (
+    <>
     <div className="bg-gray-100 dark:bg-gray-900 py-8 px-4">
       <div className="max-w-6xl mx-auto">
         <h2 className="text-2xl font-bold text-gray-700 dark:text-gray-100 mb-6">👤 마이페이지</h2>
@@ -677,5 +678,6 @@ export default function MyPage() {
       onConfirm={() => handleCancelEnrollment(cancelTarget.courseId, cancelTarget.courseTitle)}
       onCancel={() => setCancelTarget(null)}
     />
+    </>
   );
 }

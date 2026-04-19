@@ -652,6 +652,7 @@ export default function CourseDetailPage() {
   );
 
   return (
+    <>
     <div className="max-w-6xl mx-auto px-4 py-8">
       {/* 뒤로가기 */}
       <button
@@ -899,5 +900,6 @@ export default function CourseDetailPage() {
       onConfirm={handleCancelEnroll}
       onCancel={() => setCancelModalOpen(false)}
     />
+    </>
   );
 }
