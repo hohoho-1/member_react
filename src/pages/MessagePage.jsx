@@ -2,6 +2,9 @@ import { useEffect, useState, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { authFetch, getTokenPayload } from '../utils/authFetch';
 import UserAvatar from '../components/UserAvatar';
+import ConfirmModal from '../components/ConfirmModal';
+import { useConfirm } from '../hooks/useConfirm';
+import { SkeletonMyPageList } from '../components/SkeletonLoader';
 
 function timeAgo(dateStr) {
   if (!dateStr) return '';
@@ -183,6 +186,8 @@ export default function MessagePage() {
   const payload = getTokenPayload();
   const myId = payload?.userId;
 
+  const { confirmProps, confirm } = useConfirm();
+
   const [messages, setMessages] = useState([]);
   const [loading, setLoading] = useState(false);
   const [page, setPage] = useState(0);
@@ -224,7 +229,8 @@ export default function MessagePage() {
   };
 
   const handleDelete = async (messageId) => {
-    if (!window.confirm('이 쪽지를 삭제하시겠습니까?')) return;
+    const ok = await confirm({ title: '쪽지 삭제', message: '이 쪽지를 삭제하시겠습니까?', confirmText: '삭제', confirmColor: 'red' });
+    if (!ok) return;
     const res = await authFetch(`/api/messages/${messageId}`, { method: 'DELETE' });
     if (res.ok) setMessages(prev => prev.filter(m => m.id !== messageId));
   };
@@ -275,7 +281,7 @@ export default function MessagePage() {
         {/* 목록 */}
         <div className="bg-white dark:bg-gray-800 rounded-2xl shadow overflow-hidden">
           {loading ? (
-            <div className="text-center py-16 text-gray-400">불러오는 중...</div>
+            <SkeletonMyPageList count={5} />
           ) : messages.length === 0 ? (
             <div className="text-center py-16 text-gray-400">
               <p className="text-4xl mb-3">{tab === 'inbox' ? '📭' : '📤'}</p>
@@ -362,6 +368,7 @@ export default function MessagePage() {
           onReply={handleReply}
         />
       )}
+      <ConfirmModal {...confirmProps} />
     </div>
   );
 }

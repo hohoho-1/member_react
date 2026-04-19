@@ -3,6 +3,8 @@ import { useNavigate, useParams, useSearchParams, useLocation } from 'react-rout
 import { authFetch, getTokenPayload } from '../utils/authFetch';
 import UserAvatar from '../components/UserAvatar';
 import { SkeletonPage } from '../components/SkeletonLoader';
+import ConfirmModal from '../components/ConfirmModal';
+import { useConfirm } from '../hooks/useConfirm';
 
 // ─── 재귀 댓글 컴포넌트 ──────────────────────────────────────────────────────
 function CommentItem({
@@ -129,6 +131,7 @@ function FaqAccordion({ title, content }) {
           </div>
         </div>
       )}
+      <ConfirmModal {...confirmProps} />
     </div>
   );
 }
@@ -319,7 +322,8 @@ export default function PostDetailPage() {
   };
 
   const handleDeleteAnswer = async (answerId) => {
-    if (!window.confirm('답변을 삭제하시겠습니까?')) return;
+    const ok = await confirm({ title: '답변 삭제', message: '답변을 삭제하시겠습니까?', confirmText: '삭제', confirmColor: 'red' });
+    if (!ok) return;
     const res = await authFetch(`/api/posts/${id}/answers/${answerId}`, { method: 'DELETE' });
     if (res.ok) loadAnswers();
     else { const d = await res.json(); setAnswerError(d.message || '답변 삭제에 실패했습니다.'); }
@@ -360,7 +364,8 @@ export default function PostDetailPage() {
   };
 
   const handleDeleteComment = async (commentId) => {
-    if (!window.confirm('댓글을 삭제하시겠습니까?')) return;
+    const ok = await confirm({ title: '댓글 삭제', message: '댓글을 삭제하시겠습니까?', confirmText: '삭제', confirmColor: 'red' });
+    if (!ok) return;
     const res = await authFetch(`/api/posts/${id}/comments/${commentId}`, { method: 'DELETE' });
     if (res.ok) loadComments();
     else { const d = await res.json(); setCommentError(d.message || '댓글 삭제에 실패했습니다.'); }
@@ -397,7 +402,8 @@ export default function PostDetailPage() {
   };
 
   const handleDelete = async () => {
-    if (!window.confirm('이 게시글을 삭제하시겠습니까?\n삭제된 글은 관리자 페이지에서 복구할 수 있습니다.')) return;
+    const ok = await confirm({ title: '게시글 삭제', message: '이 게시글을 삭제하시겠습니까?\n삭제된 글은 관리자 페이지에서 복구할 수 있습니다.', confirmText: '삭제', confirmColor: 'red' });
+    if (!ok) return;
     const res = await authFetch(`/api/posts/${id}`, { method: 'DELETE' });
     if (res.ok) navigate(returnTo);
     else { const d = await res.json(); setErrorMsg(d.message || '삭제에 실패했습니다.'); }
@@ -410,6 +416,8 @@ export default function PostDetailPage() {
     else { const d = await res.json(); alert(d.message || '핀 설정에 실패했습니다.'); }
     setPinLoading(false);
   };
+
+  const { confirmProps, confirm } = useConfirm();
 
   const [reportModalOpen, setReportModalOpen] = useState(false);
   const [reportReason, setReportReason] = useState('');       // 라디오 선택값
@@ -788,6 +796,7 @@ export default function PostDetailPage() {
           </div>
         </div>
       )}
+      <ConfirmModal {...confirmProps} />
     </div>
   );
 }

@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { authFetch, isLoggedIn, isAdmin } from '../utils/authFetch';
 import ConfirmModal from '../components/ConfirmModal';
+import { SkeletonCourseDetail } from '../components/SkeletonLoader';
 
 const FILE_ICONS = { pdf:'📄', pptx:'📊', ppt:'📊', docx:'📝', doc:'📝', xlsx:'📊', xls:'📊', txt:'📃', zip:'🗜️', hwp:'📝', hwpx:'📝', mp4:'🎬', avi:'🎬', mov:'🎬' };
 const getFileIcon = (name) => FILE_ICONS[name?.split('.').pop()?.toLowerCase()] || '📎';
@@ -644,9 +645,7 @@ export default function CourseDetailPage() {
     return `${m}:${String(s).padStart(2, '0')}`;
   };
 
-  if (loading) return (
-    <div className="flex justify-center py-20 text-gray-400">불러오는 중...</div>
-  );
+  if (loading) return <SkeletonCourseDetail />;
   if (!course) return (
     <div className="flex justify-center py-20 text-gray-400">강의를 찾을 수 없습니다.</div>
   );

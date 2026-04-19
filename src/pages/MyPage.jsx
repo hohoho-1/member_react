@@ -3,6 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { authFetch, logout } from '../utils/authFetch';
 import { SkeletonMyPage, SkeletonMyPageList, SkeletonCourseGrid } from '../components/SkeletonLoader';
 import ConfirmModal from '../components/ConfirmModal';
+import { useConfirm } from '../hooks/useConfirm';
 
 const TABS = [
   { key: 'posts',        label: '📝 내 글' },
@@ -91,8 +92,8 @@ export default function MyPage() {
 
   const [myEnrollments, setMyEnrollments] = useState([]);
   const [myEnrollmentsLoading, setMyEnrollmentsLoading] = useState(false);
-  const [cancelTarget, setCancelTarget] = useState(null);
   const [unreadMessages, setUnreadMessages] = useState(0);
+  const { confirmProps, confirm } = useConfirm();
   const [myCertificates, setMyCertificates] = useState([]);
   const [myCertificatesLoading, setMyCertificatesLoading] = useState(false);
 
@@ -193,7 +194,8 @@ export default function MyPage() {
 
   const handleDelete = async () => {
     if (!deletePassword) { setDeleteMsg('비밀번호를 입력해주세요.'); return; }
-    if (!window.confirm('정말로 탈퇴하시겠습니까?')) return;
+    const ok = await confirm({ title: '회원 탈퇴', message: '정말로 탈퇴하시겠습니까?\n모든 정보가 삭제되며 복구할 수 없습니다.', confirmText: '탈퇴', confirmColor: 'red' });
+    if (!ok) return;
     setDeleteLoading(true);
     try {
       const res = await authFetch('/api/users/me', { method: 'DELETE', body: JSON.stringify({ password: deletePassword }) });
@@ -216,7 +218,8 @@ export default function MyPage() {
   };
 
   const handleDeleteProfileImage = async () => {
-    if (!window.confirm('프로필 이미지를 삭제하시겠습니까?')) return;
+    const ok = await confirm({ title: '프로필 이미지 삭제', message: '프로필 이미지를 삭제하시겠습니까?', confirmText: '삭제', confirmColor: 'red' });
+    if (!ok) return;
     const res = await authFetch('/api/users/me/profile-image', { method: 'DELETE' });
     if (res.ok) setUser(prev => ({ ...prev, profileImageUrl: null }));
   };
@@ -669,6 +672,7 @@ export default function MyPage() {
       </div>
     </div>
 
+    <ConfirmModal {...confirmProps} />
     <ConfirmModal
       isOpen={!!cancelTarget}
       title="수강 취소"
