@@ -276,6 +276,7 @@ export default function PostWritePage() {
             <textarea value={content} onChange={e => setContent(e.target.value)}
               placeholder="내용을 입력하세요" rows={12}
               className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl text-sm bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:border-blue-400 transition-colors resize-none" />
+            <p className="text-xs text-gray-400 dark:text-gray-500 mt-1 text-right">{content.length} 자</p>
           </div>
 
           {/* 파일 첨부 */}

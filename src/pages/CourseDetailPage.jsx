@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { authFetch, isLoggedIn, isAdmin } from '../utils/authFetch';
+import ConfirmModal from '../components/ConfirmModal';
 
 const FILE_ICONS = { pdf:'📄', pptx:'📊', ppt:'📊', docx:'📝', doc:'📝', xlsx:'📊', xls:'📊', txt:'📃', zip:'🗜️', hwp:'📝', hwpx:'📝', mp4:'🎬', avi:'🎬', mov:'🎬' };
 const getFileIcon = (name) => FILE_ICONS[name?.split('.').pop()?.toLowerCase()] || '📎';
@@ -533,6 +534,7 @@ export default function CourseDetailPage() {
   const [enrollment, setEnrollment] = useState(null);
   const [loading, setLoading] = useState(true);
   const [enrolling, setEnrolling] = useState(false);
+  const [cancelModalOpen, setCancelModalOpen] = useState(false);
   const [openSections, setOpenSections] = useState({});
   const [liked, setLiked] = useState(false);
   const [likeCount, setLikeCount] = useState(0);
@@ -613,10 +615,10 @@ export default function CourseDetailPage() {
   };
 
   const handleCancelEnroll = async () => {
-    if (!window.confirm('수강을 취소하시겠습니까?\n진도 및 학습 기록이 모두 삭제됩니다.')) return;
     const res = await authFetch(`/api/courses/${courseId}/enroll`, { method: 'DELETE' });
     if (res.ok) {
       setEnrollment(null);
+      setCancelModalOpen(false);
     } else {
       const err = await res.json().catch(() => ({}));
       alert(err.message || '수강 취소에 실패했습니다.');
@@ -860,7 +862,7 @@ export default function CourseDetailPage() {
                     {enrollment.progressRate > 0 ? '이어서 학습하기' : '학습 시작하기'}
                   </button>
                   <button
-                    onClick={handleCancelEnroll}
+                    onClick={() => setCancelModalOpen(true)}
                     className="w-full py-2 text-xs text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors">
                     수강 취소
                   </button>
@@ -887,5 +889,15 @@ export default function CourseDetailPage() {
 
       </div>
     </div>
+
+    <ConfirmModal
+      isOpen={cancelModalOpen}
+      title="수강 취소"
+      message={`수강을 취소하시겠습니까?\n진도 및 학습 기록이 모두 삭제됩니다.`}
+      confirmText="수강 취소"
+      confirmColor="red"
+      onConfirm={handleCancelEnroll}
+      onCancel={() => setCancelModalOpen(false)}
+    />
   );
 }

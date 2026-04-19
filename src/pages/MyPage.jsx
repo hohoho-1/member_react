@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { authFetch, logout } from '../utils/authFetch';
 import { SkeletonMyPage, SkeletonMyPageList, SkeletonCourseGrid } from '../components/SkeletonLoader';
+import ConfirmModal from '../components/ConfirmModal';
 
 const TABS = [
   { key: 'posts',        label: '📝 내 글' },
@@ -90,6 +91,8 @@ export default function MyPage() {
 
   const [myEnrollments, setMyEnrollments] = useState([]);
   const [myEnrollmentsLoading, setMyEnrollmentsLoading] = useState(false);
+  const [cancelTarget, setCancelTarget] = useState(null);
+  const [unreadMessages, setUnreadMessages] = useState(0);
   const [myCertificates, setMyCertificates] = useState([]);
   const [myCertificatesLoading, setMyCertificatesLoading] = useState(false);
 
@@ -97,6 +100,9 @@ export default function MyPage() {
     authFetch('/api/users/me').then(res => res.ok ? res.json() : null).then(data => {
       if (data) { setUser(data); setForm(f => ({ ...f, username: data.username, email: data.email })); }
       else navigate('/login');
+    });
+    authFetch('/api/messages/unread-count').then(res => res.ok ? res.json() : null).then(data => {
+      if (data != null) setUnreadMessages(data);
     });
   }, [navigate]);
 
@@ -161,10 +167,10 @@ export default function MyPage() {
   };
 
   const handleCancelEnrollment = async (courseId, courseTitle) => {
-    if (!window.confirm(`'${courseTitle}' 수강을 취소하시겠습니까?\n진도 및 학습 기록이 모두 삭제됩니다.`)) return;
     const res = await authFetch(`/api/courses/${courseId}/enroll`, { method: 'DELETE' });
     if (res.ok) setMyEnrollments(prev => prev.filter(e => e.courseId !== courseId));
     else alert('수강 취소에 실패했습니다.');
+    setCancelTarget(null);
   };
 
   const handleUpdate = async (e) => {
@@ -258,6 +264,15 @@ export default function MyPage() {
 
             {/* 우측 버튼들 */}
             <div className="flex items-center gap-2 shrink-0">
+              <button onClick={() => navigate('/messages')}
+                className="relative px-3 py-1.5 rounded-lg text-xs font-medium bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-600 dark:text-gray-300 transition-colors">
+                📩 쪽지함
+                {unreadMessages > 0 && (
+                  <span className="absolute -top-1.5 -right-1.5 min-w-[16px] h-4 px-1 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center">
+                    {unreadMessages > 99 ? '99+' : unreadMessages}
+                  </span>
+                )}
+              </button>
               {user.profileImageUrl && !imgError && (
                 <button onClick={handleDeleteProfileImage}
                   className="text-xs text-gray-400 hover:text-red-400 transition-colors px-2 py-1 rounded-lg hover:bg-red-50 dark:hover:bg-red-950">
@@ -531,7 +546,7 @@ export default function MyPage() {
                           <span>⏱️ {Math.floor(e.totalStudySeconds / 60)}분 학습</span>
                         </div>
                       </div>
-                      <button onClick={ev => { ev.stopPropagation(); handleCancelEnrollment(e.courseId, e.courseTitle); }}
+                      <button onClick={ev => { ev.stopPropagation(); setCancelTarget({ courseId: e.courseId, courseTitle: e.courseTitle }); }}
                         className="shrink-0 px-2.5 py-1 text-xs border border-red-200 text-red-400 rounded-lg hover:bg-red-50 dark:hover:bg-red-950 transition-colors">
                         취소
                       </button>
@@ -652,5 +667,15 @@ export default function MyPage() {
         })()}
       </div>
     </div>
+
+    <ConfirmModal
+      isOpen={!!cancelTarget}
+      title="수강 취소"
+      message={cancelTarget ? `'${cancelTarget.courseTitle}' 수강을 취소하시겠습니까?\n진도 및 학습 기록이 모두 삭제됩니다.` : ''}
+      confirmText="수강 취소"
+      confirmColor="red"
+      onConfirm={() => handleCancelEnrollment(cancelTarget.courseId, cancelTarget.courseTitle)}
+      onCancel={() => setCancelTarget(null)}
+    />
   );
 }
