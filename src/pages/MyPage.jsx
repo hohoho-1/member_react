@@ -93,6 +93,7 @@ export default function MyPage() {
   const [myEnrollments, setMyEnrollments] = useState([]);
   const [myEnrollmentsLoading, setMyEnrollmentsLoading] = useState(false);
   const [unreadMessages, setUnreadMessages] = useState(0);
+  const [cancelTarget, setCancelTarget] = useState(null);
   const { confirmProps, confirm } = useConfirm();
   const [myCertificates, setMyCertificates] = useState([]);
   const [myCertificatesLoading, setMyCertificatesLoading] = useState(false);

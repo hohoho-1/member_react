@@ -131,7 +131,6 @@ function FaqAccordion({ title, content }) {
           </div>
         </div>
       )}
-      <ConfirmModal {...confirmProps} />
     </div>
   );
 }
@@ -243,6 +242,8 @@ export default function PostDetailPage() {
   const [bookmarkLoading, setBookmarkLoading] = useState(false);
   const [pinLoading, setPinLoading]       = useState(false);
   const [adjacent, setAdjacent]           = useState({ prev: null, next: null });
+
+  const { confirmProps, confirm } = useConfirm();
 
   const payload    = getTokenPayload();
   const isLoggedIn = !!payload;
@@ -416,8 +417,6 @@ export default function PostDetailPage() {
     else { const d = await res.json(); alert(d.message || '핀 설정에 실패했습니다.'); }
     setPinLoading(false);
   };
-
-  const { confirmProps, confirm } = useConfirm();
 
   const [reportModalOpen, setReportModalOpen] = useState(false);
   const [reportReason, setReportReason] = useState('');       // 라디오 선택값
