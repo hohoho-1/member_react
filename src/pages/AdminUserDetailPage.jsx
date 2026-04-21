@@ -20,6 +20,7 @@ export default function AdminUserDetailPage() {
   const [pwForm, setPwForm] = useState({ newPassword: '', confirmPassword: '' });
   const [pwMsg, setPwMsg] = useState({ text: '', type: '' });
   const [pwLoading, setPwLoading] = useState(false);
+  const [unlockLoading, setUnlockLoading] = useState(false);
 
   const currentUserId = getTokenPayload()?.userId;
   const isMe = user?.id === currentUserId;
@@ -68,6 +69,19 @@ export default function AdminUserDetailPage() {
     const res = await authFetch(`/api/users/admin/users/${id}/withdraw`, { method: 'POST' });
     if (res.ok) navigate('/admin?tab=deleted');
     else { const data = await res.json(); setUpdateMsg({ text: data.message || '탈퇴 처리에 실패했습니다.', type: 'error' }); }
+  };
+
+  const handleUnlockUser = async () => {
+    setUnlockLoading(true);
+    const res = await authFetch(`/api/users/admin/users/${id}/unlock`, { method: 'PATCH' });
+    const data = await res.json();
+    if (res.ok) {
+      setUser(prev => ({ ...prev, loginLocked: false, loginLockedUntil: null }));
+      setUpdateMsg({ text: '로그인 잠금이 해제되었습니다.', type: 'success' });
+    } else {
+      setUpdateMsg({ text: data.message || '잠금 해제에 실패했습니다.', type: 'error' });
+    }
+    setUnlockLoading(false);
   };
 
   const handleForceChangePassword = async () => {
@@ -122,6 +136,21 @@ export default function AdminUserDetailPage() {
             <p>수정일: <span className="font-medium text-gray-700 dark:text-gray-200">{user.updatedAt ? new Date(user.updatedAt).toLocaleString('ko-KR') : '-'}</span></p>
             {user.isDeleted && <p className="text-red-500">탈퇴일: <span className="font-medium">{new Date(user.deletedAt).toLocaleDateString('ko-KR')}</span></p>}
           </div>
+          {/* 잠금 상태 표시 */}
+          {user.loginLocked && (
+            <div className="mt-3 flex items-center justify-between bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded-lg px-3 py-2">
+              <div>
+                <p className="text-xs font-semibold text-red-600 dark:text-red-400">🔒 로그인 잠금 상태</p>
+                <p className="text-xs text-red-400 dark:text-red-500">
+                  해제 시각: {new Date(user.loginLockedUntil).toLocaleString('ko-KR')}
+                </p>
+              </div>
+              <button onClick={handleUnlockUser} disabled={unlockLoading}
+                className="px-3 py-1.5 bg-red-500 hover:bg-red-600 disabled:bg-red-300 text-white text-xs rounded-lg font-medium transition-colors">
+                {unlockLoading ? '해제 중...' : '잠금 해제'}
+              </button>
+            </div>
+          )}
           {isMe && <p className="text-xs text-blue-400 mt-2">(현재 로그인 중인 계정)</p>}
         </div>
 

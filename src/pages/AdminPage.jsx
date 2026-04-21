@@ -575,6 +575,7 @@ export default function AdminPage() {
   const [totalPages, setTotalPages] = useState(0);
   const [totalElements, setTotalElements] = useState(0);
   const [selectedUser, setSelectedUser] = useState(null);
+  const [userSort, setUserSort] = useState({ field: null, dir: 'asc' });
 
   // 로그 상태
   const [logs, setLogs] = useState([]);
@@ -810,6 +811,25 @@ export default function AdminPage() {
 
   const showError = (msg) => { setErrorMsg(msg); setTimeout(() => setErrorMsg(''), 3000); };
   const showSuccess = (msg) => { setSuccessMsg(msg); setTimeout(() => setSuccessMsg(''), 3000); };
+
+  const handleUserSort = (field) => {
+    setUserSort(prev => ({
+      field,
+      dir: prev.field === field && prev.dir === 'asc' ? 'desc' : 'asc'
+    }));
+  };
+
+  const sortedUsers = [...users].sort((a, b) => {
+    if (!userSort.field) return 0;
+    let aVal = userSort.field === 'username' ? a.username : a.createdAt;
+    let bVal = userSort.field === 'username' ? b.username : b.createdAt;
+    if (userSort.field === 'username') {
+      return userSort.dir === 'asc' ? aVal.localeCompare(bVal, 'ko') : bVal.localeCompare(aVal, 'ko');
+    }
+    return userSort.dir === 'asc'
+      ? new Date(aVal) - new Date(bVal)
+      : new Date(bVal) - new Date(aVal);
+  });
 
   // ── 게시판 관리 ──────────────────────────────────────────────────────────
   const loadBoards = async () => {
@@ -1414,7 +1434,19 @@ export default function AdminPage() {
                         ? ['ID', '이름', '이메일', '탈퇴일', '관리']
                         : ['ID', '이름', '이메일', '권한', '가입일']
                       ).map(h => (
-                        <th key={h} className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">{h}</th>
+                        <th key={h} className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">
+                          {h === '이름' || h === '가입일' ? (
+                            <button onClick={() => handleUserSort(h === '이름' ? 'username' : 'createdAt')}
+                              className="flex items-center gap-1 hover:text-blue-500 transition-colors">
+                              {h}
+                              <span className="text-gray-300">
+                                {userSort.field === (h === '이름' ? 'username' : 'createdAt')
+                                  ? (userSort.dir === 'asc' ? '↑' : '↓')
+                                  : '↕'}
+                              </span>
+                            </button>
+                          ) : h}
+                        </th>
                       ))}
                     </tr>
                   </thead>
@@ -1448,7 +1480,7 @@ export default function AdminPage() {
                         </tr>
                       ))
                     ) : (
-                      users.map(u => {
+                      sortedUsers.map(u => {
                         const isMe = u.id === currentUserId;
                         return (
                           <tr key={u.id} className="border-t border-gray-50 hover:bg-gray-50 cursor-pointer"
@@ -1461,6 +1493,7 @@ export default function AdminPage() {
                             <td className="px-4 py-3">
                               <span className={`px-2 py-1 rounded-full text-xs font-medium ${u.role === 'ROLE_ADMIN' ? 'bg-pink-100 text-pink-700' : 'bg-blue-100 text-blue-700'}`}>
                                 {u.role === 'ROLE_ADMIN' ? '관리자' : '일반회원'}
+                                {u.loginLocked && <span className="ml-1 px-1.5 py-0.5 bg-red-100 text-red-500 text-xs rounded-full">🔒잠금</span>}
                               </span>
                             </td>
                             <td className="px-4 py-3 text-sm text-gray-400">
