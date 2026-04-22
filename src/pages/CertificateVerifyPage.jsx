@@ -38,9 +38,9 @@ export default function CertificateVerifyPage() {
       <div className="w-full max-w-lg">
         {/* 헤더 */}
         <div className="text-center mb-6">
-          <button onClick={() => navigate('/home')}
+          <button onClick={() => window.history.length > 1 ? navigate(-1) : navigate('/mypage?tab=certificates')}
             className="text-sm text-indigo-500 hover:text-indigo-700 transition-colors mb-4 block mx-auto">
-            ← 홈으로
+            ← 뒤로가기
           </button>
           <h1 className="text-xl font-bold text-gray-700 dark:text-gray-200">🔍 수료증 검증</h1>
           <p className="text-xs text-gray-400 mt-1">수료증 코드의 진위 여부를 확인합니다</p>

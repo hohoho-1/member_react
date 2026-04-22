@@ -653,7 +653,7 @@ export default function MyPage() {
                                 <span className="text-xs text-gray-400 hidden sm:block">⏱️ {Math.floor(cert.totalStudySeconds / 60)}분</span>
                                 <span className="text-xs text-gray-300 dark:text-gray-600 font-mono hidden md:block">{cert.code.slice(0, 8)}...</span>
                               </div>
-                              <button onClick={() => navigate(`/courses/certificates/verify/${cert.code}`)}
+                              <button onClick={() => { navigate('/mypage?tab=certificates', { replace: true }); setTimeout(() => navigate(`/courses/certificates/verify/${cert.code}`), 0); }}
                                 className={`shrink-0 px-2.5 py-1 text-xs rounded-lg border transition-colors ${
                                   idx === certList.length - 1 ? 'border-indigo-200 text-indigo-500 hover:bg-indigo-50 dark:hover:bg-indigo-950' : 'border-gray-200 dark:border-gray-600 text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-600'
                                 }`}>
