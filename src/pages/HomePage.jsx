@@ -79,37 +79,51 @@ export default function HomePage() {
   const isLoggedIn = !!payload;
 
   return (
-    <div className="bg-gray-100 dark:bg-gray-900 min-h-screen p-6">
+    <div className="bg-gray-100 dark:bg-gray-900 min-h-screen p-4 sm:p-6">
       <div className="max-w-4xl mx-auto space-y-6">
 
         {/* ── 환영 배너 ── */}
         {isLoggedIn && user ? (
-          <div className="bg-gradient-to-r from-blue-500 to-blue-400 rounded-2xl shadow p-6 flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <UserAvatar profileImageUrl={user.profileImageUrl} username={user.username} size={14} />
-              <div>
-                <p className="text-blue-100 text-sm">안녕하세요 👋</p>
-                <p className="text-white text-xl font-bold">{user.username}님</p>
-                <span className={`inline-block mt-1 px-2.5 py-0.5 rounded-full text-xs font-semibold ${isAdmin ? 'bg-yellow-300 text-yellow-900' : 'bg-blue-200 text-blue-800'}`}>
-                  {isAdmin ? '👑 관리자' : '일반회원'}
-                </span>
+          <div className="bg-gradient-to-r from-blue-500 to-blue-400 rounded-2xl shadow p-5 sm:p-6">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3 sm:gap-4 min-w-0">
+                <UserAvatar profileImageUrl={user.profileImageUrl} username={user.username} size={12} />
+                <div className="min-w-0">
+                  <p className="text-blue-100 text-xs sm:text-sm">안녕하세요 👋</p>
+                  <p className="text-white text-lg sm:text-xl font-bold truncate">{user.username}님</p>
+                  <span className={`inline-block mt-1 px-2.5 py-0.5 rounded-full text-xs font-semibold ${isAdmin ? 'bg-yellow-300 text-yellow-900' : 'bg-blue-200 text-blue-800'}`}>
+                    {isAdmin ? '👑 관리자' : '일반회원'}
+                  </span>
+                </div>
+              </div>
+              <div className="hidden sm:flex flex-col items-end gap-2 shrink-0 ml-4">
+                <button onClick={() => navigate('/community?scope=FREE')} className="px-4 py-2 bg-white bg-opacity-20 hover:bg-opacity-30 text-white rounded-xl text-sm font-medium transition-colors">📋 게시판 바로가기</button>
+                <button onClick={() => navigate('/mypage')} className="px-4 py-2 bg-white bg-opacity-20 hover:bg-opacity-30 text-white rounded-xl text-sm font-medium transition-colors">👤 마이페이지</button>
               </div>
             </div>
-            <div className="hidden sm:flex flex-col items-end gap-2">
-              <button onClick={() => navigate('/community?scope=FREE')} className="px-4 py-2 bg-white bg-opacity-20 hover:bg-opacity-30 text-white rounded-xl text-sm font-medium transition-colors">📋 게시판 바로가기</button>
-              <button onClick={() => navigate('/mypage')} className="px-4 py-2 bg-white bg-opacity-20 hover:bg-opacity-30 text-white rounded-xl text-sm font-medium transition-colors">👤 마이페이지</button>
+            {/* 모바일 전용 버튼 행 */}
+            <div className="flex gap-2 mt-4 sm:hidden">
+              <button onClick={() => navigate('/community?scope=FREE')} className="flex-1 py-2 bg-white bg-opacity-20 hover:bg-opacity-30 text-white rounded-xl text-xs font-medium transition-colors">📋 게시판</button>
+              <button onClick={() => navigate('/mypage')} className="flex-1 py-2 bg-white bg-opacity-20 hover:bg-opacity-30 text-white rounded-xl text-xs font-medium transition-colors">👤 마이페이지</button>
             </div>
           </div>
         ) : (
-          <div className="bg-gradient-to-r from-blue-500 to-blue-400 rounded-2xl shadow p-6 flex items-center justify-between">
-            <div>
-              <p className="text-blue-100 text-sm">환영합니다 👋</p>
-              <p className="text-white text-xl font-bold">커뮤니티에 오신 걸 환영해요!</p>
-              <p className="text-blue-100 text-sm mt-1">로그인하면 글쓰기, 좋아요, 북마크 등 더 많은 기능을 이용할 수 있어요.</p>
+          <div className="bg-gradient-to-r from-blue-500 to-blue-400 rounded-2xl shadow p-5 sm:p-6">
+            <div className="flex items-center justify-between">
+              <div className="min-w-0">
+                <p className="text-blue-100 text-xs sm:text-sm">환영합니다 👋</p>
+                <p className="text-white text-lg sm:text-xl font-bold">커뮤니티에 오신 걸 환영해요!</p>
+                <p className="text-blue-100 text-xs sm:text-sm mt-1">로그인하면 글쓰기, 좋아요, 북마크 등 더 많은 기능을 이용할 수 있어요.</p>
+              </div>
+              <div className="hidden sm:flex flex-col items-end gap-2 shrink-0 ml-4">
+                <button onClick={() => navigate('/login', { state: { from: location } })} className="px-4 py-2 bg-white text-blue-500 hover:bg-blue-50 rounded-xl text-sm font-bold transition-colors">🔐 로그인</button>
+                <button onClick={() => navigate('/signup')} className="px-4 py-2 bg-white bg-opacity-20 hover:bg-opacity-30 text-white rounded-xl text-sm font-medium transition-colors">✍️ 회원가입</button>
+              </div>
             </div>
-            <div className="hidden sm:flex flex-col items-end gap-2 shrink-0 ml-4">
-              <button onClick={() => navigate('/login', { state: { from: location } })} className="px-4 py-2 bg-white text-blue-500 hover:bg-blue-50 rounded-xl text-sm font-bold transition-colors">🔐 로그인</button>
-              <button onClick={() => navigate('/signup')} className="px-4 py-2 bg-white bg-opacity-20 hover:bg-opacity-30 text-white rounded-xl text-sm font-medium transition-colors">✍️ 회원가입</button>
+            {/* 모바일 전용 버튼 행 */}
+            <div className="flex gap-2 mt-4 sm:hidden">
+              <button onClick={() => navigate('/login', { state: { from: location } })} className="flex-1 py-2 bg-white text-blue-500 hover:bg-blue-50 rounded-xl text-xs font-bold transition-colors">🔐 로그인</button>
+              <button onClick={() => navigate('/signup')} className="flex-1 py-2 bg-white bg-opacity-20 hover:bg-opacity-30 text-white rounded-xl text-xs font-medium transition-colors">✍️ 회원가입</button>
             </div>
           </div>
         )}
@@ -269,7 +283,7 @@ export default function HomePage() {
               <h3 className={cardTitle}>🖼️ 갤러리</h3>
               <button onClick={() => navigate('/community?scope=GALLERY')} className={moreBtn}>더보기 →</button>
             </div>
-            <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
+            <div className="grid grid-cols-3 gap-2">
               {galleryPosts.map(post => (
                 <div key={post.id} onClick={() => navigate(`/board/${post.id}?scope=GALLERY&returnTo=${encodeURIComponent('/community?scope=GALLERY')}`)}
                   className="cursor-pointer aspect-square rounded-xl overflow-hidden bg-gray-100 dark:bg-gray-700 hover:opacity-80 transition-opacity relative group">
@@ -291,33 +305,68 @@ export default function HomePage() {
               <h3 className={cardTitle}>📚 강의</h3>
               <button onClick={() => navigate('/courses')} className={moreBtn}>더보기 →</button>
             </div>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               {upcomingCourses.map(course => {
                 const today = new Date().toISOString().slice(0, 10);
                 const isRecruiting = course.registrationStartDate && course.registrationEndDate && today >= course.registrationStartDate && today <= course.registrationEndDate;
                 return (
                   <div key={course.id} onClick={() => navigate(`/courses/${course.id}`)}
                     className="cursor-pointer rounded-xl border border-gray-100 dark:border-gray-700 overflow-hidden hover:shadow-md hover:-translate-y-0.5 transition-all bg-white dark:bg-gray-700">
-                    <div className="aspect-video bg-gradient-to-br from-blue-400 to-indigo-500 flex items-center justify-center overflow-hidden">
-                      {course.thumbnailUrl ? <img src={course.thumbnailUrl} alt={course.title} className="w-full h-full object-contain bg-gray-900" /> : <span className="text-3xl">📚</span>}
+
+                    {/* 모바일: 가로형 (썸네일 좌 + 정보 우) */}
+                    <div className="flex sm:hidden">
+                      <div className="w-[38%] shrink-0 aspect-[4/3] bg-gradient-to-br from-blue-400 to-indigo-500 flex items-center justify-center overflow-hidden">
+                        {course.thumbnailUrl
+                          ? <img src={course.thumbnailUrl} alt={course.title} className="w-full h-full object-cover" />
+                          : <span className="text-2xl">📚</span>}
+                      </div>
+                      <div className="flex-1 min-w-0 p-3 space-y-1.5">
+                        <p className="text-sm font-semibold text-gray-800 dark:text-gray-200 line-clamp-2 leading-snug">{course.title}</p>
+                        {course.instructor && <p className="text-xs text-gray-400">👨‍🏫 {course.instructor}</p>}
+                        {course.location && <p className="text-xs text-gray-400">📍 {course.location}</p>}
+                        {(course.registrationStartDate || course.registrationEndDate) && (
+                          <div className="flex items-center gap-1">
+                            <span className="text-[10px] px-1.5 py-0.5 bg-amber-100 text-amber-700 rounded font-medium shrink-0">접수</span>
+                            <span className="text-[10px] text-gray-500 dark:text-gray-400">{course.registrationStartDate ?? '?'} ~ {course.registrationEndDate ?? '?'}</span>
+                          </div>
+                        )}
+                        {(course.educationStartDate || course.educationEndDate) && (
+                          <div className="flex items-center gap-1">
+                            <span className="text-[10px] px-1.5 py-0.5 bg-blue-100 text-blue-700 rounded font-medium shrink-0">교육</span>
+                            <span className="text-[10px] text-gray-500 dark:text-gray-400">{course.educationStartDate ?? '?'} ~ {course.educationEndDate ?? '?'}</span>
+                          </div>
+                        )}
+                        {isRecruiting && <span className="inline-block text-[10px] px-1.5 py-0.5 bg-green-100 text-green-700 rounded-full font-medium">🟢 접수중</span>}
+                      </div>
                     </div>
-                    <div className="p-2.5 space-y-1.5">
-                      <p className="text-xs font-semibold text-gray-800 dark:text-gray-200 truncate">{course.title}</p>
-                      {course.instructor && <p className="text-[10px] text-gray-400">👨‍🏫 {course.instructor}</p>}
-                      {(course.registrationStartDate || course.registrationEndDate) && (
-                        <div className="flex items-center gap-1">
-                          <span className="text-[10px] px-1.5 py-0.5 bg-amber-100 text-amber-700 rounded font-medium shrink-0">접수</span>
-                          <span className="text-[10px] text-gray-500 dark:text-gray-400 truncate">{course.registrationStartDate ?? '?'} ~ {course.registrationEndDate ?? '?'}</span>
-                        </div>
-                      )}
-                      {(course.educationStartDate || course.educationEndDate) && (
-                        <div className="flex items-center gap-1">
-                          <span className="text-[10px] px-1.5 py-0.5 bg-blue-100 text-blue-700 rounded font-medium shrink-0">교육</span>
-                          <span className="text-[10px] text-gray-500 dark:text-gray-400 truncate">{course.educationStartDate ?? '?'} ~ {course.educationEndDate ?? '?'}</span>
-                        </div>
-                      )}
-                      {isRecruiting && <span className="inline-block text-[10px] px-1.5 py-0.5 bg-green-100 text-green-700 rounded-full font-medium">🟢 접수중</span>}
+
+                    {/* 데스크탑: 세로형 (기존 레이아웃) */}
+                    <div className="hidden sm:block">
+                      <div className="aspect-video bg-gradient-to-br from-blue-400 to-indigo-500 flex items-center justify-center overflow-hidden">
+                        {course.thumbnailUrl
+                          ? <img src={course.thumbnailUrl} alt={course.title} className="w-full h-full object-contain bg-gray-900" />
+                          : <span className="text-3xl">📚</span>}
+                      </div>
+                      <div className="p-2.5 space-y-1.5">
+                        <p className="text-xs font-semibold text-gray-800 dark:text-gray-200 truncate">{course.title}</p>
+                        {course.instructor && <p className="text-[10px] text-gray-400">👨‍🏫 {course.instructor}</p>}
+                        {course.location && <p className="text-[10px] text-gray-400">📍 {course.location}</p>}
+                        {(course.registrationStartDate || course.registrationEndDate) && (
+                          <div className="flex items-center gap-1">
+                            <span className="text-[10px] px-1.5 py-0.5 bg-amber-100 text-amber-700 rounded font-medium shrink-0">접수</span>
+                            <span className="text-[10px] text-gray-500 dark:text-gray-400 truncate">{course.registrationStartDate ?? '?'} ~ {course.registrationEndDate ?? '?'}</span>
+                          </div>
+                        )}
+                        {(course.educationStartDate || course.educationEndDate) && (
+                          <div className="flex items-center gap-1">
+                            <span className="text-[10px] px-1.5 py-0.5 bg-blue-100 text-blue-700 rounded font-medium shrink-0">교육</span>
+                            <span className="text-[10px] text-gray-500 dark:text-gray-400 truncate">{course.educationStartDate ?? '?'} ~ {course.educationEndDate ?? '?'}</span>
+                          </div>
+                        )}
+                        {isRecruiting && <span className="inline-block text-[10px] px-1.5 py-0.5 bg-green-100 text-green-700 rounded-full font-medium">🟢 접수중</span>}
+                      </div>
                     </div>
+
                   </div>
                 );
               })}

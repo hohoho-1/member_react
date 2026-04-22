@@ -192,7 +192,7 @@ export default function BoardListPage({ groupKey, groupLabel, groupEmoji, boards
   );
 
   return (
-    <div className="bg-gray-100 dark:bg-gray-900 p-6">
+    <div className="bg-gray-100 dark:bg-gray-900 p-4 sm:p-6">
       <div className="max-w-6xl mx-auto">
 
         {/* 헤더 */}
@@ -260,13 +260,14 @@ export default function BoardListPage({ groupKey, groupLabel, groupEmoji, boards
           /* ── 일반 / 갤러리 뷰 ── */
           <div className="bg-white dark:bg-gray-800 rounded-2xl shadow overflow-hidden">
             {/* 툴바 */}
-            <div className="flex justify-between items-center px-6 py-4 border-b border-gray-100 dark:border-gray-700">
-              <div className="flex items-center gap-3">
-                <span className="font-semibold text-gray-700 dark:text-gray-200">
+            <div className="px-4 sm:px-6 py-3 sm:py-4 border-b border-gray-100 dark:border-gray-700 space-y-2 sm:space-y-0 sm:flex sm:justify-between sm:items-center">
+              {/* 정렬 버튼 */}
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="text-sm font-semibold text-gray-700 dark:text-gray-200">
                   총 {totalElements}개
-                  <span className="ml-2 text-sm text-gray-400 dark:text-gray-500">({currentPage + 1} / {totalPages || 1} 페이지)</span>
+                  <span className="ml-1 text-xs text-gray-400 dark:text-gray-500 hidden sm:inline">({currentPage + 1} / {totalPages || 1} 페이지)</span>
                 </span>
-                <div className="flex gap-1">
+                <div className="flex gap-1 flex-wrap">
                   {[
                     { value: 'latest', label: '최신순' },
                     { value: 'views', label: '👁️ 조회순' },
@@ -274,7 +275,7 @@ export default function BoardListPage({ groupKey, groupLabel, groupEmoji, boards
                     ...(allowComment ? [{ value: 'comments', label: '💬 댓글순' }] : []),
                   ].map(s => (
                     <button key={s.value} onClick={() => switchSort(s.value)}
-                      className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${
+                      className={`px-2.5 py-1 rounded-full text-xs font-medium transition-colors ${
                         sort === s.value ? 'bg-blue-500 text-white' : 'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-600'
                       }`}>
                       {s.label}
@@ -282,11 +283,12 @@ export default function BoardListPage({ groupKey, groupLabel, groupEmoji, boards
                   ))}
                 </div>
               </div>
+              {/* 검색창 */}
               <div className="relative">
-                <input type="text" placeholder="검색어 입력 후 Enter 또는 🔍"
+                <input type="text" placeholder="검색어 입력 후 Enter"
                   value={keywordInput} onChange={e => setKeywordInput(e.target.value)}
                   onKeyDown={e => { if (e.key === 'Enter') applyKeyword(keywordInput); }}
-                  className="px-3 py-2 pr-16 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 focus:outline-none focus:border-blue-400 w-56" />
+                  className="w-full sm:w-56 px-3 py-2 pr-16 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 focus:outline-none focus:border-blue-400" />
                 {keywordInput && (
                   <button onClick={() => { setKeywordInput(''); setSearchParams({ scope, sort }); }}
                     className="absolute right-8 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 text-base leading-none">✕</button>
@@ -339,7 +341,8 @@ export default function BoardListPage({ groupKey, groupLabel, groupEmoji, boards
 
             ) : (
               <>
-                <table className="w-full">
+                {/* ── 데스크탑: 테이블 뷰 ── */}
+                <table className="hidden sm:table w-full">
                   <thead className="bg-gray-50 dark:bg-gray-700">
                     <tr>
                       {['번호', '게시판', '제목', '작성자', '날짜', '조회', '❤️', ...(allowComment ? ['💬'] : [])].map(h => (
@@ -400,6 +403,57 @@ export default function BoardListPage({ groupKey, groupLabel, groupEmoji, boards
                     })}
                   </tbody>
                 </table>
+
+                {/* ── 모바일: 카드 리스트 뷰 ── */}
+                <div className="sm:hidden divide-y divide-gray-100 dark:divide-gray-700">
+                  {posts.map((post, index) => {
+                    const prevPost = posts[index - 1];
+                    const isFirstUnpinned = !post.pinned && (index === 0 || prevPost?.pinned === true);
+                    const isPinned = post.pinned;
+                    const isNew = (Date.now() - new Date(post.createdAt).getTime()) < 24 * 60 * 60 * 1000;
+                    return (
+                      <>
+                        {isFirstUnpinned && index > 0 && (
+                          <div key={`divider-${post.id}`} className="border-t-2 border-dashed border-gray-200 dark:border-gray-600 mx-4" />
+                        )}
+                        <div key={post.id}
+                          onClick={() => goToDetail(post.id)}
+                          className={`px-4 py-3 cursor-pointer transition-colors ${
+                            isPinned
+                              ? 'bg-amber-50 dark:bg-amber-950'
+                              : 'hover:bg-gray-50 dark:hover:bg-gray-700'
+                          }`}>
+                          {/* 첫 줄: 배지 + 제목 + NEW */}
+                          <div className="flex items-start gap-2 mb-1.5">
+                            {isPinned
+                              ? <span className="shrink-0 text-amber-500 text-sm mt-0.5">📌</span>
+                              : <span className={`shrink-0 px-1.5 py-0.5 rounded-full text-[10px] font-medium mt-0.5 ${getBadgeColor(post.boardCode)}`}>{post.boardName}</span>
+                            }
+                            <span className="flex-1 text-sm font-medium text-gray-700 dark:text-gray-200 leading-snug line-clamp-2">
+                              {post.title}
+                            </span>
+                            {isNew && <span className="shrink-0 px-1.5 py-0.5 bg-red-500 text-white text-[10px] font-bold rounded mt-0.5">NEW</span>}
+                            {isQnaBoard && (
+                              <span className={`shrink-0 px-1.5 py-0.5 text-[10px] font-bold rounded mt-0.5 ${post.answerCount > 0 ? 'bg-green-100 text-green-700' : 'bg-gray-100 dark:bg-gray-600 text-gray-400'}`}>
+                                {post.answerCount > 0 ? '✅' : '⏳'}
+                              </span>
+                            )}
+                          </div>
+                          {/* 둘째 줄: 작성자 · 날짜 · 조회 · 좋아요 · 댓글 */}
+                          <div className="flex items-center gap-2 text-[11px] text-gray-400 dark:text-gray-500 flex-wrap">
+                            <span>{post.authorName}</span>
+                            <span>·</span>
+                            <span>{new Date(post.createdAt).toLocaleDateString('ko-KR')}</span>
+                            {post.viewCount > 0 && <><span>·</span><span>👁 {post.viewCount}</span></>}
+                            {post.likeCount > 0 && <span className="text-red-400">❤️ {post.likeCount}</span>}
+                            {allowComment && post.commentCount > 0 && <span className="text-blue-400">💬 {post.commentCount}</span>}
+                          </div>
+                        </div>
+                      </>
+                    );
+                  })}
+                </div>
+
                 {renderPagination()}
               </>
             )}

@@ -456,11 +456,11 @@ export default function PostDetailPage() {
   );
 
   return (
-    <div className="bg-gray-100 dark:bg-gray-900 p-6">
+    <div className="bg-gray-100 dark:bg-gray-900 p-4 sm:p-6">
       <div className="max-w-6xl mx-auto">
 
         {/* 상단 버튼 영역 */}
-        <div className="flex justify-between items-center mb-6">
+        <div className="flex justify-between items-center mb-4 sm:mb-6 flex-wrap gap-2">
           <button onClick={() => navigate(returnTo)}
             className="px-4 py-2 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-600 dark:text-gray-300 rounded-lg text-sm transition-colors">
             ← 목록으로
@@ -513,9 +513,9 @@ export default function PostDetailPage() {
                 {answers.length > 0 ? `✅ 답변완료 (${answers.length})` : '⏳ 답변대기'}
               </span>
             )}
-            <h1 className="text-2xl font-bold text-gray-800 dark:text-gray-100 mt-3">{post.title}</h1>
+            <h1 className="text-xl sm:text-2xl font-bold text-gray-800 dark:text-gray-100 mt-3">{post.title}</h1>
           </div>
-          <div className="flex items-center gap-4 text-sm text-gray-400 dark:text-gray-500 pb-6 border-b border-gray-100 dark:border-gray-700 flex-wrap">
+          <div className="flex items-center gap-3 text-sm text-gray-400 dark:text-gray-500 pb-6 border-b border-gray-100 dark:border-gray-700 flex-wrap">
             <span>✍️ {post.authorName}</span>
             <span>📅 {new Date(post.createdAt).toLocaleString('ko-KR')}</span>
             {post.updatedAt !== post.createdAt && (
@@ -625,7 +625,7 @@ export default function PostDetailPage() {
 
         {/* ── FAQ 아코디언 뷰 ─────────────────────────────────────────────── */}
         {isFAQ && (
-          <div className="bg-white rounded-2xl shadow p-8 mt-4 border-l-4 border-green-400">
+          <div className="bg-white rounded-2xl shadow p-5 sm:p-8 mt-4 border-l-4 border-green-400">
             <h2 className="text-base font-bold text-gray-700 mb-5">❓ FAQ</h2>
             <FaqAccordion title={post.title} content={post.content} />
           </div>
@@ -633,7 +633,7 @@ export default function PostDetailPage() {
 
         {/* ── QnA 답변 섹션 ───────────────────────────────────────────────── */}
         {isQnA && (
-          <div className="bg-white rounded-2xl shadow p-8 mt-4 border-l-4 border-amber-400">
+          <div className="bg-white rounded-2xl shadow p-5 sm:p-8 mt-4 border-l-4 border-amber-400">
             <h2 className="text-base font-bold text-gray-700 mb-5">
               💡 답변 <span className="text-amber-500">{answers.length}</span>
             </h2>

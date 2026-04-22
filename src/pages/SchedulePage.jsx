@@ -82,8 +82,8 @@ function ScheduleFormModal({ initial, onClose, onSave }) {
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50" onClick={onClose}>
-      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl w-[480px] max-h-[90vh] overflow-y-auto p-8"
+    <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50 p-4" onClick={onClose}>
+      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl w-full max-w-[480px] max-h-[90vh] overflow-y-auto p-5 sm:p-8"
         onClick={e => e.stopPropagation()}>
         <div className="flex justify-between items-center mb-6">
           <h3 className="text-lg font-bold text-gray-700 dark:text-gray-100">
@@ -93,7 +93,6 @@ function ScheduleFormModal({ initial, onClose, onSave }) {
         </div>
 
         <div className="space-y-4">
-          {/* 제목 */}
           <div>
             <label className="block text-xs font-semibold text-gray-500 mb-1">제목 <span className="text-red-400">*</span></label>
             <input value={form.title} onChange={e => set('title', e.target.value)}
@@ -101,17 +100,14 @@ function ScheduleFormModal({ initial, onClose, onSave }) {
               className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-teal-400 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100" />
           </div>
 
-          {/* 종일 토글 */}
           <div className="flex items-center gap-3">
-            <button
-              onClick={() => set('allDay', !form.allDay)}
+            <button onClick={() => set('allDay', !form.allDay)}
               className={`relative w-10 h-5 rounded-full transition-colors ${form.allDay ? 'bg-teal-500' : 'bg-gray-300'}`}>
               <span className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform ${form.allDay ? 'left-5' : 'left-0.5'}`} />
             </button>
             <span className="text-sm text-gray-600 dark:text-gray-300">종일</span>
           </div>
 
-          {/* 날짜 */}
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="block text-xs font-semibold text-gray-500 mb-1">시작일 <span className="text-red-400">*</span></label>
@@ -125,7 +121,6 @@ function ScheduleFormModal({ initial, onClose, onSave }) {
             </div>
           </div>
 
-          {/* 시간 (종일 아닐 때) */}
           {!form.allDay && (
             <div className="grid grid-cols-2 gap-3">
               <div>
@@ -141,7 +136,6 @@ function ScheduleFormModal({ initial, onClose, onSave }) {
             </div>
           )}
 
-          {/* 색상 */}
           <div>
             <label className="block text-xs font-semibold text-gray-500 mb-2">색상</label>
             <div className="flex gap-2 flex-wrap">
@@ -153,7 +147,6 @@ function ScheduleFormModal({ initial, onClose, onSave }) {
             </div>
           </div>
 
-          {/* 공개 설정 */}
           <div>
             <label className="block text-xs font-semibold text-gray-500 mb-2">공개 설정</label>
             <div className="flex flex-col gap-2">
@@ -171,15 +164,12 @@ function ScheduleFormModal({ initial, onClose, onSave }) {
                     </p>
                     <p className="text-xs text-gray-400">{opt.desc}</p>
                   </div>
-                  {form.visibility === opt.value && (
-                    <span className="ml-auto text-teal-500 text-sm font-bold">✓</span>
-                  )}
+                  {form.visibility === opt.value && <span className="ml-auto text-teal-500 text-sm font-bold">✓</span>}
                 </button>
               ))}
             </div>
           </div>
 
-          {/* 내용 */}
           <div>
             <label className="block text-xs font-semibold text-gray-500 mb-1">내용 (선택)</label>
             <textarea value={form.content} onChange={e => set('content', e.target.value)}
@@ -191,9 +181,7 @@ function ScheduleFormModal({ initial, onClose, onSave }) {
 
           <div className="flex gap-3 pt-2">
             <button onClick={onClose}
-              className="flex-1 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-600 rounded-xl text-sm font-medium transition-colors">
-              취소
-            </button>
+              className="flex-1 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-600 rounded-xl text-sm font-medium transition-colors">취소</button>
             <button onClick={handleSubmit}
               className="flex-1 py-2.5 bg-teal-500 hover:bg-teal-600 text-white rounded-xl text-sm font-medium transition-colors">
               {isEdit ? '수정 완료' : '일정 등록'}
@@ -212,16 +200,14 @@ function ScheduleDetailModal({ event, isAdmin, onClose, onEdit, onDelete, onNavi
   const isCourse = !!event.courseId;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50" onClick={onClose}>
-      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl w-[420px] p-8"
+    <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50 p-4" onClick={onClose}>
+      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl w-full max-w-[420px] p-5 sm:p-8"
         onClick={e => e.stopPropagation()}>
         <div className="flex justify-between items-center mb-5">
           <div className="flex items-center gap-3">
             <div className="w-3 h-3 rounded-full shrink-0" style={{ backgroundColor: event.color ?? '#3B82F6' }} />
             <h3 className="text-lg font-bold text-gray-800 dark:text-gray-100">{event.title}</h3>
-            {isCourse && (
-              <span className="px-2 py-0.5 bg-blue-100 text-blue-600 dark:bg-blue-900 dark:text-blue-300 text-xs font-semibold rounded-full">📚 강의</span>
-            )}
+            {isCourse && <span className="px-2 py-0.5 bg-blue-100 text-blue-600 dark:bg-blue-900 dark:text-blue-300 text-xs font-semibold rounded-full">📚 강의</span>}
           </div>
           <button onClick={onClose} className="text-gray-400 hover:text-gray-600 text-xl font-bold leading-none">×</button>
         </div>
@@ -266,16 +252,12 @@ function ScheduleDetailModal({ event, isAdmin, onClose, onEdit, onDelete, onNavi
         )}
 
         <div className="flex flex-col gap-2">
-          {/* 강의 이동 버튼 (강의 연동 일정인 경우) */}
           {isCourse && (
-            <button
-              onClick={() => { onClose(); onNavigate(`/courses/${event.courseId}`); }}
+            <button onClick={() => { onClose(); onNavigate(`/courses/${event.courseId}`); }}
               className="w-full py-2.5 bg-blue-500 hover:bg-blue-600 text-white rounded-xl text-sm font-medium transition-colors">
               📚 강의 상세 보기
             </button>
           )}
-
-          {/* 관리자 편집 버튼 (자동생성 일정은 잠금) */}
           {isAdmin && !isCourse ? (
             <div className="flex gap-2">
               <button onClick={onClose} className="flex-1 py-2.5 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-600 dark:text-gray-300 rounded-xl text-sm font-medium transition-colors">닫기</button>
@@ -318,11 +300,18 @@ export default function SchedulePage() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
 
+  const [calHeight, setCalHeight] = useState(window.innerWidth < 640 ? 620 : 740);
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(false);
   const [currentDate, setCurrentDate] = useState(new Date());
   const [detailEvent, setDetailEvent] = useState(null);
   const [formInitial, setFormInitial] = useState(null);
+
+  useEffect(() => {
+    const handleResize = () => setCalHeight(window.innerWidth < 640 ? 620 : 740);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   const fetchSchedules = useCallback(async (date) => {
     setLoading(true);
@@ -336,30 +325,21 @@ export default function SchedulePage() {
           const hasTime = !!s.startTime;
           let start, end;
           if (hasTime) {
-            // 시간 지정 일정
             start = parseLocalDateTime(s.startDate, s.startTime);
             end   = parseLocalDateTime(s.endDate, s.endTime);
           } else {
-            // 종일 일정
             start = parseLocalDate(s.startDate);
             end   = addDay(parseLocalDate(s.endDate));
           }
           return {
-            id: s.id,
-            title: s.title,
-            start,
-            end,
-            allDay: !hasTime,
-            color: s.color ?? '#3B82F6',
-            content: s.content,
-            authorName: s.authorName,
+            id: s.id, title: s.title, start, end,
+            allDay: !hasTime, color: s.color ?? '#3B82F6',
+            content: s.content, authorName: s.authorName,
             visibility: s.visibility ?? 'PUBLIC',
             courseId: s.courseId ?? null,
             autoGenerated: s.autoGenerated ?? false,
-            startDate: s.startDate,
-            endDate: s.endDate,
-            startTime: s.startTime ?? '',
-            endTime: s.endTime ?? '',
+            startDate: s.startDate, endDate: s.endDate,
+            startTime: s.startTime ?? '', endTime: s.endTime ?? '',
           };
         });
         setEvents(mapped);
@@ -382,27 +362,19 @@ export default function SchedulePage() {
   const handleNavigate = (date) => { setCurrentDate(date); fetchSchedules(date); };
   const handleSelectEvent = (event) => setDetailEvent(event);
 
-  const handleSelectSlot = ({ start, end, action }) => {
+  const handleSelectSlot = ({ start, end }) => {
     if (!isAdmin) return;
     const startDateStr = formatDateStr(start);
     const endDateStr   = formatDateStr(subDay(end));
-
-    // 주간 뷰 드래그: start/end에 시간 정보 포함 (action === 'select')
     const isWeekDrag = start.getHours() !== 0 || start.getMinutes() !== 0
                     || end.getHours()   !== 0 || end.getMinutes()   !== 0;
-
     if (isWeekDrag) {
-      // 시간 지정 모달 — 시작/종료가 같은 날이면 endDate도 같은 날로
       const adjustedEnd = end.getTime() > start.getTime() ? end : new Date(start.getTime() + 60 * 60 * 1000);
       setFormInitial({
-        startDate: startDateStr,
-        endDate: formatDateStr(adjustedEnd),
-        startTime: formatTimeStr(start),
-        endTime: formatTimeStr(adjustedEnd),
-        allDay: false,
+        startDate: startDateStr, endDate: formatDateStr(adjustedEnd),
+        startTime: formatTimeStr(start), endTime: formatTimeStr(adjustedEnd), allDay: false,
       });
     } else {
-      // 월간 뷰 날짜 클릭/드래그: 종일 모달
       setFormInitial({
         startDate: startDateStr,
         endDate: endDateStr < startDateStr ? startDateStr : endDateStr,
@@ -415,30 +387,18 @@ export default function SchedulePage() {
     const url    = isEdit ? `/api/schedules/${form.id}` : '/api/schedules';
     const method = isEdit ? 'PUT' : 'POST';
     const res = await authFetch(url, {
-      method,
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(form),
+      method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(form),
     });
-    if (res.ok) {
-      setFormInitial(null);
-      setDetailEvent(null);
-      fetchSchedules(currentDate);
-    }
+    if (res.ok) { setFormInitial(null); setDetailEvent(null); fetchSchedules(currentDate); }
   };
 
   const handleEdit = (event) => {
     setDetailEvent(null);
     setFormInitial({
-      id: event.id,
-      title: event.title,
-      content: event.content ?? '',
-      startDate: event.startDate,
-      endDate: event.endDate,
-      startTime: event.startTime ?? '',
-      endTime: event.endTime ?? '',
-      allDay: event.allDay,
-      color: event.color,
-      visibility: event.visibility ?? 'PUBLIC',
+      id: event.id, title: event.title, content: event.content ?? '',
+      startDate: event.startDate, endDate: event.endDate,
+      startTime: event.startTime ?? '', endTime: event.endTime ?? '',
+      allDay: event.allDay, color: event.color, visibility: event.visibility ?? 'PUBLIC',
     });
   };
 
@@ -452,7 +412,6 @@ export default function SchedulePage() {
     const v = event.visibility ?? 'PUBLIC';
     const isCourse = !!event.courseId;
     const base = { borderRadius: '6px', fontSize: '12px', padding: '2px 6px', borderWidth: '2px', borderColor: event.color ?? '#3B82F6' };
-    // 강의 연동 일정: 왼쪽 사선 패턴으로 구분
     if (isCourse) return { style: { ...base, backgroundColor: event.color ?? '#3B82F6', borderStyle: 'solid', color: '#fff', opacity: 0.9, fontWeight: '600' } };
     if (v === 'PRIVATE') return { style: { ...base, backgroundColor: 'transparent', borderStyle: 'dashed', color: event.color ?? '#3B82F6' } };
     if (v === 'MEMBER')  return { style: { ...base, backgroundColor: event.color ?? '#3B82F6', borderStyle: 'solid', color: '#fff', opacity: 0.75 } };
@@ -460,16 +419,16 @@ export default function SchedulePage() {
   };
 
   return (
-    <div className="max-w-6xl mx-auto px-4 py-8">
-      <div className="flex justify-between items-start mb-6">
+    <div className="max-w-6xl mx-auto px-4 py-6 sm:py-8">
+      <div className="flex justify-between items-start mb-4 sm:mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-gray-800 dark:text-gray-100">📅 일정</h1>
+          <h1 className="text-xl sm:text-2xl font-bold text-gray-800 dark:text-gray-100">📅 일정</h1>
           <p className="text-sm text-gray-400 mt-1">
             {isAdmin ? '날짜를 클릭해서 일정을 등록하세요.' : '월간 일정을 확인할 수 있습니다.'}
           </p>
         </div>
         {isAdmin && (
-          <button onClick={() => setFormInitial({})} className="px-4 py-2 bg-teal-500 hover:bg-teal-600 text-white rounded-lg text-sm font-medium transition-colors">
+          <button onClick={() => setFormInitial({})} className="px-4 py-2 bg-teal-500 hover:bg-teal-600 text-white rounded-lg text-sm font-medium transition-colors shrink-0">
             + 일정 등록
           </button>
         )}
@@ -480,11 +439,11 @@ export default function SchedulePage() {
           <span className="flex items-center gap-1.5"><span className="inline-block w-6 h-3 rounded" style={{ backgroundColor: '#3B82F6' }} />🌐 전체 공개</span>
           <span className="flex items-center gap-1.5"><span className="inline-block w-6 h-3 rounded opacity-75" style={{ backgroundColor: '#3B82F6' }} />👥 회원 공개</span>
           <span className="flex items-center gap-1.5"><span className="inline-block w-6 h-3 rounded border-2 border-dashed border-blue-400" style={{ backgroundColor: 'transparent' }} />🔒 비공개</span>
-          <span className="flex items-center gap-1.5"><span className="inline-block w-6 h-3 rounded font-bold" style={{ backgroundColor: '#3B82F6' }} />📚 강의 연동</span>
+          <span className="flex items-center gap-1.5"><span className="inline-block w-6 h-3 rounded" style={{ backgroundColor: '#3B82F6' }} />📚 강의 연동</span>
         </div>
       )}
 
-      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow p-4 relative">
+      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow p-2 sm:p-4 relative">
         {loading && (
           <div className="absolute inset-0 flex items-center justify-center bg-white/60 dark:bg-gray-800/60 rounded-2xl z-10">
             <div className="w-8 h-8 border-4 border-blue-200 border-t-blue-500 rounded-full animate-spin" />
@@ -495,7 +454,7 @@ export default function SchedulePage() {
           events={events}
           startAccessor="start"
           endAccessor="end"
-          style={{ height: 740 }}
+          style={{ height: calHeight }}
           culture="ko"
           defaultView="month"
           views={['month', 'week']}
@@ -503,14 +462,14 @@ export default function SchedulePage() {
           onSelectEvent={handleSelectEvent}
           onSelectSlot={handleSelectSlot}
           selectable={isAdmin}
-          dayMaxEvents={2}
+          dayMaxEvents={calHeight < 700 ? 1 : 2}
           components={{ event: EventItem }}
           eventPropGetter={eventStyleGetter}
           popup
           messages={{
             next: '▶', previous: '◀', today: '오늘', month: '월', week: '주',
             noEventsInRange: '이 기간에 일정이 없습니다.',
-            showMore: count => `+${count}개 더보기`,
+            showMore: count => `+${count}`,
           }}
         />
         {!loading && events.length === 0 && (
@@ -543,26 +502,25 @@ export default function SchedulePage() {
                 const isToday = event.startDate <= today && event.endDate >= today;
                 const isPast  = event.endDate < today;
                 return (
-                  <li key={event.id ?? `course-${event.courseId}-${event.title}`} onClick={() => setDetailEvent(event)}
-                    className="flex items-center gap-4 py-3 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 rounded-xl px-2 transition-colors group">
+                  <li key={event.id ?? `course-${event.courseId}-${event.title}`}
+                    onClick={() => setDetailEvent(event)}
+                    className="flex items-center gap-3 py-3 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 rounded-xl px-2 transition-colors group">
                     <div className="w-1 h-10 rounded-full shrink-0" style={{ backgroundColor: event.color ?? '#3B82F6', opacity: isPast ? 0.4 : 1 }} />
-                    <div className="w-24 shrink-0">
+                    <div className="w-16 sm:w-24 shrink-0">
                       <p className={`text-xs font-semibold ${isPast ? 'text-gray-300 dark:text-gray-600' : 'text-gray-500 dark:text-gray-400'}`}>
                         {event.startDate.slice(5).replace('-', '/')}
-                        {event.startTime && ` ${event.startTime.slice(0, 5)}`}
+                        {event.startTime && <span className="hidden sm:inline"> {event.startTime.slice(0, 5)}</span>}
                       </p>
                       {(event.startDate !== event.endDate || event.endTime) && (
                         <p className={`text-[10px] ${isPast ? 'text-gray-300 dark:text-gray-600' : 'text-gray-400'}`}>
                           ~ {event.endDate.slice(5).replace('-', '/')}
-                          {event.endTime && ` ${event.endTime.slice(0, 5)}`}
+                          {event.endTime && <span className="hidden sm:inline"> {event.endTime.slice(0, 5)}</span>}
                         </p>
                       )}
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className={`text-sm font-medium truncate group-hover:text-blue-600 transition-colors ${isPast ? 'text-gray-400 dark:text-gray-500 line-through' : 'text-gray-700 dark:text-gray-200'}`}>
-                        {isCourse
-                          ? <span className="text-xs mr-1">📚</span>
-                          : !event.allDay && <span className="text-xs mr-1">🕐</span>}
+                        {isCourse ? <span className="text-xs mr-1">📚</span> : !event.allDay && <span className="text-xs mr-1">🕐</span>}
                         {event.title}
                       </p>
                       {event.content && <p className="text-xs text-gray-400 truncate mt-0.5">{event.content}</p>}

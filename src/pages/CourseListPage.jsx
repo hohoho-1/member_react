@@ -192,100 +192,127 @@ export default function CourseListPage() {
           <div>검색 결과가 없습니다</div>
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
           {courses.map(course => {
             const isRecruiting = course.registrationStartDate && course.registrationEndDate
               && today >= course.registrationStartDate && today <= course.registrationEndDate;
+            const enroll = enrollMap[course.id];
+
+            // 썸네일 공통 오버레이 (배지 + 좋아요 + 진도율)
+            const ThumbnailOverlay = ({ compact = false }) => (
+              <>
+                <button
+                  onClick={e => handleLike(e, course.id)}
+                  className={`absolute top-2 right-2 ${compact ? 'w-6 h-6 text-xs' : 'w-8 h-8 text-base'} rounded-full flex items-center justify-center shadow-md transition-all ${
+                    likeMap[course.id]?.liked
+                      ? 'bg-white text-red-500 scale-110'
+                      : 'bg-black/30 text-white hover:bg-white hover:text-red-400'
+                  }`}>
+                  {likeMap[course.id]?.liked ? '❤️' : '🤍'}
+                </button>
+                {enroll && !enroll.completed && (
+                  <div className={`absolute top-2 left-2 px-2 py-0.5 bg-blue-500/90 text-white ${compact ? 'text-[9px]' : 'text-[10px]'} font-semibold rounded-full`}>수강중</div>
+                )}
+                {enroll?.completed && (
+                  <div className={`absolute top-2 left-2 px-2 py-0.5 bg-green-500/90 text-white ${compact ? 'text-[9px]' : 'text-[10px]'} font-semibold rounded-full`}>🎓 수료완료</div>
+                )}
+                {enroll && !enroll.completed && (
+                  <div className="absolute bottom-0 left-0 right-0 h-1.5 bg-black/30">
+                    <div className="h-full bg-blue-400 transition-all" style={{ width: `${enroll.progressRate}%` }} />
+                  </div>
+                )}
+              </>
+            );
+
+            // 하단 메타 정보 (날짜, 강사, 좋아요 등)
+            const MetaInfo = ({ compact = false }) => (
+              <div className={`space-y-0.5 ${compact ? '' : 'pt-2 border-t border-gray-50 dark:border-gray-700'}`}>
+                {course.registrationStartDate && (
+                  <p className="text-[10px] sm:text-xs text-gray-400">📋 {course.registrationStartDate} ~ {course.registrationEndDate || '-'}</p>
+                )}
+                {course.educationStartDate && (
+                  <p className="text-[10px] sm:text-xs text-gray-400">🎓 {course.educationStartDate} ~ {course.educationEndDate || '-'}</p>
+                )}
+                {course.instructor && (
+                  <p className="text-[10px] sm:text-xs text-gray-400">👨‍🏫 {course.instructor}</p>
+                )}
+                {course.location && (
+                  <p className="text-[10px] sm:text-xs text-gray-400">📍 {course.location}</p>
+                )}
+                <div className="flex items-center justify-between pt-0.5">
+                  <span className="text-[10px] text-gray-300 dark:text-gray-600">
+                    {new Date(course.createdAt).toLocaleDateString()}
+                  </span>
+                  <div className="flex items-center gap-1.5">
+                    {enroll && !enroll.completed && (
+                      <span className="text-[10px] text-blue-500 font-semibold">{enroll.progressRate}%</span>
+                    )}
+                    {course.reviewCount > 0 && (
+                      <span className="text-[10px] text-yellow-500">⭐ {course.avgRating?.toFixed(1)}</span>
+                    )}
+                    {(likeMap[course.id]?.likeCount > 0) && (
+                      <span className="text-[10px] text-red-400">❤️ {likeMap[course.id].likeCount}</span>
+                    )}
+                    {course.viewCount > 0 && (
+                      <span className="text-[10px] text-gray-400">👁 {course.viewCount}</span>
+                    )}
+                  </div>
+                </div>
+              </div>
+            );
+
             return (
               <div key={course.id} onClick={() => handleCourseClick(course.id)}
-                className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden cursor-pointer hover:shadow-md hover:-translate-y-0.5 transition-all flex flex-col">
-                {/* 썸네일 - 하트 버튼 + 진도율 오버레이 */}
-                <div className="relative aspect-video bg-gradient-to-br from-blue-400 to-indigo-500 flex items-center justify-center overflow-hidden shrink-0">
-                  {course.thumbnailUrl ? (
-                    <img src={course.thumbnailUrl} alt={course.title} className="w-full h-full object-contain bg-gray-900" />
-                  ) : (
-                    <span className="text-4xl">📚</span>
-                  )}
-                  {/* 좋아요 버튼 */}
-                  <button
-                    onClick={e => handleLike(e, course.id)}
-                    className={`absolute top-2 right-2 w-8 h-8 rounded-full flex items-center justify-center text-base shadow-md transition-all ${
-                      likeMap[course.id]?.liked
-                        ? 'bg-white text-red-500 scale-110'
-                        : 'bg-black/30 text-white hover:bg-white hover:text-red-400'
-                    }`}>
-                    {likeMap[course.id]?.liked ? '❤️' : '🤍'}
-                  </button>
-                  {/* 수강 중 배지 */}
-                  {enrollMap[course.id] && !enrollMap[course.id].completed && (
-                    <div className="absolute top-2 left-2 px-2 py-0.5 bg-blue-500/90 text-white text-[10px] font-semibold rounded-full">
-                      수강중
-                    </div>
-                  )}
-                  {/* 수료 배지 */}
-                  {enrollMap[course.id]?.completed && (
-                    <div className="absolute top-2 left-2 px-2 py-0.5 bg-green-500/90 text-white text-[10px] font-semibold rounded-full">
-                      🎓 수료완료
-                    </div>
-                  )}
-                  {/* 진도율 바 (수강 중인 경우만) */}
-                  {enrollMap[course.id] && !enrollMap[course.id].completed && (
-                    <div className="absolute bottom-0 left-0 right-0 h-1.5 bg-black/30">
-                      <div
-                        className="h-full bg-blue-400 transition-all"
-                        style={{ width: `${enrollMap[course.id].progressRate}%` }}
-                      />
-                    </div>
-                  )}
-                </div>
-                <div className="p-4 flex flex-col flex-1">
-                  <div className="flex items-start gap-1.5 mb-1">
-                    {isRecruiting && (
-                      <span className="shrink-0 text-[10px] px-1.5 py-0.5 bg-green-100 text-green-700 rounded-full font-medium mt-0.5">접수중</span>
-                    )}
-                    <h3 className="font-semibold text-gray-900 dark:text-white text-sm leading-tight line-clamp-2">
-                      {course.title}
-                    </h3>
+                className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden cursor-pointer hover:shadow-md hover:-translate-y-0.5 transition-all">
+
+                {/* ── 모바일: 가로형 (썸네일 좌 + 정보 우) ── */}
+                <div className="flex sm:hidden">
+                  <div className="relative w-[38%] shrink-0 aspect-[4/3] bg-gradient-to-br from-blue-400 to-indigo-500 flex items-center justify-center overflow-hidden">
+                    {course.thumbnailUrl
+                      ? <img src={course.thumbnailUrl} alt={course.title} className="w-full h-full object-cover" />
+                      : <span className="text-2xl">📚</span>}
+                    <ThumbnailOverlay compact={true} />
                   </div>
-                  {course.description && (
-                    <p className="text-xs text-gray-500 dark:text-gray-400 line-clamp-2 mb-2">{course.description}</p>
-                  )}
-                  <div className="mt-auto space-y-0.5 pt-2 border-t border-gray-50 dark:border-gray-700">
-                    {course.registrationStartDate && (
-                      <p className="text-xs text-gray-400">📋 {course.registrationStartDate} ~ {course.registrationEndDate || '-'}</p>
-                    )}
-                    {course.educationStartDate && (
-                      <p className="text-xs text-gray-400">🎓 {course.educationStartDate} ~ {course.educationEndDate || '-'}</p>
-                    )}
-                    {course.instructor && (
-                      <p className="text-xs text-gray-400">👨‍🏫 {course.instructor}</p>
-                    )}
-                    {course.location && (
-                      <p className="text-xs text-gray-400">📍 {course.location}</p>
-                    )}
-                    <div className="flex items-center justify-between pt-1">
-                      <span className="text-[11px] text-gray-300 dark:text-gray-600">
-                        {new Date(course.createdAt).toLocaleDateString()}
-                      </span>
-                      <div className="flex items-center gap-2">
-                        {enrollMap[course.id] && !enrollMap[course.id].completed && (
-                          <span className="text-[11px] text-blue-500 font-semibold">
-                            {enrollMap[course.id].progressRate}%
-                          </span>
+                  <div className="flex-1 min-w-0 p-3 flex flex-col justify-between">
+                    <div>
+                      <div className="flex items-start gap-1 mb-1">
+                        {isRecruiting && (
+                          <span className="shrink-0 text-[9px] px-1.5 py-0.5 bg-green-100 text-green-700 rounded-full font-medium mt-0.5">접수중</span>
                         )}
-                        {course.reviewCount > 0 && (
-                          <span className="text-[11px] text-yellow-500">⭐ {course.avgRating?.toFixed(1)} ({course.reviewCount})</span>
-                        )}
-                        {(likeMap[course.id]?.likeCount > 0) && (
-                          <span className="text-[11px] text-red-400">❤️ {likeMap[course.id].likeCount.toLocaleString()}</span>
-                        )}
-                        {course.viewCount > 0 && (
-                          <span className="text-[11px] text-gray-400">👁 {course.viewCount.toLocaleString()}</span>
-                        )}
+                        <h3 className="font-semibold text-gray-900 dark:text-white text-sm leading-snug line-clamp-2">{course.title}</h3>
                       </div>
+                      {course.description && (
+                        <p className="text-[11px] text-gray-500 dark:text-gray-400 line-clamp-1 mb-1">{course.description}</p>
+                      )}
+                    </div>
+                    <MetaInfo compact={true} />
+                  </div>
+                </div>
+
+                {/* ── 데스크탑: 세로형 (기존 레이아웃) ── */}
+                <div className="hidden sm:flex flex-col h-full">
+                  <div className="relative aspect-video bg-gradient-to-br from-blue-400 to-indigo-500 flex items-center justify-center overflow-hidden shrink-0">
+                    {course.thumbnailUrl
+                      ? <img src={course.thumbnailUrl} alt={course.title} className="w-full h-full object-contain bg-gray-900" />
+                      : <span className="text-4xl">📚</span>}
+                    <ThumbnailOverlay compact={false} />
+                  </div>
+                  <div className="p-4 flex flex-col flex-1">
+                    <div className="flex items-start gap-1.5 mb-1">
+                      {isRecruiting && (
+                        <span className="shrink-0 text-[10px] px-1.5 py-0.5 bg-green-100 text-green-700 rounded-full font-medium mt-0.5">접수중</span>
+                      )}
+                      <h3 className="font-semibold text-gray-900 dark:text-white text-sm leading-tight line-clamp-2">{course.title}</h3>
+                    </div>
+                    {course.description && (
+                      <p className="text-xs text-gray-500 dark:text-gray-400 line-clamp-2 mb-2">{course.description}</p>
+                    )}
+                    <div className="mt-auto">
+                      <MetaInfo compact={false} />
                     </div>
                   </div>
                 </div>
+
               </div>
             );
           })}
