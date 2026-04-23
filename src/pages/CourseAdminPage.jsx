@@ -2,10 +2,12 @@ import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { authFetch } from '../utils/authFetch';
 import ConfirmModal from '../components/ConfirmModal';
+import { useToastContext } from '../context/ToastContext';
 import { useConfirm } from '../hooks/useConfirm';
 
 export default function CourseAdminPage() {
   const navigate = useNavigate();
+  const { success, error } = useToastContext();
   const [searchParams] = useSearchParams();
   const highlightCourseId = searchParams.get('courseId'); // 알림에서 진입한 강의 ID
   const [courses, setCourses] = useState([]);
@@ -63,7 +65,7 @@ export default function CourseAdminPage() {
         ));
       }
     } else {
-      alert('수강 취소에 실패했습니다.');
+      error('수강 취소에 실패했습니다.');
     }
   };
 
@@ -92,7 +94,7 @@ export default function CourseAdminPage() {
       // URL에서 courseId 파라미터 제거 (하이라이트 해제)
       navigate('/courses/admin', { replace: true });
     } else {
-      alert('수료 승인에 실패했습니다.');
+      error('수료 승인에 실패했습니다.');
     }
   };
 
@@ -169,7 +171,7 @@ export default function CourseAdminPage() {
 
   // 저장 시 → 강의 저장 후 파일 업로드 (있을 경우)
   const handleSave = async () => {
-    if (!form.title.trim()) { alert('강의명을 입력하세요.'); return; }
+    if (!form.title.trim()) { error('강의명을 입력하세요.'); return; }
     setSaving(true);
     try {
       const method = editCourse ? 'PUT' : 'POST';
@@ -178,7 +180,7 @@ export default function CourseAdminPage() {
 
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
-        alert(err.message || '저장에 실패했습니다.');
+        error(err.message || '저장에 실패했습니다.');
         return;
       }
 
@@ -186,7 +188,7 @@ export default function CourseAdminPage() {
       const savedId = saved?.id ?? editCourse?.id;
 
       if (!savedId) {
-        alert('강의 ID를 가져오지 못했습니다. 다시 시도해주세요.');
+        error('강의 ID를 가져오지 못했습니다. 다시 시도해주세요.');
         return;
       }
 
@@ -206,7 +208,7 @@ export default function CourseAdminPage() {
           });
         } else {
           const err = await thumbRes.json().catch(() => ({}));
-          alert('강의는 저장됐지만 썸네일 업로드에 실패했습니다: ' + (err.message || '알 수 없는 오류'));
+          error('강의는 저장됐지만 썸네일 업로드에 실패했습니다: ' + (err.message || '알 수 없는 오류'));
         }
       }
 
@@ -229,7 +231,7 @@ export default function CourseAdminPage() {
     if (!ok) return;
     const res = await authFetch(`/api/courses/${courseId}`, { method: 'DELETE' });
     if (res.ok) fetchCourses();
-    else alert('삭제에 실패했습니다.');
+    else error('삭제에 실패했습니다.');
   };
 
   const togglePublish = async (course) => {
@@ -249,7 +251,7 @@ export default function CourseAdminPage() {
       })
     });
     if (res.ok) fetchCourses();
-    else alert('공개 상태 변경에 실패했습니다.');
+    else error('공개 상태 변경에 실패했습니다.');
   };
 
   // 현재 미리보기 소스 결정 (파일 선택 > URL 입력 순)

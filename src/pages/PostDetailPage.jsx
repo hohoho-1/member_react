@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate, useParams, useSearchParams, useLocation } from 'react-router-dom';
 import { authFetch, getTokenPayload } from '../utils/authFetch';
 import UserAvatar from '../components/UserAvatar';
+import { useToastContext } from '../context/ToastContext';
 import { SkeletonPage } from '../components/SkeletonLoader';
 import ConfirmModal from '../components/ConfirmModal';
 import { useConfirm } from '../hooks/useConfirm';
@@ -206,6 +207,7 @@ function AnswerItem({ answer, isAdmin, onEdit, onDelete, colorScheme = 'amber' }
 export default function PostDetailPage() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { success, error } = useToastContext();
   const location = useLocation();
   const [searchParams] = useSearchParams();
 
@@ -414,7 +416,7 @@ export default function PostDetailPage() {
     setPinLoading(true);
     const res = await authFetch(`/api/posts/${id}/pin`, { method: 'PATCH' });
     if (res.ok) { const d = await res.json(); setPost(prev => ({ ...prev, pinned: d.pinned })); }
-    else { const d = await res.json(); alert(d.message || '핀 설정에 실패했습니다.'); }
+    else { const d = await res.json(); error(d.message || '핀 설정에 실패했습니다.'); }
     setPinLoading(false);
   };
 
@@ -426,7 +428,7 @@ export default function PostDetailPage() {
   const reportFinalReason = reportReason === '__custom__' ? reportCustom : reportReason;
 
   const handleReport = async () => {
-    if (!reportFinalReason.trim()) { alert('신고 사유를 입력해주세요.'); return; }
+    if (!reportFinalReason.trim()) { error('신고 사유를 입력해주세요.'); return; }
     setReporting(true);
     const res = await authFetch(`/api/reports/posts/${id}`, {
       method: 'POST',
@@ -435,13 +437,13 @@ export default function PostDetailPage() {
     });
     setReporting(false);
     if (res.ok) {
-      alert('신고가 접수되었습니다.');
+      success('신고가 접수되었습니다.');
       setReportModalOpen(false);
       setReportReason('');
       setReportCustom('');
     } else {
       const d = await res.json().catch(() => ({}));
-      alert(d.message || '신고에 실패했습니다.');
+      error(d.message || '신고에 실패했습니다.');
     }
   };
 

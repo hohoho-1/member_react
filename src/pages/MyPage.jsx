@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { authFetch, logout } from '../utils/authFetch';
 import { SkeletonMyPage, SkeletonMyPageList, SkeletonCourseGrid } from '../components/SkeletonLoader';
+import { useToastContext } from '../context/ToastContext';
 import ConfirmModal from '../components/ConfirmModal';
 import { useConfirm } from '../hooks/useConfirm';
 
@@ -47,6 +48,7 @@ const rowCls = 'px-6 py-4 hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer
 
 export default function MyPage() {
   const navigate = useNavigate();
+  const { success, error } = useToastContext();
   const [searchParams] = useSearchParams();
   const fileInputRef = useRef(null);
   const [imgError, setImgError] = useState(false);
@@ -171,7 +173,7 @@ export default function MyPage() {
   const handleCancelEnrollment = async (courseId, courseTitle) => {
     const res = await authFetch(`/api/courses/${courseId}/enroll`, { method: 'DELETE' });
     if (res.ok) setMyEnrollments(prev => prev.filter(e => e.courseId !== courseId));
-    else alert('수강 취소에 실패했습니다.');
+    else error('수강 취소에 실패했습니다.');
     setCancelTarget(null);
   };
 
@@ -213,8 +215,8 @@ export default function MyPage() {
     try {
       const res = await authFetch('/api/users/me/profile-image', { method: 'POST', body: formData });
       if (res.ok) { const data = await res.json(); setUser(prev => ({ ...prev, profileImageUrl: data.profileImageUrl })); setImgError(false); }
-      else { const d = await res.json(); alert(d.message || '이미지 업로드에 실패했습니다.'); }
-    } catch { alert('서버 오류가 발생했습니다.'); }
+      else { const d = await res.json(); error(d.message || '이미지 업로드에 실패했습니다.'); }
+    } catch { error('서버 오류가 발생했습니다.'); }
     finally { setProfileUploading(false); e.target.value = ''; }
   };
 

@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { authFetch } from '../utils/authFetch';
 import ConfirmModal from '../components/ConfirmModal';
+import { useToastContext } from '../context/ToastContext';
 import { useConfirm } from '../hooks/useConfirm';
 
 const FILE_ICONS = {
@@ -21,6 +22,7 @@ const LESSON_TYPES = [
 export default function CourseCurriculumPage() {
   const { courseId } = useParams();
   const navigate = useNavigate();
+  const { success, error } = useToastContext();
   const { confirmProps, confirm } = useConfirm();
   const [course, setCourse] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -76,7 +78,7 @@ export default function CourseCurriculumPage() {
       await fetchCourseFiles();
     } else {
       const err = await res.json().catch(() => ({}));
-      alert(err.message || '파일 업로드에 실패했습니다.');
+      error(err.message || '파일 업로드에 실패했습니다.');
     }
     setUploading(false);
     e.target.value = '';
@@ -87,13 +89,13 @@ export default function CourseCurriculumPage() {
     if (!ok) return;
     const res = await authFetch(`/api/courses/${courseId}/files/${fileId}`, { method: 'DELETE' });
     if (res.ok) setCourseFiles(prev => prev.filter(f => f.id !== fileId));
-    else alert('파일 삭제에 실패했습니다.');
+    else error('파일 삭제에 실패했습니다.');
   };
 
   const handleDownload = async (fileId, originalName) => {
     try {
       const res = await authFetch(`/api/courses/files/${fileId}/download`);
-      if (!res.ok) { alert('다운로드에 실패했습니다.'); return; }
+      if (!res.ok) { error('다운로드에 실패했습니다.'); return; }
       const blob = await res.blob();
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
@@ -104,7 +106,7 @@ export default function CourseCurriculumPage() {
       a.remove();
       window.URL.revokeObjectURL(url);
     } catch {
-      alert('다운로드 중 오류가 발생했습니다.');
+      error('다운로드 중 오류가 발생했습니다.');
     }
   };
 
@@ -121,7 +123,7 @@ export default function CourseCurriculumPage() {
   };
 
   const handleSaveSection = async () => {
-    if (!sectionForm.title.trim()) { alert('섹션 제목을 입력하세요.'); return; }
+    if (!sectionForm.title.trim()) { error('섹션 제목을 입력하세요.'); return; }
     setSaving(true);
     if (sectionModal.mode === 'create') {
       await authFetch(`/api/courses/${courseId}/sections`, {
@@ -163,7 +165,7 @@ export default function CourseCurriculumPage() {
   };
 
   const handleSaveLesson = async () => {
-    if (!lessonForm.title.trim()) { alert('레슨 제목을 입력하세요.'); return; }
+    if (!lessonForm.title.trim()) { error('레슨 제목을 입력하세요.'); return; }
     setSaving(true);
     const body = {
       title: lessonForm.title,
@@ -223,8 +225,8 @@ export default function CourseCurriculumPage() {
   };
 
   const handleSaveQuestion = async () => {
-    if (!questionForm.questionText.trim()) { alert('문항 내용을 입력하세요.'); return; }
-    if (!questionForm.answer.toString().trim()) { alert('정답을 입력하세요.'); return; }
+    if (!questionForm.questionText.trim()) { error('문항 내용을 입력하세요.'); return; }
+    if (!questionForm.answer.toString().trim()) { error('정답을 입력하세요.'); return; }
     setSaving(true);
 
     const body = {

@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { ThemeProvider } from './context/ThemeContext';
+import { ToastProvider } from './context/ToastContext';
 import Layout from './components/Layout';
 import PrivateRoute from './components/PrivateRoute';
 import LoginPage from './pages/LoginPage';
@@ -27,6 +28,7 @@ import NotFoundPage from './pages/NotFoundPage';
 function App() {
   return (
     <ThemeProvider>
+      <ToastProvider>
       <BrowserRouter>
         <Routes>
           {/* 루트: 홈으로 */}
@@ -74,6 +76,7 @@ function App() {
           <Route path="*" element={<NotFoundPage />} />
         </Routes>
       </BrowserRouter>
+      </ToastProvider>
     </ThemeProvider>
   );
 }

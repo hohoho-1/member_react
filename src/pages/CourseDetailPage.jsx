@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { authFetch, isLoggedIn, isAdmin } from '../utils/authFetch';
 import ConfirmModal from '../components/ConfirmModal';
 import { useConfirm } from '../hooks/useConfirm';
+import { useToastContext } from '../context/ToastContext';
 import { SkeletonCourseDetail } from '../components/SkeletonLoader';
 
 const FILE_ICONS = { pdf:'📄', pptx:'📊', ppt:'📊', docx:'📝', doc:'📝', xlsx:'📊', xls:'📊', txt:'📃', zip:'🗜️', hwp:'📝', hwpx:'📝', mp4:'🎬', avi:'🎬', mov:'🎬' };
@@ -39,6 +40,7 @@ function ReviewSection({ courseId, enrollment }) {
   const [content, setContent] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const { confirmProps, confirm } = useConfirm();
+  const { error } = useToastContext();
 
   const canWrite = enrollment?.completed || enrollment?.isCompleted;
 
@@ -77,7 +79,7 @@ function ReviewSection({ courseId, enrollment }) {
   };
 
   const handleSubmit = async () => {
-    if (!content.trim()) { alert('후기 내용을 입력해주세요.'); return; }
+    if (!content.trim()) { error('후기 내용을 입력해주세요.'); return; }
     setSubmitting(true);
     try {
       let res;
@@ -100,7 +102,7 @@ function ReviewSection({ courseId, enrollment }) {
         await fetchMyReview();
       } else {
         const err = await res.json().catch(() => ({}));
-        alert(err.message || '오류가 발생했습니다.');
+        error(err.message || '오류가 발생했습니다.');
       }
     } finally {
       setSubmitting(false);
@@ -249,6 +251,7 @@ function QnaSection({ courseId, enrollment }) {
   const [answerContent, setAnswerContent] = useState('');
   const [answerEditId, setAnswerEditId] = useState(null);
   const { confirmProps, confirm } = useConfirm();
+  const { error } = useToastContext();
 
   const canWrite = !!enrollment; // 수강 신청만 해도 작성 가능
 
@@ -281,7 +284,7 @@ function QnaSection({ courseId, enrollment }) {
   };
 
   const handleSubmit = async () => {
-    if (!title.trim() || !content.trim()) { alert('제목과 내용을 입력해주세요.'); return; }
+    if (!title.trim() || !content.trim()) { error('제목과 내용을 입력해주세요.'); return; }
     setSubmitting(true);
     try {
       let res;
@@ -304,7 +307,7 @@ function QnaSection({ courseId, enrollment }) {
         await fetchQna();
       } else {
         const err = await res.json().catch(() => ({}));
-        alert(err.message || '오류가 발생했습니다.');
+        error(err.message || '오류가 발생했습니다.');
       }
     } finally {
       setSubmitting(false);
@@ -319,7 +322,7 @@ function QnaSection({ courseId, enrollment }) {
   };
 
   const handleAnswerSubmit = async (qnaId) => {
-    if (!answerContent.trim()) { alert('답변 내용을 입력해주세요.'); return; }
+    if (!answerContent.trim()) { error('답변 내용을 입력해주세요.'); return; }
     const res = await authFetch(`/api/courses/${courseId}/qna/${qnaId}/answer`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -552,6 +555,7 @@ export default function CourseDetailPage() {
   const [likeCount, setLikeCount] = useState(0);
   const [liking, setLiking] = useState(false);
   const { confirmProps, confirm } = useConfirm();
+  const { success, error } = useToastContext();
 
   useEffect(() => {
     fetchCourse();
@@ -591,7 +595,7 @@ export default function CourseDetailPage() {
       setEnrollment(data);
     } else {
       const err = await res.json().catch(() => ({}));
-      alert(err.message || '수강 신청에 실패했습니다.');
+      error(err.message || '수강 신청에 실패했습니다.');
     }
     setEnrolling(false);
   };
@@ -599,7 +603,7 @@ export default function CourseDetailPage() {
   const handleDownload = async (fileId, originalName) => {
     try {
       const res = await authFetch(`/api/courses/files/${fileId}/download`);
-      if (!res.ok) { alert('다운로드에 실패했습니다.'); return; }
+      if (!res.ok) { error('다운로드에 실패했습니다.'); return; }
       const blob = await res.blob();
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
@@ -610,7 +614,7 @@ export default function CourseDetailPage() {
       a.remove();
       window.URL.revokeObjectURL(url);
     } catch {
-      alert('다운로드 중 오류가 발생했습니다.');
+      error('다운로드 중 오류가 발생했습니다.');
     }
   };
 
@@ -640,7 +644,7 @@ export default function CourseDetailPage() {
       setEnrollment(null);
     } else {
       const err = await res.json().catch(() => ({}));
-      alert(err.message || '수강 취소에 실패했습니다.');
+      error(err.message || '수강 취소에 실패했습니다.');
     }
   };
 

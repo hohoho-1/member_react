@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, useCallback } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { authFetch, getTokenPayload } from '../utils/authFetch';
 import { useDraft } from '../hooks/useDraft';
+import { useToastContext } from '../context/ToastContext';
 
 const MAX_FILES = 5;
 const MAX_SIZE = 10 * 1024 * 1024;
@@ -20,6 +21,7 @@ function formatSavedAt(iso) {
 export default function PostWritePage() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { error } = useToastContext();
   const [searchParams] = useSearchParams();
   const isEditMode = !!id;
   const fileInputRef = useRef(null);
@@ -80,7 +82,7 @@ export default function PostWritePage() {
     const [postRes, fileRes] = await Promise.all([authFetch(`/api/posts/${id}`), authFetch(`/api/posts/${id}/files`)]);
     if (postRes.ok) {
       const data = await postRes.json();
-      if (data.authorId !== payload.userId && !isAdmin) { alert('수정 권한이 없습니다.'); navigate(`/board/${id}`); return; }
+      if (data.authorId !== payload.userId && !isAdmin) { error('수정 권한이 없습니다.'); navigate(`/board/${id}`); return; }
       setBoardCode(data.boardCode ?? data.category ?? 'FREE');
       setTitle(data.title); setContent(data.content); setIsPinned(data.pinned ?? false);
     }
