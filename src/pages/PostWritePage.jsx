@@ -161,7 +161,7 @@ export default function PostWritePage() {
 
   return (
     <div className="bg-gray-100 dark:bg-gray-900 p-6">
-      <div className="max-w-3xl mx-auto">
+      <div className="max-w-3xl mx-auto px-0 sm:px-4">
 
         {/* 임시저장 복원 토스트 */}
         {draftToast === 'restore' && draftRestoreData && (

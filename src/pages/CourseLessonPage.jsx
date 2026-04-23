@@ -127,8 +127,8 @@ export default function CourseLessonPage() {
   );
 
   return (
-    <div className="max-w-5xl mx-auto px-4 py-6 flex gap-6">
-      {/* 사이드바: 커리큘럼 */}
+    <div className="max-w-5xl mx-auto px-3 sm:px-4 py-4 sm:py-6 flex gap-6">
+      {/* 사이드바: 커리큘럼 (lg 이상에서만 표시) */}
       <aside className="w-64 shrink-0 hidden lg:block">
         <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 overflow-hidden sticky top-20">
           <div className="p-3 border-b border-gray-100 dark:border-gray-700">
@@ -178,6 +178,22 @@ export default function CourseLessonPage() {
 
       {/* 메인: 레슨 콘텐츠 */}
       <main className="flex-1 min-w-0">
+        {/* 모바일 전용: 강의홈 링크 + 진도율 */}
+        <div className="lg:hidden bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 px-4 py-3 mb-4">
+          <div className="flex items-center justify-between mb-2">
+            <button onClick={() => navigate(`/courses/${courseId}`)}
+              className="text-xs text-blue-500 hover:underline">← 강의 홈</button>
+            {enrollment && (
+              <span className="text-xs font-semibold text-blue-600">{enrollment.progressRate}%</span>
+            )}
+          </div>
+          {enrollment && (
+            <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-1.5">
+              <div className="bg-blue-500 h-1.5 rounded-full transition-all" style={{ width: `${enrollment.progressRate}%` }} />
+            </div>
+          )}
+        </div>
+
         {/* 레슨 헤더 */}
         <div className="mb-4">
           <div className="flex items-center gap-2 text-xs text-gray-400 dark:text-gray-500 mb-1">

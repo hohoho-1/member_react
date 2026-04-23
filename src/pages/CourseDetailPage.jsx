@@ -652,7 +652,7 @@ export default function CourseDetailPage() {
 
   return (
     <>
-    <div className="max-w-6xl mx-auto px-4 py-8">
+    <div className="max-w-6xl mx-auto px-4 py-6">
       {/* 뒤로가기 */}
       <button
         onClick={() => navigate('/courses')}
@@ -660,11 +660,11 @@ export default function CourseDetailPage() {
         ← 강의 목록으로
       </button>
 
-      {/* 2컬럼 레이아웃 */}
-      <div className="flex gap-6 items-start">
+      {/* 모바일: 우측 패널을 상단에 먼저 표시, 데스크탑: 2컬럼 */}
+      <div className="flex flex-col-reverse lg:flex-row lg:gap-6 lg:items-start">
 
         {/* 좌측: 썸네일 + 커리큘럼 + 교육자료 + 리뷰 */}
-        <div className="flex-1 min-w-0 space-y-4">
+        <div className="flex-1 min-w-0 space-y-4 mt-4 lg:mt-0">
           {/* 썸네일 */}
           <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
             <div className="aspect-video bg-gradient-to-br from-blue-400 to-indigo-500 flex items-center justify-center overflow-hidden">
@@ -753,9 +753,9 @@ export default function CourseDetailPage() {
           <QnaSection courseId={courseId} enrollment={enrollment} />
         </div>
 
-        {/* 우측: 강의 정보 + 수강신청 (sticky) */}
-        <div className="w-80 shrink-0">
-          <div className="sticky top-6 bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-5 space-y-4">
+        {/* 우측: 강의 정보 + 수강신청 (데스크탑: sticky, 모바일: 상단 표시) */}
+        <div className="lg:w-80 lg:shrink-0">
+          <div className="lg:sticky lg:top-6 bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-5 space-y-4">
             {/* 제목 */}
             <div>
               <h1 className="text-lg font-bold text-gray-900 dark:text-white mb-2">{course.title}</h1>

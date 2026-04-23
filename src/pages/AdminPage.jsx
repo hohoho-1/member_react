@@ -17,7 +17,7 @@ function DeletedPostModal({ post, onClose, onRestore, onPermanentDelete }) {
   return (
     <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50"
       onClick={onClose}>
-      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl w-[480px] p-8"
+      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl w-full max-w-md sm:max-w-lg p-6 sm:p-8"
         onClick={e => e.stopPropagation()}>
         <div className="flex justify-between items-center mb-6">
           <h3 className="text-lg font-bold text-gray-700">📝 삭제된 게시글 상세</h3>
@@ -92,7 +92,7 @@ function DeletedUserModal({ user, onClose, onRestore, onPermanentDelete }) {
   return (
     <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50"
       onClick={onClose}>
-      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl w-[400px] p-8"
+      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl w-full max-w-sm sm:max-w-md p-6 sm:p-8"
         onClick={e => e.stopPropagation()}>
         <div className="flex justify-between items-center mb-6">
           <h3 className="text-lg font-bold text-gray-700">🗑️ 탈퇴 회원 상세</h3>
@@ -300,7 +300,7 @@ function ScheduleFormModal({ schedule, onClose, onSave }) {
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50" onClick={onClose}>
-      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl w-[480px] max-h-[90vh] overflow-y-auto p-8"
+      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl w-full max-w-md sm:max-w-lg max-h-[90vh] overflow-y-auto p-6 sm:p-8"
         onClick={e => e.stopPropagation()}>
         <div className="flex justify-between items-center mb-6">
           <h3 className="text-lg font-bold text-gray-700">
@@ -448,7 +448,7 @@ function BoardFormModal({ board, onClose, onSave }) {
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50" onClick={onClose}>
-      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl w-[500px] max-h-[90vh] overflow-y-auto p-8"
+      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl w-full max-w-md sm:max-w-xl max-h-[90vh] overflow-y-auto p-6 sm:p-8"
         onClick={e => e.stopPropagation()}>
         <div className="flex justify-between items-center mb-6">
           <h3 className="text-lg font-bold text-gray-700">
@@ -961,7 +961,7 @@ export default function AdminPage() {
   const pageNumbers = Array.from({ length: totalPages }, (_, i) => i);
 
   return (
-    <div className="bg-gray-100 dark:bg-gray-900 p-6">
+    <div className="bg-gray-100 dark:bg-gray-900 min-h-screen p-3 sm:p-6">
       <DeletedUserModal
         user={selectedUser}
         onClose={() => setSelectedUser(null)}
@@ -990,7 +990,7 @@ export default function AdminPage() {
       )}
       <div className="max-w-6xl mx-auto">
         <div className="flex justify-between items-center mb-6">
-          <h2 className="text-2xl font-bold text-gray-700">🛠️ 관리자 페이지</h2>
+          <h2 className="text-xl sm:text-2xl font-bold text-gray-700 dark:text-gray-100">🛠️ 관리자 페이지</h2>
         </div>
 
         {errorMsg && (
@@ -1098,42 +1098,30 @@ export default function AdminPage() {
         )}
 
         {/* 탭 버튼 */}
-        <div className="flex mb-4 bg-white rounded-2xl shadow overflow-hidden">
-          <button onClick={() => switchTab('active')}
-            className={`flex-1 py-3 text-sm font-semibold transition-colors ${tab === 'active' ? 'bg-blue-500 text-white' : 'text-gray-500 hover:bg-gray-50'}`}>
-            👥 활성 회원
-          </button>
-          <button onClick={() => switchTab('deleted')}
-            className={`flex-1 py-3 text-sm font-semibold transition-colors ${tab === 'deleted' ? 'bg-red-400 text-white' : 'text-gray-500 hover:bg-gray-50'}`}>
-            🗑️ 탈퇴 회원
-          </button>
-          <button onClick={() => switchTab('logs')}
-            className={`flex-1 py-3 text-sm font-semibold transition-colors ${tab === 'logs' ? 'bg-purple-500 text-white' : 'text-gray-500 hover:bg-gray-50'}`}>
-            📋 활동 로그
-          </button>
-          <button onClick={() => switchTab('deletedPosts')}
-            className={`flex-1 py-3 text-sm font-semibold transition-colors ${tab === 'deletedPosts' ? 'bg-orange-500 text-white' : 'text-gray-500 hover:bg-gray-50'}`}>
-            📝 삭제 게시글
-          </button>
-          <button onClick={() => switchTab('boards')}
-            className={`flex-1 py-3 text-sm font-semibold transition-colors ${tab === 'boards' ? 'bg-indigo-500 text-white' : 'text-gray-500 hover:bg-gray-50'}`}>
-            📌 게시판 관리
-          </button>
-          <button onClick={() => switchTab('schedules')}
-            className={`flex-1 py-3 text-sm font-semibold transition-colors ${tab === 'schedules' ? 'bg-teal-500 text-white' : 'text-gray-500 hover:bg-gray-50'}`}>
-            📅 일정 관리
-          </button>
-          <button onClick={() => switchTab('reports')}
-            className={`flex-1 py-3 text-sm font-semibold transition-colors ${tab === 'reports' ? 'bg-red-500 text-white' : 'text-gray-500 hover:bg-gray-50'}`}>
-            🚨 신고 관리
-          </button>
-          <button onClick={() => switchTab('stats')}
-            className={`flex-1 py-3 text-sm font-semibold transition-colors ${tab === 'stats' ? 'bg-emerald-500 text-white' : 'text-gray-500 hover:bg-gray-50'}`}>
-            📊 통계
-          </button>
-          <button onClick={() => navigate('/courses/admin')}            className="flex-1 py-3 text-sm font-semibold transition-colors text-gray-500 hover:bg-gray-50">
-            📚 강의 관리
-          </button>
+        <div className="mb-4 bg-white rounded-2xl shadow overflow-hidden">
+          <div className="flex overflow-x-auto scrollbar-hide">
+            {[
+              { key: 'active',       label: '👥 활성 회원',   color: 'bg-blue-500' },
+              { key: 'deleted',      label: '🗑️ 탈퇴 회원',   color: 'bg-red-400' },
+              { key: 'logs',         label: '📋 활동 로그',   color: 'bg-purple-500' },
+              { key: 'deletedPosts', label: '📝 삭제 게시글', color: 'bg-orange-500' },
+              { key: 'boards',       label: '📌 게시판 관리', color: 'bg-indigo-500' },
+              { key: 'schedules',    label: '📅 일정 관리',   color: 'bg-teal-500' },
+              { key: 'reports',      label: '🚨 신고 관리',   color: 'bg-red-500' },
+              { key: 'stats',        label: '📊 통계',        color: 'bg-emerald-500' },
+            ].map(t => (
+              <button key={t.key} onClick={() => switchTab(t.key)}
+                className={`flex-shrink-0 py-3 px-4 text-xs sm:text-sm font-semibold transition-colors whitespace-nowrap ${
+                  tab === t.key ? `${t.color} text-white` : 'text-gray-500 hover:bg-gray-50'
+                }`}>
+                {t.label}
+              </button>
+            ))}
+            <button onClick={() => navigate('/courses/admin')}
+              className="flex-shrink-0 py-3 px-4 text-xs sm:text-sm font-semibold transition-colors whitespace-nowrap text-gray-500 hover:bg-gray-50">
+              📚 강의 관리
+            </button>
+          </div>
         </div>
 
         {/* ── 활동 로그 탭 ── */}

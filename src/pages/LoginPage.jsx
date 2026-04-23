@@ -53,8 +53,8 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-100 dark:bg-gray-900 flex items-center justify-center">
-      <div className="bg-white dark:bg-gray-800 p-10 rounded-2xl shadow-lg w-96">
+    <div className="min-h-screen bg-gray-100 dark:bg-gray-900 flex items-center justify-center px-4 py-8">
+      <div className="bg-white dark:bg-gray-800 p-8 sm:p-10 rounded-2xl shadow-lg w-full max-w-sm sm:max-w-md">
         <h2 className="text-2xl font-bold text-center text-gray-700 dark:text-gray-100 mb-6">🔐 로그인</h2>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>

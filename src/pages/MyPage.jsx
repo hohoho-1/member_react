@@ -235,40 +235,43 @@ export default function MyPage() {
 
         {/* ── 프로필 카드 ── */}
         <div className="bg-white dark:bg-gray-800 rounded-2xl shadow mb-4">
-          <div className="flex items-center gap-4 p-5">
-            {/* 아바타 */}
-            <div className="relative group shrink-0">
-              {user.profileImageUrl && !imgError ? (
-                <img src={`http://localhost:8080${user.profileImageUrl}`} alt="프로필"
-                  className="w-16 h-16 rounded-full object-cover border-2 border-blue-100" onError={() => setImgError(true)} />
-              ) : (
-                <div className="w-16 h-16 rounded-full bg-blue-100 flex items-center justify-center text-2xl font-bold text-blue-500">
-                  {user.username[0]}
+          <div className="flex flex-col sm:flex-row sm:items-center gap-4 p-5">
+            {/* 아바타 + 유저 정보 (모바일: 가로 배치) */}
+            <div className="flex items-center gap-4 flex-1 min-w-0">
+              {/* 아바타 */}
+              <div className="relative group shrink-0">
+                {user.profileImageUrl && !imgError ? (
+                  <img src={`http://localhost:8080${user.profileImageUrl}`} alt="프로필"
+                    className="w-14 h-14 sm:w-16 sm:h-16 rounded-full object-cover border-2 border-blue-100" onError={() => setImgError(true)} />
+                ) : (
+                  <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-blue-100 flex items-center justify-center text-2xl font-bold text-blue-500">
+                    {user.username[0]}
+                  </div>
+                )}
+                <button onClick={() => fileInputRef.current?.click()} disabled={profileUploading}
+                  className="absolute inset-0 rounded-full bg-black/40 text-white text-xs font-medium opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                  {profileUploading ? '...' : '변경'}
+                </button>
+                <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleProfileImageChange} />
+              </div>
+
+              {/* 유저 정보 */}
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2">
+                  <p className="font-semibold text-gray-800 dark:text-gray-100">{user.username}</p>
+                  <span className="text-xs text-gray-400 dark:text-gray-500">{user.role === 'ROLE_ADMIN' ? '👑 관리자' : '일반 회원'}</span>
                 </div>
-              )}
-              <button onClick={() => fileInputRef.current?.click()} disabled={profileUploading}
-                className="absolute inset-0 rounded-full bg-black/40 text-white text-xs font-medium opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                {profileUploading ? '...' : '변경'}
-              </button>
-              <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleProfileImageChange} />
-            </div>
-
-            {/* 유저 정보 */}
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2">
-                <p className="font-semibold text-gray-800 dark:text-gray-100">{user.username}</p>
-                <span className="text-xs text-gray-400 dark:text-gray-500">{user.role === 'ROLE_ADMIN' ? '👑 관리자' : '일반 회원'}</span>
-              </div>
-              <p className="text-sm text-gray-400 dark:text-gray-500 mt-0.5">{user.email}</p>
-              <div className="flex flex-wrap gap-x-4 gap-y-0.5 mt-2">
-                <span className="text-xs text-gray-400 dark:text-gray-500">📅 가입일 {user.createdAt ? new Date(user.createdAt).toLocaleDateString('ko-KR') : '-'}</span>
-                <span className="text-xs text-gray-400 dark:text-gray-500">🕐 최종 로그인 {user.lastLoginAt ? new Date(user.lastLoginAt).toLocaleString('ko-KR') : '-'}</span>
-                <span className="text-xs text-gray-400 dark:text-gray-500">🔑 로그인 {user.loginCount ?? 0}회</span>
+                <p className="text-sm text-gray-400 dark:text-gray-500 mt-0.5">{user.email}</p>
+                <div className="flex flex-wrap gap-x-3 gap-y-0.5 mt-1.5">
+                  <span className="text-xs text-gray-400 dark:text-gray-500">📅 {user.createdAt ? new Date(user.createdAt).toLocaleDateString('ko-KR') : '-'}</span>
+                  <span className="text-xs text-gray-400 dark:text-gray-500 hidden sm:inline">🕐 {user.lastLoginAt ? new Date(user.lastLoginAt).toLocaleString('ko-KR') : '-'}</span>
+                  <span className="text-xs text-gray-400 dark:text-gray-500">🔑 {user.loginCount ?? 0}회</span>
+                </div>
               </div>
             </div>
 
-            {/* 우측 버튼들 */}
-            <div className="flex items-center gap-2 shrink-0">
+            {/* 버튼들 (모바일: 아래 한 줄, 데스크탑: 우측) */}
+            <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap sm:shrink-0">
               <button onClick={() => navigate('/messages')}
                 className="relative px-3 py-1.5 rounded-lg text-xs font-medium bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-600 dark:text-gray-300 transition-colors">
                 📩 쪽지함
@@ -363,15 +366,17 @@ export default function MyPage() {
         </div>
 
         {/* ── 탭 ── */}
-        <div className="flex mb-4 bg-white dark:bg-gray-800 rounded-2xl shadow overflow-hidden">
+        <div className="mb-4 bg-white dark:bg-gray-800 rounded-2xl shadow overflow-hidden">
+          <div className="flex overflow-x-auto scrollbar-hide">
           {TABS.map(t => (
             <button key={t.key} onClick={() => setTab(t.key)}
-              className={`flex-1 py-3 text-sm font-semibold transition-colors ${
+              className={`flex-shrink-0 flex-1 min-w-[80px] py-3 text-xs sm:text-sm font-semibold transition-colors whitespace-nowrap px-2 ${
                 tab === t.key ? 'bg-blue-500 text-white' : 'text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700'
               }`}>
               {t.label}
             </button>
           ))}
+          </div>
         </div>
 
         {/* ── 내 글 ── */}
@@ -529,32 +534,34 @@ export default function MyPage() {
             ) : (
               <div className="divide-y divide-gray-100 dark:divide-gray-700">
                 {myEnrollments.map(e => (
-                  <div key={e.id} className="px-5 py-4 hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer transition-colors" onClick={() => navigate(`/courses/${e.courseId}`)}>
-                    <div className="flex items-center gap-4">
-                      <div className="w-14 h-10 rounded-lg bg-gradient-to-br from-blue-400 to-indigo-500 flex items-center justify-center shrink-0 overflow-hidden">
+                  <div key={e.id} className="px-4 py-4 hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer transition-colors" onClick={() => navigate(`/courses/${e.courseId}`)}>
+                    <div className="flex items-start gap-3">
+                      <div className="w-12 h-9 sm:w-14 sm:h-10 rounded-lg bg-gradient-to-br from-blue-400 to-indigo-500 flex items-center justify-center shrink-0 overflow-hidden">
                         {e.courseThumbnailUrl ? <img src={e.courseThumbnailUrl} alt="" className="w-full h-full object-cover" /> : <span className="text-lg">📚</span>}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-1">
-                          <span className="font-medium text-sm text-gray-800 dark:text-gray-200 truncate">{e.courseTitle}</span>
-                          {(e.completed || e.isCompleted) && <span className="shrink-0 text-xs px-1.5 py-0.5 bg-green-100 text-green-700 rounded-full font-medium">🎓 수료완료</span>}
-                          {e.pendingApproval && <span className="shrink-0 text-xs px-1.5 py-0.5 bg-amber-100 text-amber-700 rounded-full font-medium">⏳ 수료대기</span>}
+                        <div className="flex items-start justify-between gap-2 mb-1">
+                          <div className="flex flex-wrap items-center gap-1.5 flex-1 min-w-0">
+                            <span className="font-medium text-sm text-gray-800 dark:text-gray-200 truncate">{e.courseTitle}</span>
+                            {(e.completed || e.isCompleted) && <span className="shrink-0 text-xs px-1.5 py-0.5 bg-green-100 text-green-700 rounded-full font-medium">🎓 수료완료</span>}
+                            {e.pendingApproval && <span className="shrink-0 text-xs px-1.5 py-0.5 bg-amber-100 text-amber-700 rounded-full font-medium">⏳ 수료대기</span>}
+                          </div>
+                          <button onClick={ev => { ev.stopPropagation(); setCancelTarget({ courseId: e.courseId, courseTitle: e.courseTitle }); }}
+                            className="shrink-0 px-2 py-1 text-xs border border-red-200 text-red-400 rounded-lg hover:bg-red-50 dark:hover:bg-red-950 transition-colors">
+                            취소
+                          </button>
                         </div>
-                        <div className="flex items-center gap-3">
+                        <div className="flex items-center gap-2 mb-1">
                           <div className="flex-1 bg-gray-200 dark:bg-gray-600 rounded-full h-1.5">
                             <div className="bg-blue-500 h-1.5 rounded-full transition-all" style={{ width: `${e.progressRate}%` }} />
                           </div>
                           <span className="text-xs text-blue-600 font-semibold shrink-0">{e.progressRate}%</span>
                         </div>
-                        <div className="flex gap-3 mt-1 text-xs text-gray-400 dark:text-gray-500">
+                        <div className="flex gap-3 text-xs text-gray-400 dark:text-gray-500">
                           <span>📅 {new Date(e.enrolledAt).toLocaleDateString('ko-KR')}</span>
                           <span>⏱️ {Math.floor(e.totalStudySeconds / 60)}분 학습</span>
                         </div>
                       </div>
-                      <button onClick={ev => { ev.stopPropagation(); setCancelTarget({ courseId: e.courseId, courseTitle: e.courseTitle }); }}
-                        className="shrink-0 px-2.5 py-1 text-xs border border-red-200 text-red-400 rounded-lg hover:bg-red-50 dark:hover:bg-red-950 transition-colors">
-                        취소
-                      </button>
                     </div>
                   </div>
                 ))}
@@ -574,27 +581,29 @@ export default function MyPage() {
             ) : (
               <div className="divide-y divide-gray-100 dark:divide-gray-700">
                 {myCourseLikes.map(course => (
-                  <div key={course.id} className="px-5 py-4 hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer transition-colors" onClick={() => navigate(`/courses/${course.id}`)}>
-                    <div className="flex items-center gap-4">
-                      <div className="w-14 h-10 rounded-lg bg-gradient-to-br from-rose-400 to-pink-500 flex items-center justify-center shrink-0 overflow-hidden">
+                  <div key={course.id} className="px-4 py-4 hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer transition-colors" onClick={() => navigate(`/courses/${course.id}`)}>
+                    <div className="flex items-start gap-3">
+                      <div className="w-12 h-9 sm:w-14 sm:h-10 rounded-lg bg-gradient-to-br from-rose-400 to-pink-500 flex items-center justify-center shrink-0 overflow-hidden">
                         {course.thumbnailUrl ? <img src={course.thumbnailUrl} alt="" className="w-full h-full object-cover" /> : <span className="text-lg">📚</span>}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-0.5">
-                          <span className="font-medium text-sm text-gray-800 dark:text-gray-200 truncate">{course.title}</span>
-                          {course.isPublished === false && <span className="shrink-0 text-xs px-1.5 py-0.5 bg-gray-100 dark:bg-gray-600 text-gray-400 rounded-full">비공개</span>}
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="flex flex-wrap items-center gap-1.5 flex-1 min-w-0 mb-0.5">
+                            <span className="font-medium text-sm text-gray-800 dark:text-gray-200 truncate">{course.title}</span>
+                            {course.isPublished === false && <span className="shrink-0 text-xs px-1.5 py-0.5 bg-gray-100 dark:bg-gray-600 text-gray-400 rounded-full">비공개</span>}
+                          </div>
+                          <button onClick={ev => { ev.stopPropagation(); navigate(`/courses/${course.id}`); }}
+                            className="shrink-0 px-2.5 py-1 text-xs border border-blue-200 text-blue-500 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-950 transition-colors">
+                            보기
+                          </button>
                         </div>
                         <div className="flex flex-wrap gap-x-3 gap-y-0.5 text-xs text-gray-400 dark:text-gray-500">
                           {course.instructor && <span>👨‍🏫 {course.instructor}</span>}
-                          {course.educationStartDate && <span>📅 {course.educationStartDate} ~ {course.educationEndDate}</span>}
+                          {course.educationStartDate && <span className="hidden sm:inline">📅 {course.educationStartDate} ~ {course.educationEndDate}</span>}
                           <span className="text-rose-400">❤️ {course.likeCount}</span>
                           <span>👁️ {course.viewCount}</span>
                         </div>
                       </div>
-                      <button onClick={ev => { ev.stopPropagation(); navigate(`/courses/${course.id}`); }}
-                        className="shrink-0 px-3 py-1.5 text-xs border border-blue-200 text-blue-500 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-950 transition-colors">
-                        강의 보기
-                      </button>
                     </div>
                   </div>
                 ))}
@@ -642,19 +651,19 @@ export default function MyPage() {
                         </div>
                         <div style={{ paddingLeft: '52px' }} className="space-y-2">
                           {certList.map((cert, idx) => (
-                            <div key={cert.id} className={`flex items-center justify-between gap-3 px-3 py-2 rounded-xl ${
+                            <div key={cert.id} className={`flex flex-col sm:flex-row sm:items-center gap-2 px-3 py-2 rounded-xl ${
                               idx === certList.length - 1 ? 'bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800' : 'bg-gray-50 dark:bg-gray-700 border border-gray-100 dark:border-gray-600'
                             }`}>
-                              <div className="flex items-center gap-2 min-w-0">
+                              <div className="flex items-center gap-2 flex-1 flex-wrap">
                                 <span className={`text-xs font-bold px-1.5 py-0.5 rounded ${idx === certList.length - 1 ? 'bg-yellow-200 text-yellow-700' : 'bg-gray-200 dark:bg-gray-600 text-gray-500 dark:text-gray-300'}`}>
                                   {certList.length === 1 ? '수료' : `${idx + 1}회차`}
                                 </span>
                                 <span className="text-xs text-gray-500 dark:text-gray-400">📅 {new Date(cert.issuedAt).toLocaleDateString('ko-KR')} 발급</span>
-                                <span className="text-xs text-gray-400 hidden sm:block">⏱️ {Math.floor(cert.totalStudySeconds / 60)}분</span>
-                                <span className="text-xs text-gray-300 dark:text-gray-600 font-mono hidden md:block">{cert.code.slice(0, 8)}...</span>
+                                <span className="text-xs text-gray-400 hidden sm:inline">⏱️ {Math.floor(cert.totalStudySeconds / 60)}분</span>
+                                <span className="text-xs text-gray-300 dark:text-gray-600 font-mono hidden md:inline">{cert.code.slice(0, 8)}...</span>
                               </div>
                               <button onClick={() => { navigate('/mypage?tab=certificates', { replace: true }); setTimeout(() => navigate(`/courses/certificates/verify/${cert.code}`), 0); }}
-                                className={`shrink-0 px-2.5 py-1 text-xs rounded-lg border transition-colors ${
+                                className={`shrink-0 self-start sm:self-auto px-2.5 py-1 text-xs rounded-lg border transition-colors ${
                                   idx === certList.length - 1 ? 'border-indigo-200 text-indigo-500 hover:bg-indigo-50 dark:hover:bg-indigo-950' : 'border-gray-200 dark:border-gray-600 text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-600'
                                 }`}>
                                 검증

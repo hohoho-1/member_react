@@ -249,11 +249,11 @@ export default function MessagePage() {
   };
 
   return (
-    <div className="bg-gray-100 dark:bg-gray-900 min-h-screen py-8 px-4">
+    <div className="bg-gray-100 dark:bg-gray-900 min-h-screen py-6 px-3 sm:px-4">
       <div className="max-w-3xl mx-auto">
         {/* 헤더 */}
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-2xl font-bold text-gray-700 dark:text-gray-100">✉️ 쪽지함</h2>
+        <div className="flex items-center justify-between mb-5">
+          <h2 className="text-xl sm:text-2xl font-bold text-gray-700 dark:text-gray-100">✉️ 쪽지함</h2>
           <div className="flex items-center gap-2">
             {tab === 'inbox' && messages.some(m => !m.readByReceiver) && (
               <button onClick={handleMarkAllRead}
@@ -262,7 +262,7 @@ export default function MessagePage() {
               </button>
             )}
             <button onClick={() => { setReplyTarget(null); setComposeOpen(true); }}
-              className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg text-sm font-medium transition-colors">
+              className="px-3 sm:px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg text-xs sm:text-sm font-medium transition-colors">
               ✏️ 쪽지 쓰기
             </button>
           </div>
@@ -297,15 +297,15 @@ export default function MessagePage() {
                 const counterpartImg = tab === 'inbox' ? msg.senderProfileImageUrl : msg.receiverProfileImageUrl;
                 return (
                   <div key={msg.id} onClick={() => handleOpenDetail(msg)}
-                    className={`flex items-center gap-4 px-5 py-4 cursor-pointer transition-colors hover:bg-gray-50 dark:hover:bg-gray-700 ${
+                    className={`flex items-center gap-3 px-4 py-3 cursor-pointer transition-colors hover:bg-gray-50 dark:hover:bg-gray-700 ${
                       isUnread ? 'bg-blue-50/40 dark:bg-blue-950/20' : ''
                     }`}>
                     <div className="shrink-0">
-                      <UserAvatar profileImageUrl={counterpartImg} username={counterpart} size={10} />
+                      <UserAvatar profileImageUrl={counterpartImg} username={counterpart} size={9} />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-0.5">
-                        <span className={`text-sm font-semibold ${isUnread ? 'text-gray-900 dark:text-white' : 'text-gray-600 dark:text-gray-300'}`}>
+                      <div className="flex items-center gap-1.5 mb-0.5">
+                        <span className={`text-sm font-semibold truncate ${isUnread ? 'text-gray-900 dark:text-white' : 'text-gray-600 dark:text-gray-300'}`}>
                           {counterpart}
                         </span>
                         {isUnread && <span className="shrink-0 w-2 h-2 rounded-full bg-blue-500" />}
@@ -316,13 +316,13 @@ export default function MessagePage() {
                             {msg.readByReceiver ? '읽음' : '안 읽음'}
                           </span>
                         )}
+                        <span className="ml-auto shrink-0 text-xs text-gray-400 dark:text-gray-500">{timeAgo(msg.sentAt)}</span>
                       </div>
                       <p className={`text-sm truncate ${isUnread ? 'font-medium text-gray-800 dark:text-gray-100' : 'text-gray-500 dark:text-gray-400'}`}>
                         {msg.title}
                       </p>
                       <p className="text-xs text-gray-400 dark:text-gray-500 truncate mt-0.5">{msg.content}</p>
                     </div>
-                    <div className="shrink-0 text-xs text-gray-400 dark:text-gray-500">{timeAgo(msg.sentAt)}</div>
                     <button onClick={e => { e.stopPropagation(); handleDelete(msg.id); }}
                       className="shrink-0 p-1 text-gray-300 hover:text-red-400 transition-colors rounded">
                       🗑️
