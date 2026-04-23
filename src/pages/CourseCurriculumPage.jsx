@@ -1,6 +1,8 @@
 import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { authFetch } from '../utils/authFetch';
+import ConfirmModal from '../components/ConfirmModal';
+import { useConfirm } from '../hooks/useConfirm';
 
 const FILE_ICONS = {
   pdf: '📄', pptx: '📊', ppt: '📊', docx: '📝', doc: '📝',
@@ -19,6 +21,7 @@ const LESSON_TYPES = [
 export default function CourseCurriculumPage() {
   const { courseId } = useParams();
   const navigate = useNavigate();
+  const { confirmProps, confirm } = useConfirm();
   const [course, setCourse] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -80,7 +83,8 @@ export default function CourseCurriculumPage() {
   };
 
   const handleDeleteFile = async (fileId) => {
-    if (!window.confirm('이 파일을 삭제하시겠습니까?')) return;
+    const ok = await confirm({ title: '파일 삭제', message: '이 파일을 삭제하시겠습니까?', confirmText: '삭제', confirmColor: 'red' });
+    if (!ok) return;
     const res = await authFetch(`/api/courses/${courseId}/files/${fileId}`, { method: 'DELETE' });
     if (res.ok) setCourseFiles(prev => prev.filter(f => f.id !== fileId));
     else alert('파일 삭제에 실패했습니다.');
@@ -134,7 +138,8 @@ export default function CourseCurriculumPage() {
   };
 
   const handleDeleteSection = async (sectionId) => {
-    if (!window.confirm('섹션을 삭제하면 포함된 레슨도 모두 삭제됩니다.')) return;
+    const ok = await confirm({ title: '섹션 삭제', message: '섹션을 삭제하면 포함된 레슨도 모두 삭제됩니다.', confirmText: '삭제', confirmColor: 'red' });
+    if (!ok) return;
     await authFetch(`/api/courses/sections/${sectionId}`, { method: 'DELETE' });
     fetchCourse();
   };
@@ -182,7 +187,8 @@ export default function CourseCurriculumPage() {
   };
 
   const handleDeleteLesson = async (lessonId) => {
-    if (!window.confirm('이 레슨을 삭제하시겠습니까?')) return;
+    const ok = await confirm({ title: '레슨 삭제', message: '이 레슨을 삭제하시겠습니까?', confirmText: '삭제', confirmColor: 'red' });
+    if (!ok) return;
     await authFetch(`/api/courses/lessons/${lessonId}`, { method: 'DELETE' });
     fetchCourse();
   };
@@ -252,7 +258,8 @@ export default function CourseCurriculumPage() {
   };
 
   const handleDeleteQuestion = async (questionId) => {
-    if (!window.confirm('이 문항을 삭제하시겠습니까?')) return;
+    const ok = await confirm({ title: '문항 삭제', message: '이 문항을 삭제하시겠습니까?', confirmText: '삭제', confirmColor: 'red' });
+    if (!ok) return;
     const res = await authFetch(`/api/courses/quiz/${questionId}`, { method: 'DELETE' });
     if (res.ok) setQuizQuestions(prev => prev.filter(q => q.id !== questionId));
   };
@@ -268,6 +275,7 @@ export default function CourseCurriculumPage() {
   if (loading) return <div className="flex justify-center py-20 text-gray-400">불러오는 중...</div>;
 
   return (
+    <>
     <div className="max-w-6xl mx-auto px-3 sm:px-4 py-6 sm:py-8">
       {/* 헤더 */}
       <div className="flex items-center justify-between mb-6">
@@ -691,5 +699,7 @@ export default function CourseCurriculumPage() {
         </div>
       )}
     </div>
+    <ConfirmModal {...confirmProps} />
+    </>
   );
 }

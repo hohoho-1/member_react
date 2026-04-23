@@ -1,6 +1,8 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { authFetch } from '../utils/authFetch';
+import ConfirmModal from '../components/ConfirmModal';
+import { useConfirm } from '../hooks/useConfirm';
 
 export default function CourseAdminPage() {
   const navigate = useNavigate();
@@ -26,6 +28,7 @@ export default function CourseAdminPage() {
   const [enrollments, setEnrollments] = useState([]);
   const [enrollLoading, setEnrollLoading] = useState(false);
   const [selectedEnrollment, setSelectedEnrollment] = useState(null); // 수강자 상세 모달
+  const { confirmProps, confirm } = useConfirm();
 
   const openEnrollModal = async (course) => {
     setEnrollModal({ courseId: course.id, courseTitle: course.title });
@@ -40,7 +43,13 @@ export default function CourseAdminPage() {
   };
 
   const handleAdminCancelEnrollment = async (enrollment) => {
-    if (!window.confirm(`'${enrollment.username}' 수강자를 삭제하시겠습니까?\n진도 및 학습 기록이 모두 삭제됩니다.`)) return;
+    const ok = await confirm({
+      title: '수강 삭제',
+      message: `'${enrollment.username}' 수강자를 삭제하시겠습니까?\n진도 및 학습 기록이 모두 삭제됩니다.`,
+      confirmText: '삭제',
+      confirmColor: 'red',
+    });
+    if (!ok) return;
     const res = await authFetch(`/api/courses/admin/enrollments/${enrollment.id}`, { method: 'DELETE' });
     if (res.ok) {
       setSelectedEnrollment(null);
@@ -59,7 +68,13 @@ export default function CourseAdminPage() {
   };
 
   const handleAdminApproveCompletion = async (enrollment) => {
-    if (!window.confirm(`'${enrollment.username}' 수강자의 수료를 승인하시겠습니까?`)) return;
+    const ok = await confirm({
+      title: '수료 승인',
+      message: `'${enrollment.username}' 수강자의 수료를 승인하시겠습니까?`,
+      confirmText: '승인',
+      confirmColor: 'blue',
+    });
+    if (!ok) return;
     const res = await authFetch(`/api/courses/admin/enrollments/${enrollment.id}/approve`, { method: 'POST' });
     if (res.ok) {
       const updated = await res.json();
@@ -205,7 +220,13 @@ export default function CourseAdminPage() {
   };
 
   const handleDelete = async (courseId) => {
-    if (!window.confirm('강의를 삭제하시겠습니까? 섹션과 레슨도 모두 삭제됩니다.')) return;
+    const ok = await confirm({
+      title: '강의 삭제',
+      message: '강의를 삭제하시겠습니까?\n섹션과 레슨도 모두 삭제됩니다.',
+      confirmText: '삭제',
+      confirmColor: 'red',
+    });
+    if (!ok) return;
     const res = await authFetch(`/api/courses/${courseId}`, { method: 'DELETE' });
     if (res.ok) fetchCourses();
     else alert('삭제에 실패했습니다.');
@@ -235,6 +256,7 @@ export default function CourseAdminPage() {
   const previewSrc = thumbnailPreview || form.thumbnailUrl;
 
   return (
+    <>
     <div className="max-w-6xl mx-auto px-3 sm:px-4 py-6 sm:py-8">
       <div className="flex items-center justify-between mb-6">
         <div>
@@ -652,5 +674,7 @@ export default function CourseAdminPage() {
         </div>
       )}
     </div>
+    <ConfirmModal {...confirmProps} />
+    </>
   );
 }

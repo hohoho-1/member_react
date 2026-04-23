@@ -3,6 +3,8 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { authFetch, getTokenPayload } from '../utils/authFetch';
 import GalleryLightbox from './GalleryLightbox';
 import { SkeletonPostList } from './SkeletonLoader';
+import ConfirmModal from './ConfirmModal';
+import { useConfirm } from '../hooks/useConfirm';
 
 const PAGE_SIZE = 10;
 
@@ -12,6 +14,7 @@ function FaqItem({ post, defaultOpen = false, canEdit = false, onDelete, onUpdat
   const [editForm, setEditForm] = useState({ title: post.title, content: post.content ?? '' });
   const [saving, setSaving] = useState(false);
   const isNew = (Date.now() - new Date(post.createdAt).getTime()) < 24 * 60 * 60 * 1000;
+  const { confirmProps: faqConfirmProps, confirm: faqConfirm } = useConfirm();
 
   const handleEditSave = async (e) => {
     e.stopPropagation();
@@ -28,12 +31,14 @@ function FaqItem({ post, defaultOpen = false, canEdit = false, onDelete, onUpdat
 
   const handleDelete = async (e) => {
     e.stopPropagation();
-    if (!window.confirm(`'${post.title}' FAQ를 삭제하시겠습니까?`)) return;
+    const ok = await faqConfirm({ title: 'FAQ 삭제', message: `'${post.title}' FAQ를 삭제하시겠습니까?`, confirmText: '삭제', confirmColor: 'red' });
+    if (!ok) return;
     const res = await authFetch(`/api/posts/${post.id}`, { method: 'DELETE' });
     if (res.ok) onDelete?.();
   };
 
   return (
+    <>
     <div className={`border rounded-xl overflow-hidden transition-all ${open ? 'border-green-300 dark:border-green-700 shadow-sm' : 'border-gray-200 dark:border-gray-700'}`}>
       <div
         onClick={() => { if (!editing) setOpen(v => !v); }}
@@ -94,6 +99,8 @@ function FaqItem({ post, defaultOpen = false, canEdit = false, onDelete, onUpdat
         </div>
       )}
     </div>
+    <ConfirmModal {...faqConfirmProps} />
+    </>
   );
 }
 

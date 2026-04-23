@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { authFetch, isAdmin, getTokenPayload } from '../utils/authFetch';
 import { SkeletonMyPageList, SkeletonPage } from '../components/SkeletonLoader';
+import ConfirmModal from '../components/ConfirmModal';
+import { useConfirm } from '../hooks/useConfirm';
 import {
   DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, DragOverlay,
 } from '@dnd-kit/core';
@@ -83,6 +85,7 @@ function DeletedPostModal({ post, onClose, onRestore, onPermanentDelete }) {
         </div>
       </div>
     </div>
+    <ConfirmModal {...confirmProps} />
   );
 }
 
@@ -146,6 +149,7 @@ function DeletedUserModal({ user, onClose, onRestore, onPermanentDelete }) {
         </div>
       </div>
     </div>
+    <ConfirmModal {...confirmProps} />
   );
 }
 
@@ -242,6 +246,7 @@ function SortableBoardItem({ board, onToggleActive, onEdit, onDelete, isDragging
         </button>
       </div>
     </div>
+    <ConfirmModal {...confirmProps} />
   );
 }
 
@@ -420,6 +425,7 @@ function ScheduleFormModal({ schedule, onClose, onSave }) {
         </div>
       </div>
     </div>
+    <ConfirmModal {...confirmProps} />
   );
 }
 
@@ -551,6 +557,7 @@ function BoardFormModal({ board, onClose, onSave }) {
         </div>
       </div>
     </div>
+    <ConfirmModal {...confirmProps} />
   );
 }
 
@@ -616,6 +623,7 @@ export default function AdminPage() {
   // 알림 상태
   const [errorMsg, setErrorMsg] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
+  const { confirmProps, confirm } = useConfirm();
   const [aiDays, setAiDays] = useState(7);
   const [aiInsights, setAiInsights] = useState(null);
   const [aiLoading, setAiLoading] = useState(false);
@@ -712,7 +720,8 @@ export default function AdminPage() {
   };
 
   const handleRestorePost = async (id, title) => {
-    if (!window.confirm(`'${title}' 게시글을 복구하시겠습니까?`)) return;
+    const ok = await confirm({ title: '게시글 복구', message: `'${title}' 게시글을 복구하시겠습니까?`, confirmText: '복구', confirmColor: 'blue' });
+    if (!ok) return;
     const res = await authFetch(`/api/posts/${id}/restore`, { method: 'POST' });
     if (res.ok) {
       setSelectedPost(null);
@@ -725,7 +734,8 @@ export default function AdminPage() {
   };
 
   const handlePermanentDeletePost = async (id, title) => {
-    if (!window.confirm(`'${title}' 게시글을 완전히 삭제합니다.\n이 작업은 되돌릴 수 없습니다.`)) return;
+    const ok = await confirm({ title: '게시글 영구 삭제', message: `'${title}' 게시글을 완전히 삭제합니다.\n이 작업은 되돌릴 수 없습니다.`, confirmText: '영구 삭제', confirmColor: 'red' });
+    if (!ok) return;
     const res = await authFetch(`/api/posts/${id}/permanent`, { method: 'DELETE' });
     if (res.ok) {
       setSelectedPost(null);
@@ -769,7 +779,8 @@ export default function AdminPage() {
   };
 
   const handleRestore = async (id, username) => {
-    if (!window.confirm(`'${username}' 회원을 복구하시겠습니까?`)) return;
+    const ok = await confirm({ title: '회원 복구', message: `'${username}' 회원을 복구하시겠습니까?`, confirmText: '복구', confirmColor: 'blue' });
+    if (!ok) return;
     const res = await authFetch(`/api/users/admin/users/${id}/restore`, { method: 'POST' });
     if (res.ok) {
       setSelectedUser(null);
@@ -784,7 +795,8 @@ export default function AdminPage() {
   };
 
   const handlePermanentDelete = async (id, username) => {
-    if (!window.confirm(`'${username}' 회원을 완전히 삭제합니다.\n이 작업은 되돌릴 수 없습니다. 계속하시겠습니까?`)) return;
+    const ok = await confirm({ title: '회원 영구 삭제', message: `'${username}' 회원을 완전히 삭제합니다.\n이 작업은 되돌릴 수 없습니다. 계속하시겠습니까?`, confirmText: '영구 삭제', confirmColor: 'red' });
+    if (!ok) return;
     const res = await authFetch(`/api/users/admin/users/${id}`, { method: 'DELETE' });
     if (res.ok) {
       setSelectedUser(null);
@@ -798,7 +810,8 @@ export default function AdminPage() {
   };
 
   const handleClearLogs = async () => {
-    if (!window.confirm('모든 활동 로그를 삭제하시겠습니까?\n이 작업은 되돌릴 수 없습니다.')) return;
+    const ok = await confirm({ title: '로그 전체 삭제', message: '모든 활동 로그를 삭제하시겠습니까?\n이 작업은 되돌릴 수 없습니다.', confirmText: '전체 삭제', confirmColor: 'red' });
+    if (!ok) return;
     const res = await authFetch('/api/users/admin/logs', { method: 'DELETE' });
     if (res.ok) {
       showSuccess('활동 로그가 모두 삭제되었습니다.');
@@ -902,7 +915,8 @@ export default function AdminPage() {
   };
 
   const handleDeleteBoard = async (code, name) => {
-    if (!window.confirm(`'${name}' 게시판을 삭제하시겠습니까?\n⚠️ 게시글이 남아있는 경우 삭제되지 않을 수 있습니다.`)) return;
+    const ok = await confirm({ title: '게시판 삭제', message: `'${name}' 게시판을 삭제하시겠습니까?\n⚠️ 게시글이 남아있는 경우 삭제되지 않을 수 있습니다.`, confirmText: '삭제', confirmColor: 'red' });
+    if (!ok) return;
     const res = await authFetch(`/api/boards/${code}`, { method: 'DELETE' });
     if (res.ok) {
       setBoards(prev => prev.filter(b => b.code !== code));
@@ -948,7 +962,8 @@ export default function AdminPage() {
   };
 
   const handleDeleteSchedule = async (id, title) => {
-    if (!window.confirm(`'${title}' 일정을 삭제하시겠습니까?`)) return;
+    const ok = await confirm({ title: '일정 삭제', message: `'${title}' 일정을 삭제하시겠습니까?`, confirmText: '삭제', confirmColor: 'red' });
+    if (!ok) return;
     const res = await authFetch(`/api/schedules/${id}`, { method: 'DELETE' });
     if (res.ok) {
       setSchedules(prev => prev.filter(s => s.id !== id));
@@ -1588,6 +1603,7 @@ export default function AdminPage() {
 
       </div>
     </div>
+    <ConfirmModal {...confirmProps} />
   );
 }
 
@@ -1903,6 +1919,7 @@ function StatsTab() {
         )}
       </div>
     </div>
+    <ConfirmModal {...confirmProps} />
   );
 }
 
@@ -1936,7 +1953,8 @@ function ReportsTab({ showSuccess, showError }) {
   };
 
   const handleResolve = async (reportId) => {
-    if (!window.confirm('신고를 승인하고 게시글을 삭제하시겠습니까?')) return;
+    const ok = await confirm({ title: '신고 승인', message: '신고를 승인하고 게시글을 삭제하시겠습니까?', confirmText: '승인 및 삭제', confirmColor: 'red' });
+    if (!ok) return;
     const memo = memoMap[reportId] || '';
     const res = await authFetch(`/api/reports/${reportId}/resolve`, {
       method: 'POST',
@@ -1953,7 +1971,8 @@ function ReportsTab({ showSuccess, showError }) {
   };
 
   const handleDismiss = async (reportId) => {
-    if (!window.confirm('신고를 기각하시겠습니까?')) return;
+    const ok = await confirm({ title: '신고 기각', message: '신고를 기각하시겠습니까?', confirmText: '기각', confirmColor: 'blue' });
+    if (!ok) return;
     const memo = memoMap[reportId] || '';
     const res = await authFetch(`/api/reports/${reportId}/dismiss`, {
       method: 'POST',
@@ -2079,5 +2098,6 @@ function ReportsTab({ showSuccess, showError }) {
         </>
       )}
     </div>
+    <ConfirmModal {...confirmProps} />
   );
 }

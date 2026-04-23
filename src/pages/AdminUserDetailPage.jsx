@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react';
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import { SkeletonPage } from '../components/SkeletonLoader';
 import { authFetch, isAdmin, getTokenPayload } from '../utils/authFetch';
+import ConfirmModal from '../components/ConfirmModal';
+import { useConfirm } from '../hooks/useConfirm';
 
 export default function AdminUserDetailPage() {
   const { id } = useParams();
@@ -24,6 +26,7 @@ export default function AdminUserDetailPage() {
 
   const currentUserId = getTokenPayload()?.userId;
   const isMe = user?.id === currentUserId;
+  const { confirmProps, confirm } = useConfirm();
 
   const inputCls = 'w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 focus:outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100 dark:focus:ring-blue-900';
 
@@ -57,7 +60,8 @@ export default function AdminUserDetailPage() {
 
   const handleDelete = async () => {
     if (isMe) { setUpdateMsg({ text: '자신은 삭제할 수 없습니다.', type: 'error' }); return; }
-    if (!window.confirm(`'${user.username}' 회원을 즉시 삭제합니다.\n이 작업은 되돌릴 수 없습니다. 계속하시겠습니까?`)) return;
+    const ok = await confirm({ title: '회원 영구 삭제', message: `'${user.username}' 회원을 즉시 삭제합니다.\n이 작업은 되돌릴 수 없습니다. 계속하시겠습니까?`, confirmText: '삭제', confirmColor: 'red' });
+    if (!ok) return;
     const res = await authFetch(`/api/users/admin/users/${id}`, { method: 'DELETE' });
     if (res.ok) navigate('/admin');
     else { const data = await res.json(); setUpdateMsg({ text: data.message || '삭제에 실패했습니다.', type: 'error' }); }
@@ -65,7 +69,8 @@ export default function AdminUserDetailPage() {
 
   const handleWithdraw = async () => {
     if (isMe) { setUpdateMsg({ text: '자신은 탈퇴 처리할 수 없습니다.', type: 'error' }); return; }
-    if (!window.confirm(`'${user.username}' 회원을 탈퇴 처리하시겠습니까?\n탈퇴 회원 탭에서 복구할 수 있습니다.`)) return;
+    const ok = await confirm({ title: '회원 탈퇴 처리', message: `'${user.username}' 회원을 탈퇴 처리하시겠습니까?\n탈퇴 회원 탭에서 복구할 수 있습니다.`, confirmText: '탈퇴 처리', confirmColor: 'red' });
+    if (!ok) return;
     const res = await authFetch(`/api/users/admin/users/${id}/withdraw`, { method: 'POST' });
     if (res.ok) navigate('/admin?tab=deleted');
     else { const data = await res.json(); setUpdateMsg({ text: data.message || '탈퇴 처리에 실패했습니다.', type: 'error' }); }
@@ -87,7 +92,8 @@ export default function AdminUserDetailPage() {
   const handleForceChangePassword = async () => {
     if (pwForm.newPassword.length < 6) { setPwMsg({ text: '비밀번호는 6자 이상이어야 합니다.', type: 'error' }); return; }
     if (pwForm.newPassword !== pwForm.confirmPassword) { setPwMsg({ text: '비밀번호가 일치하지 않습니다.', type: 'error' }); return; }
-    if (!window.confirm(`'${user.username}' 회원의 비밀번호를 강제 변경하시겠습니까?`)) return;
+    const ok = await confirm({ title: '비밀번호 강제 변경', message: `'${user.username}' 회원의 비밀번호를 강제 변경하시겠습니까?`, confirmText: '변경', confirmColor: 'blue' });
+    if (!ok) return;
     setPwLoading(true); setPwMsg({ text: '', type: '' });
     const res = await authFetch(`/api/users/admin/users/${id}/password`, {
       method: 'PATCH', headers: { 'Content-Type': 'application/json' },
@@ -102,6 +108,7 @@ export default function AdminUserDetailPage() {
   if (loading) return <SkeletonPage />;
 
   return (
+    <>
     <div className="bg-gray-100 dark:bg-gray-900 min-h-screen flex items-start justify-center py-8 px-4">
       <div className="bg-white dark:bg-gray-800 p-6 sm:p-10 rounded-2xl shadow-lg w-full max-w-sm sm:max-w-lg">
 
@@ -229,5 +236,7 @@ export default function AdminUserDetailPage() {
         {isMe && <p className="text-xs text-center text-gray-400 dark:text-gray-500 mt-2">자신은 탈퇴 처리하거나 삭제할 수 없습니다.</p>}
       </div>
     </div>
+    <ConfirmModal {...confirmProps} />
+    </>
   );
 }

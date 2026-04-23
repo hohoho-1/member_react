@@ -5,6 +5,8 @@ import { ko } from 'date-fns/locale';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { authFetch, getTokenPayload } from '../utils/authFetch';
 import { SkeletonPage } from '../components/SkeletonLoader';
+import ConfirmModal from '../components/ConfirmModal';
+import { useConfirm } from '../hooks/useConfirm';
 import 'react-big-calendar/lib/css/react-big-calendar.css';
 
 const localizer = dateFnsLocalizer({
@@ -306,6 +308,7 @@ export default function SchedulePage() {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [detailEvent, setDetailEvent] = useState(null);
   const [formInitial, setFormInitial] = useState(null);
+  const { confirmProps, confirm } = useConfirm();
 
   useEffect(() => {
     const handleResize = () => setCalHeight(window.innerWidth < 640 ? 620 : 740);
@@ -403,7 +406,8 @@ export default function SchedulePage() {
   };
 
   const handleDelete = async (event) => {
-    if (!window.confirm(`'${event.title}' 일정을 삭제하시겠습니까?`)) return;
+    const ok = await confirm({ title: '일정 삭제', message: `'${event.title}' 일정을 삭제하시겠습니까?`, confirmText: '삭제', confirmColor: 'red' });
+    if (!ok) return;
     const res = await authFetch(`/api/schedules/${event.id}`, { method: 'DELETE' });
     if (res.ok) { setDetailEvent(null); fetchSchedules(currentDate); }
   };
@@ -540,6 +544,7 @@ export default function SchedulePage() {
 
       <ScheduleDetailModal event={detailEvent} isAdmin={isAdmin} onClose={() => setDetailEvent(null)} onEdit={handleEdit} onDelete={handleDelete} onNavigate={navigate} />
       {formInitial !== null && <ScheduleFormModal initial={formInitial} onClose={() => setFormInitial(null)} onSave={handleSave} />}
+      <ConfirmModal {...confirmProps} />
     </div>
   );
 }
