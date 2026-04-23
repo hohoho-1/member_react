@@ -593,6 +593,7 @@ export default function CourseDetailPage() {
     if (res.ok) {
       const data = await res.json();
       setEnrollment(data);
+      success('수강 신청이 완료되었습니다!');
     } else {
       const err = await res.json().catch(() => ({}));
       error(err.message || '수강 신청에 실패했습니다.');
@@ -642,6 +643,7 @@ export default function CourseDetailPage() {
     const res = await authFetch(`/api/courses/${courseId}/enroll`, { method: 'DELETE' });
     if (res.ok) {
       setEnrollment(null);
+      success('수강이 취소되었습니다.');
     } else {
       const err = await res.json().catch(() => ({}));
       error(err.message || '수강 취소에 실패했습니다.');

@@ -76,6 +76,7 @@ export default function CourseCurriculumPage() {
     const res = await authFetch(`/api/courses/${courseId}/files`, { method: 'POST', body: formData });
     if (res.ok) {
       await fetchCourseFiles();
+      success('파일이 업로드되었습니다.');
     } else {
       const err = await res.json().catch(() => ({}));
       error(err.message || '파일 업로드에 실패했습니다.');
@@ -88,7 +89,7 @@ export default function CourseCurriculumPage() {
     const ok = await confirm({ title: '파일 삭제', message: '이 파일을 삭제하시겠습니까?', confirmText: '삭제', confirmColor: 'red' });
     if (!ok) return;
     const res = await authFetch(`/api/courses/${courseId}/files/${fileId}`, { method: 'DELETE' });
-    if (res.ok) setCourseFiles(prev => prev.filter(f => f.id !== fileId));
+    if (res.ok) { success('파일이 삭제되었습니다.'); setCourseFiles(prev => prev.filter(f => f.id !== fileId)); }
     else error('파일 삭제에 실패했습니다.');
   };
 

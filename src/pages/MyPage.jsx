@@ -214,7 +214,7 @@ export default function MyPage() {
     const formData = new FormData(); formData.append('image', file);
     try {
       const res = await authFetch('/api/users/me/profile-image', { method: 'POST', body: formData });
-      if (res.ok) { const data = await res.json(); setUser(prev => ({ ...prev, profileImageUrl: data.profileImageUrl })); setImgError(false); }
+      if (res.ok) { const data = await res.json(); setUser(prev => ({ ...prev, profileImageUrl: data.profileImageUrl })); setImgError(false); success('프로필 이미지가 변경되었습니다.'); }
       else { const d = await res.json(); error(d.message || '이미지 업로드에 실패했습니다.'); }
     } catch { error('서버 오류가 발생했습니다.'); }
     finally { setProfileUploading(false); e.target.value = ''; }
@@ -224,7 +224,7 @@ export default function MyPage() {
     const ok = await confirm({ title: '프로필 이미지 삭제', message: '프로필 이미지를 삭제하시겠습니까?', confirmText: '삭제', confirmColor: 'red' });
     if (!ok) return;
     const res = await authFetch('/api/users/me/profile-image', { method: 'DELETE' });
-    if (res.ok) setUser(prev => ({ ...prev, profileImageUrl: null }));
+    if (res.ok) { setUser(prev => ({ ...prev, profileImageUrl: null })); success('프로필 이미지가 삭제되었습니다.'); }
   };
 
   if (!user) return <SkeletonMyPage />;

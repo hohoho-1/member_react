@@ -83,6 +83,7 @@ export default function CourseAdminPage() {
       setEnrollments(prev => prev.map(e => e.id === updated.id ? updated : e));
       // 상세 모달에서 승인한 경우만 상세 모달 업데이트
       setSelectedEnrollment(prev => prev?.id === updated.id ? updated : prev);
+      success('수료가 승인되었습니다.');
       // 강의 카드 pendingCount 업데이트
       if (enrollModal) {
         setCourses(prev => prev.map(c =>
@@ -215,6 +216,7 @@ export default function CourseAdminPage() {
       setShowForm(false);
       setThumbnailFile(null);
       setThumbnailPreview('');
+      success(editCourse ? '강의가 수정되었습니다.' : '강의가 등록되었습니다.');
       fetchCourses();
     } finally {
       setSaving(false);
@@ -230,7 +232,7 @@ export default function CourseAdminPage() {
     });
     if (!ok) return;
     const res = await authFetch(`/api/courses/${courseId}`, { method: 'DELETE' });
-    if (res.ok) fetchCourses();
+    if (res.ok) { success('강의가 삭제되었습니다.'); fetchCourses(); }
     else error('삭제에 실패했습니다.');
   };
 
@@ -250,7 +252,7 @@ export default function CourseAdminPage() {
         instructor: course.instructor || '',
       })
     });
-    if (res.ok) fetchCourses();
+    if (res.ok) { success(course.isPublished ? '강의를 비공개로 전환했습니다.' : '강의를 공개했습니다.'); fetchCourses(); }
     else error('공개 상태 변경에 실패했습니다.');
   };
 
