@@ -85,7 +85,6 @@ function DeletedPostModal({ post, onClose, onRestore, onPermanentDelete }) {
         </div>
       </div>
     </div>
-    <ConfirmModal {...confirmProps} />
   );
 }
 
@@ -149,7 +148,6 @@ function DeletedUserModal({ user, onClose, onRestore, onPermanentDelete }) {
         </div>
       </div>
     </div>
-    <ConfirmModal {...confirmProps} />
   );
 }
 
@@ -246,7 +244,6 @@ function SortableBoardItem({ board, onToggleActive, onEdit, onDelete, isDragging
         </button>
       </div>
     </div>
-    <ConfirmModal {...confirmProps} />
   );
 }
 
@@ -425,7 +422,6 @@ function ScheduleFormModal({ schedule, onClose, onSave }) {
         </div>
       </div>
     </div>
-    <ConfirmModal {...confirmProps} />
   );
 }
 
@@ -557,7 +553,6 @@ function BoardFormModal({ board, onClose, onSave }) {
         </div>
       </div>
     </div>
-    <ConfirmModal {...confirmProps} />
   );
 }
 
@@ -976,6 +971,7 @@ export default function AdminPage() {
   const pageNumbers = Array.from({ length: totalPages }, (_, i) => i);
 
   return (
+  <>
     <div className="bg-gray-100 dark:bg-gray-900 min-h-screen p-3 sm:p-6">
       <DeletedUserModal
         user={selectedUser}
@@ -1604,6 +1600,7 @@ export default function AdminPage() {
       </div>
     </div>
     <ConfirmModal {...confirmProps} />
+  </>
   );
 }
 
@@ -1919,7 +1916,6 @@ function StatsTab() {
         )}
       </div>
     </div>
-    <ConfirmModal {...confirmProps} />
   );
 }
 
@@ -1931,6 +1927,7 @@ function ReportsTab({ showSuccess, showError }) {
   const [statusFilter, setStatusFilter] = useState('ALL');
   const [page, setPage] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
+  const { confirmProps: reportsConfirmProps, confirm: reportsConfirm } = useConfirm();
   const [totalElements, setTotalElements] = useState(0);
   const [memoMap, setMemoMap] = useState({});  // { reportId: memoText }
 
@@ -1953,7 +1950,7 @@ function ReportsTab({ showSuccess, showError }) {
   };
 
   const handleResolve = async (reportId) => {
-    const ok = await confirm({ title: '신고 승인', message: '신고를 승인하고 게시글을 삭제하시겠습니까?', confirmText: '승인 및 삭제', confirmColor: 'red' });
+    const ok = await reportsConfirm({ title: '신고 승인', message: '신고를 승인하고 게시글을 삭제하시겠습니까?', confirmText: '승인 및 삭제', confirmColor: 'red' });
     if (!ok) return;
     const memo = memoMap[reportId] || '';
     const res = await authFetch(`/api/reports/${reportId}/resolve`, {
@@ -1971,7 +1968,7 @@ function ReportsTab({ showSuccess, showError }) {
   };
 
   const handleDismiss = async (reportId) => {
-    const ok = await confirm({ title: '신고 기각', message: '신고를 기각하시겠습니까?', confirmText: '기각', confirmColor: 'blue' });
+    const ok = await reportsConfirm({ title: '신고 기각', message: '신고를 기각하시겠습니까?', confirmText: '기각', confirmColor: 'blue' });
     if (!ok) return;
     const memo = memoMap[reportId] || '';
     const res = await authFetch(`/api/reports/${reportId}/dismiss`, {
@@ -1995,6 +1992,7 @@ function ReportsTab({ showSuccess, showError }) {
   const STATUS_LABEL = { PENDING: '⏳ 대기', RESOLVED: '✅ 처리됨', DISMISSED: '❌ 기각됨' };
 
   return (
+  <>
     <div className="bg-white rounded-2xl shadow overflow-hidden">
       <div className="flex flex-wrap justify-between items-center px-6 py-4 border-b border-gray-100 gap-3">
         <span className="font-semibold text-gray-700">
@@ -2098,6 +2096,7 @@ function ReportsTab({ showSuccess, showError }) {
         </>
       )}
     </div>
-    <ConfirmModal {...confirmProps} />
+    <ConfirmModal {...reportsConfirmProps} />
+  </>
   );
 }
