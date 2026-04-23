@@ -16,8 +16,8 @@ export default function ForbiddenPage() {
   }, [navigate]);
 
   return (
-    <div className="min-h-screen bg-gray-100 dark:bg-gray-900 flex items-center justify-center">
-      <div className="bg-white dark:bg-gray-800 p-10 rounded-2xl shadow-lg w-96 text-center">
+    <div className="min-h-screen bg-gray-100 dark:bg-gray-900 flex items-center justify-center px-4">
+      <div className="bg-white dark:bg-gray-800 p-8 sm:p-10 rounded-2xl shadow-lg w-full max-w-sm text-center">
         <div className="text-6xl mb-4">🚫</div>
         <h2 className="text-2xl font-bold text-red-600 dark:text-red-400 mb-2">접근 권한이 없습니다</h2>
         <p className="text-gray-500 dark:text-gray-400 text-sm mb-6">이 페이지는 관리자만 접근할 수 있습니다.</p>

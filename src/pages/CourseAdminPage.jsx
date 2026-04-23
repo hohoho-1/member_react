@@ -235,7 +235,7 @@ export default function CourseAdminPage() {
   const previewSrc = thumbnailPreview || form.thumbnailUrl;
 
   return (
-    <div className="max-w-6xl mx-auto px-4 py-8">
+    <div className="max-w-6xl mx-auto px-3 sm:px-4 py-6 sm:py-8">
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white">🛠️ 강의 관리</h1>
@@ -265,31 +265,35 @@ export default function CourseAdminPage() {
         <div className="space-y-3">
           {courses.map(course => (
             <div key={course.id}
-              className={`rounded-xl border p-4 flex items-center gap-4 transition-all ${
+              className={`rounded-xl border p-4 transition-all ${
                 String(course.id) === String(highlightCourseId)
                   ? 'bg-amber-50 dark:bg-amber-900/20 border-amber-400 dark:border-amber-500'
                   : 'bg-white dark:bg-gray-800 border-gray-100 dark:border-gray-700'
               }`}>
-              <div className="w-16 h-12 rounded-lg bg-gradient-to-br from-blue-400 to-indigo-500 flex items-center justify-center shrink-0 overflow-hidden">
-                {course.thumbnailUrl
-                  ? <img src={course.thumbnailUrl} alt="" className="w-full h-full object-contain bg-gray-900" />
-                  : <span className="text-xl">📚</span>
-                }
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 mb-0.5">
-                  <span className="font-semibold text-sm text-gray-900 dark:text-white truncate">{course.title}</span>
-                  <span className={`text-xs px-1.5 py-0.5 rounded-full ${
-                    course.isPublished
-                      ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
-                      : 'bg-gray-100 text-gray-500 dark:bg-gray-700 dark:text-gray-400'
-                  }`}>
-                    {course.isPublished ? '공개' : '비공개'}
-                  </span>
+              {/* 상단: 썸네일 + 제목/날짜 */}
+              <div className="flex items-center gap-3 mb-3">
+                <div className="w-14 h-10 sm:w-16 sm:h-12 rounded-lg bg-gradient-to-br from-blue-400 to-indigo-500 flex items-center justify-center shrink-0 overflow-hidden">
+                  {course.thumbnailUrl
+                    ? <img src={course.thumbnailUrl} alt="" className="w-full h-full object-contain bg-gray-900" />
+                    : <span className="text-xl">📚</span>
+                  }
                 </div>
-                <div className="text-xs text-gray-400">{new Date(course.createdAt).toLocaleDateString()}</div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    <span className="font-semibold text-sm text-gray-900 dark:text-white truncate">{course.title}</span>
+                    <span className={`shrink-0 text-xs px-1.5 py-0.5 rounded-full ${
+                      course.isPublished
+                        ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
+                        : 'bg-gray-100 text-gray-500 dark:bg-gray-700 dark:text-gray-400'
+                    }`}>
+                      {course.isPublished ? '공개' : '비공개'}
+                    </span>
+                  </div>
+                  <div className="text-xs text-gray-400 mt-0.5">{new Date(course.createdAt).toLocaleDateString()}</div>
+                </div>
               </div>
-              <div className="flex items-center gap-2 shrink-0">
+              {/* 하단: 버튼들 */}
+              <div className="flex flex-wrap items-center gap-1.5">
                 <button onClick={() => navigate(`/courses/admin/${course.id}/curriculum`)}
                   className="px-3 py-1.5 text-xs border border-blue-300 dark:border-blue-600 text-blue-600 dark:text-blue-400 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors">
                   커리큘럼
@@ -357,7 +361,8 @@ export default function CourseAdminPage() {
                   <p className="text-sm">수강자가 없습니다.</p>
                 </div>
               ) : (
-                <table className="w-full">
+                <div className="overflow-x-auto">
+                <table className="w-full min-w-[480px]">
                   <thead className="bg-gray-50 dark:bg-gray-750 sticky top-0">
                     <tr>
                       {['수강자', '신청일', '진도율', '학습시간', '상태', '관리'].map(h => (
@@ -415,6 +420,7 @@ export default function CourseAdminPage() {
                     ))}
                   </tbody>
                 </table>
+                </div>
               )}
             </div>
 

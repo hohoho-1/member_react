@@ -102,8 +102,8 @@ export default function AdminUserDetailPage() {
   if (loading) return <SkeletonPage />;
 
   return (
-    <div className="bg-gray-100 dark:bg-gray-900 flex items-center justify-center py-10">
-      <div className="bg-white dark:bg-gray-800 p-10 rounded-2xl shadow-lg w-[480px]">
+    <div className="bg-gray-100 dark:bg-gray-900 min-h-screen flex items-start justify-center py-8 px-4">
+      <div className="bg-white dark:bg-gray-800 p-6 sm:p-10 rounded-2xl shadow-lg w-full max-w-sm sm:max-w-lg">
 
         {/* 헤더 */}
         <div className="flex justify-between items-center mb-6">

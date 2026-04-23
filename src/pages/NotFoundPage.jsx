@@ -16,8 +16,8 @@ export default function NotFoundPage() {
   }, [navigate]);
 
   return (
-    <div className="min-h-screen bg-gray-100 dark:bg-gray-900 flex items-center justify-center">
-      <div className="bg-white dark:bg-gray-800 p-10 rounded-2xl shadow-lg w-96 text-center">
+    <div className="min-h-screen bg-gray-100 dark:bg-gray-900 flex items-center justify-center px-4">
+      <div className="bg-white dark:bg-gray-800 p-8 sm:p-10 rounded-2xl shadow-lg w-full max-w-sm text-center">
         <div className="text-7xl mb-4">🗺️</div>
         <h2 className="text-4xl font-bold text-gray-800 dark:text-gray-100 mb-2">404</h2>
         <p className="text-lg font-semibold text-gray-600 dark:text-gray-300 mb-2">페이지를 찾을 수 없습니다</p>
