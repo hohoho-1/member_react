@@ -361,36 +361,21 @@ export default function CourseAdminPage() {
                   <p className="text-sm">수강자가 없습니다.</p>
                 </div>
               ) : (
-                <div className="overflow-x-auto">
-                <table className="w-full min-w-[480px]">
-                  <thead className="bg-gray-50 dark:bg-gray-750 sticky top-0">
-                    <tr>
-                      {['수강자', '신청일', '진도율', '학습시간', '상태', '관리'].map(h => (
-                        <th key={h} className="px-4 py-2.5 text-left text-xs font-semibold text-gray-500 dark:text-gray-400">{h}</th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-50 dark:divide-gray-700">
-                    {enrollments.map(e => (
-                      <tr key={e.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50">
-                        <td className="px-4 py-3">
+                <div className="divide-y divide-gray-100 dark:divide-gray-700">
+                  {enrollments.map(e => (
+                    <div key={e.id} className="px-5 py-3.5 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+                      <div className="flex items-center justify-between gap-3">
+                        {/* 이름 + 신청일 */}
+                        <div className="min-w-0">
                           <button
                             onClick={() => setSelectedEnrollment(e)}
-                            className="text-sm font-medium text-blue-600 dark:text-blue-400 hover:underline text-left">
+                            className="text-sm font-semibold text-blue-600 dark:text-blue-400 hover:underline">
                             {e.username || '-'}
                           </button>
-                        </td>
-                        <td className="px-4 py-3 text-xs text-gray-400">{new Date(e.enrolledAt).toLocaleDateString('ko-KR')}</td>
-                        <td className="px-4 py-3">
-                          <div className="flex items-center gap-2">
-                            <div className="w-16 bg-gray-200 dark:bg-gray-600 rounded-full h-1.5">
-                              <div className="bg-blue-500 h-1.5 rounded-full" style={{ width: `${e.progressRate}%` }} />
-                            </div>
-                            <span className="text-xs text-blue-600 font-medium">{e.progressRate}%</span>
-                          </div>
-                        </td>
-                        <td className="px-4 py-3 text-xs text-gray-400">{formatStudyTime(e.totalStudySeconds)}</td>
-                        <td className="px-4 py-3">
+                          <p className="text-xs text-gray-400 mt-0.5">{new Date(e.enrolledAt).toLocaleDateString('ko-KR')}</p>
+                        </div>
+                        {/* 상태 배지 */}
+                        <div className="shrink-0">
                           {isEnrollCompleted(e)
                             ? <span className="text-xs px-2 py-0.5 bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 rounded-full">🎓 수료완료</span>
                             : isEnrollPending(e)
@@ -399,27 +384,33 @@ export default function CourseAdminPage() {
                                 ? <span className="text-xs px-2 py-0.5 bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400 rounded-full">📖 수강중</span>
                                 : <span className="text-xs px-2 py-0.5 bg-gray-100 text-gray-500 dark:bg-gray-700 dark:text-gray-400 rounded-full">미시작</span>
                           }
-                        </td>
-                        <td className="px-4 py-3">
-                          <div className="flex gap-1">
-                            {isEnrollPending(e) && (
-                              <button
-                                onClick={() => handleAdminApproveCompletion(e)}
-                                className="text-xs px-2 py-1 bg-amber-50 hover:bg-amber-100 text-amber-600 dark:bg-amber-900/20 dark:text-amber-400 rounded-lg transition-colors font-medium">
-                                승인
-                              </button>
-                            )}
+                        </div>
+                        {/* 관리 버튼 */}
+                        <div className="flex gap-1 shrink-0">
+                          {isEnrollPending(e) && (
                             <button
-                              onClick={() => handleAdminCancelEnrollment(e)}
-                              className="text-xs px-2 py-1 bg-red-50 hover:bg-red-100 text-red-500 dark:bg-red-900/20 dark:hover:bg-red-900/40 dark:text-red-400 rounded-lg transition-colors">
-                              삭제
+                              onClick={() => handleAdminApproveCompletion(e)}
+                              className="text-xs px-2 py-1 bg-amber-50 hover:bg-amber-100 text-amber-600 dark:bg-amber-900/20 dark:text-amber-400 rounded-lg transition-colors font-medium">
+                              승인
                             </button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+                          )}
+                          <button
+                            onClick={() => handleAdminCancelEnrollment(e)}
+                            className="text-xs px-2 py-1 bg-red-50 hover:bg-red-100 text-red-500 dark:bg-red-900/20 dark:hover:bg-red-900/40 dark:text-red-400 rounded-lg transition-colors">
+                            삭제
+                          </button>
+                        </div>
+                      </div>
+                      {/* 진도율 바 */}
+                      <div className="flex items-center gap-2 mt-2">
+                        <div className="flex-1 bg-gray-200 dark:bg-gray-600 rounded-full h-1.5">
+                          <div className="bg-blue-500 h-1.5 rounded-full transition-all" style={{ width: `${e.progressRate}%` }} />
+                        </div>
+                        <span className="text-xs text-blue-600 dark:text-blue-400 font-semibold shrink-0 w-8 text-right">{e.progressRate}%</span>
+                        <span className="text-xs text-gray-400 shrink-0">{formatStudyTime(e.totalStudySeconds)}</span>
+                      </div>
+                    </div>
+                  ))}
                 </div>
               )}
             </div>
