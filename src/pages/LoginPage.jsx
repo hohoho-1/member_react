@@ -12,6 +12,7 @@ export default function LoginPage() {
       const from = fromLocation ? (fromLocation.pathname + (fromLocation.search ?? '')) : '/home';
       navigate(from, { replace: true });
     }
+    // eslint-disable-next-line
   }, []);
 
   const [form, setForm] = useState({ email: '', password: '' });

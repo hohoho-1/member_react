@@ -57,6 +57,7 @@ export default function PostWritePage() {
     if (!payload) { navigate('/login'); return; }
     loadBoards();
     if (isEditMode) loadPost();
+    // eslint-disable-next-line
   }, []);
 
   const loadBoards = async () => {

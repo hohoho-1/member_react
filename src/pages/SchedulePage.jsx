@@ -4,7 +4,6 @@ import { format, parse, startOfWeek, getDay } from 'date-fns';
 import { ko } from 'date-fns/locale';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { authFetch, getTokenPayload } from '../utils/authFetch';
-import { SkeletonPage } from '../components/SkeletonLoader';
 import ConfirmModal from '../components/ConfirmModal';
 import { useConfirm } from '../hooks/useConfirm';
 import 'react-big-calendar/lib/css/react-big-calendar.css';

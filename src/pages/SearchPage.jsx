@@ -152,6 +152,7 @@ export default function SearchPage() {
     authFetch(`/api/courses?keyword=${encodeURIComponent(keyword)}&page=0&size=1`).then(r => r.ok ? r.json() : { totalElements: 0 }).then(data => setCourseCount(data.totalElements ?? 0));
   }, [keyword]);
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     if (!keyword) { setSections({}); setTabPosts([]); setScheduleSection([]); setCourseSection([]); return; }
     if (activeTab === 'all')           loadAllSections();
