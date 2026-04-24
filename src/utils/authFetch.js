@@ -60,7 +60,12 @@ export function getTokenPayload() {
   const token = localStorage.getItem('accessToken');
   if (!token) return null;
   try {
-    return JSON.parse(atob(token.split('.')[1]));
+    // atob()은 바이너리 문자열만 처리 → 한글 등 멀티바이트 문자 깨짐 방지
+    const base64 = token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/');
+    const jsonStr = decodeURIComponent(
+      atob(base64).split('').map(c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)).join('')
+    );
+    return JSON.parse(jsonStr);
   } catch {
     return null;
   }

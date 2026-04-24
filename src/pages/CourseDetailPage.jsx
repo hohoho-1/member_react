@@ -6,6 +6,7 @@ import ConfirmModal from '../components/ConfirmModal';
 import { useConfirm } from '../hooks/useConfirm';
 import { useToastContext } from '../context/ToastContext';
 import { SkeletonCourseDetail } from '../components/SkeletonLoader';
+import CourseThumbnail from '../components/CourseThumbnail';
 
 const FILE_ICONS = { pdf:'📄', pptx:'📊', ppt:'📊', docx:'📝', doc:'📝', xlsx:'📊', xls:'📊', txt:'📃', zip:'🗜️', hwp:'📝', hwpx:'📝', mp4:'🎬', avi:'🎬', mov:'🎬' };
 const getFileIcon = (name) => FILE_ICONS[name?.split('.').pop()?.toLowerCase()] || '📎';
@@ -745,11 +746,16 @@ export default function CourseDetailPage() {
         <div className="flex-1 min-w-0 space-y-4 mt-4 lg:mt-0">
           {/* 썸네일 */}
           <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
-            <div className="aspect-video bg-gradient-to-br from-blue-400 to-indigo-500 flex items-center justify-center overflow-hidden">
+            <div className="aspect-video overflow-hidden">
               {course.thumbnailUrl ? (
                 <img src={course.thumbnailUrl} alt={course.title} className="w-full h-full object-contain bg-gray-900" />
               ) : (
-                <span className="text-6xl">📚</span>
+                <CourseThumbnail
+                  thumbnailUrl={null}
+                  title={course.title}
+                  category={course.category}
+                  className="w-full h-full"
+                />
               )}
             </div>
           </div>
@@ -974,24 +980,47 @@ export default function CourseDetailPage() {
                     대기 취소
                   </button>
                 </div>
-              ) : (
-                <div className="space-y-2">
-                  <button
-                    onClick={handleEnroll}
-                    disabled={enrolling}
-                    className="w-full py-2.5 bg-blue-500 hover:bg-blue-600 disabled:bg-blue-300 text-white rounded-lg text-sm font-medium transition-colors">
-                    {enrolling ? '신청 중...' : '수강 신청하기'}
-                  </button>
-                  {course.maxStudents && (
-                    <p className="text-center text-xs text-gray-400">
-                      정원 {course.enrolledCount ?? 0} / {course.maxStudents}명
-                      {course.enrolledCount >= course.maxStudents && (
-                        <span className="ml-1.5 text-red-400 font-medium">정원 마감</span>
-                      )}
-                    </p>
-                  )}
-                </div>
-              )}
+              ) : (() => {
+                const isFull = course.maxStudents && course.enrolledCount >= course.maxStudents;
+                const today = new Date().toISOString().slice(0, 10);
+                const regStart = course.registrationStartDate;
+                const regEnd = course.registrationEndDate;
+                const notInRegPeriod = regStart && regEnd
+                  ? (today < regStart || today > regEnd)
+                  : regStart
+                  ? today < regStart
+                  : false;
+                const btnDisabled = enrolling || isFull || notInRegPeriod;
+                const btnText = enrolling
+                  ? '신청 중...'
+                  : isFull
+                  ? '정원 마감'
+                  : notInRegPeriod
+                  ? '접수 기간이 아닙니다'
+                  : '수강 신청하기';
+                return (
+                  <div className="space-y-2">
+                    <button
+                      onClick={handleEnroll}
+                      disabled={btnDisabled}
+                      className={`w-full py-2.5 text-white rounded-lg text-sm font-medium transition-colors ${
+                        btnDisabled
+                          ? 'bg-gray-400 cursor-not-allowed'
+                          : 'bg-blue-500 hover:bg-blue-600'
+                      }`}>
+                      {btnText}
+                    </button>
+                    {course.maxStudents && (
+                      <p className="text-center text-xs text-gray-400">
+                        정원 {course.enrolledCount ?? 0} / {course.maxStudents}명
+                        {isFull && (
+                          <span className="ml-1.5 text-red-400 font-medium">정원 마감</span>
+                        )}
+                      </p>
+                    )}
+                  </div>
+                );
+              })()}
 
               {isAdmin() && (
                 <button

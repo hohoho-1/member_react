@@ -52,7 +52,7 @@ export default function CourseLessonPage() {
       // 현재 레슨 찾기
       for (const section of courseData.sections || []) {
         const found = section.lessons?.find(l => String(l.id) === String(lessonId));
-        if (found) { setLesson(found); break; }
+        if (found) { setLesson(found); document.title = `${found.title} | GetSmart`; break; }
       }
     }
     if (enrollRes.ok) {

@@ -3,6 +3,7 @@ import { usePageTitle } from '../hooks/usePageTitle';
 import { useNavigate } from 'react-router-dom';
 import { authFetch, isAdmin, isLoggedIn } from '../utils/authFetch';
 import { SkeletonCourseGrid } from '../components/SkeletonLoader';
+import CourseThumbnail from '../components/CourseThumbnail';
 
 export default function CourseListPage() {
   usePageTitle('강의 목록');
@@ -279,10 +280,13 @@ export default function CourseListPage() {
 
                 {/* ── 모바일: 가로형 (썸네일 좌 + 정보 우) ── */}
                 <div className="flex sm:hidden">
-                  <div className="relative w-[38%] shrink-0 aspect-[4/3] bg-gradient-to-br from-blue-400 to-indigo-500 flex items-center justify-center overflow-hidden">
-                    {course.thumbnailUrl
-                      ? <img src={course.thumbnailUrl} alt={course.title} className="w-full h-full object-cover" />
-                      : <span className="text-2xl">📚</span>}
+                  <div className="relative w-[38%] shrink-0 aspect-[4/3] overflow-hidden">
+                    <CourseThumbnail
+                      thumbnailUrl={course.thumbnailUrl}
+                      title={course.title}
+                      category={course.category}
+                      imgClassName="w-full h-full object-cover"
+                    />
                     <ThumbnailOverlay compact={true} />
                   </div>
                   <div className="flex-1 min-w-0 p-3 flex flex-col justify-between">
@@ -303,10 +307,13 @@ export default function CourseListPage() {
 
                 {/* ── 데스크탑: 세로형 (기존 레이아웃) ── */}
                 <div className="hidden sm:flex flex-col h-full">
-                  <div className="relative aspect-video bg-gradient-to-br from-blue-400 to-indigo-500 flex items-center justify-center overflow-hidden shrink-0">
-                    {course.thumbnailUrl
-                      ? <img src={course.thumbnailUrl} alt={course.title} className="w-full h-full object-contain bg-gray-900" />
-                      : <span className="text-4xl">📚</span>}
+                  <div className="relative aspect-video overflow-hidden shrink-0">
+                    <CourseThumbnail
+                      thumbnailUrl={course.thumbnailUrl}
+                      title={course.title}
+                      category={course.category}
+                      imgClassName="w-full h-full object-contain bg-gray-900"
+                    />
                     <ThumbnailOverlay compact={false} />
                   </div>
                   <div className="p-4 flex flex-col flex-1">

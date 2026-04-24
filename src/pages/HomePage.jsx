@@ -4,6 +4,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { authFetch, getTokenPayload } from '../utils/authFetch';
 import UserAvatar from '../components/UserAvatar';
 import { SkeletonPage } from '../components/SkeletonLoader';
+import CourseThumbnail from '../components/CourseThumbnail';
 
 export default function HomePage() {
   usePageTitle(); // 홈은 "GetSmart"만
@@ -320,7 +321,7 @@ export default function HomePage() {
                       <div className="w-[38%] shrink-0 aspect-[4/3] bg-gradient-to-br from-blue-400 to-indigo-500 flex items-center justify-center overflow-hidden">
                         {course.thumbnailUrl
                           ? <img src={course.thumbnailUrl} alt={course.title} className="w-full h-full object-cover" />
-                          : <span className="text-2xl">📚</span>}
+                          : <CourseThumbnail thumbnailUrl={null} title={course.title} category={course.category} className="w-full h-full" />}
                       </div>
                       <div className="flex-1 min-w-0 p-3 space-y-1.5">
                         <p className="text-sm font-semibold text-gray-800 dark:text-gray-200 line-clamp-2 leading-snug">{course.title}</p>
@@ -352,7 +353,7 @@ export default function HomePage() {
                       <div className="aspect-video bg-gradient-to-br from-blue-400 to-indigo-500 flex items-center justify-center overflow-hidden">
                         {course.thumbnailUrl
                           ? <img src={course.thumbnailUrl} alt={course.title} className="w-full h-full object-contain bg-gray-900" />
-                          : <span className="text-3xl">📚</span>}
+                          : <CourseThumbnail thumbnailUrl={null} title={course.title} category={course.category} className="w-full h-full" />}
                       </div>
                       <div className="p-2.5 space-y-1.5">
                         <p className="text-xs font-semibold text-gray-800 dark:text-gray-200 truncate">{course.title}</p>
