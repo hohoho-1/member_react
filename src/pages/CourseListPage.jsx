@@ -197,13 +197,42 @@ export default function CourseListPage() {
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
           {courses.map(course => {
-            const isRecruiting = course.registrationStartDate && course.registrationEndDate
-              && today >= course.registrationStartDate && today <= course.registrationEndDate;
             const enroll = enrollMap[course.id];
 
-            // 썸네일 공통 오버레이 (배지 + 좋아요 + 진도율)
+            // 강의 상태 플래그 계산
+            const getCourseStatus = () => {
+              const regStart = course.registrationStartDate;
+              const regEnd   = course.registrationEndDate;
+              const eduStart = course.educationStartDate;
+              const eduEnd   = course.educationEndDate;
+              if (eduEnd   && today > eduEnd)   return { label: '종료',   cls: 'bg-gray-500/80' };
+              if (eduStart && today >= eduStart) return { label: '진행중', cls: 'bg-blue-500/90' };
+              if (regStart && regEnd && today >= regStart && today <= regEnd)
+                                                return { label: '접수중', cls: 'bg-green-500/90' };
+              if (regStart && today < regStart) return { label: '준비중', cls: 'bg-amber-500/90' };
+              return null;
+            };
+            const courseStatus = getCourseStatus();
             const ThumbnailOverlay = ({ compact = false }) => (
               <>
+                {/* 좌상단: 강의 상태 플래그 */}
+                {courseStatus && (
+                  <div className={`absolute top-2 left-2 px-2 py-0.5 ${courseStatus.cls} text-white ${compact ? 'text-[9px]' : 'text-[10px]'} font-bold rounded-sm tracking-wide shadow`}>
+                    {courseStatus.label}
+                  </div>
+                )}
+                {/* 좌상단 아래: 수강중 / 수료완료 배지 */}
+                {enroll && !enroll.completed && (
+                  <div className={`absolute ${courseStatus ? (compact ? 'top-6' : 'top-7') : 'top-2'} left-2 px-2 py-0.5 bg-blue-500/90 text-white ${compact ? 'text-[9px]' : 'text-[10px]'} font-semibold rounded-full`}>
+                    수강중
+                  </div>
+                )}
+                {enroll?.completed && (
+                  <div className={`absolute ${courseStatus ? (compact ? 'top-6' : 'top-7') : 'top-2'} left-2 px-2 py-0.5 bg-emerald-500/90 text-white ${compact ? 'text-[9px]' : 'text-[10px]'} font-semibold rounded-full`}>
+                    🎓 수료
+                  </div>
+                )}
+                {/* 우상단: 좋아요 버튼 */}
                 <button
                   onClick={e => handleLike(e, course.id)}
                   className={`absolute top-2 right-2 ${compact ? 'w-6 h-6 text-xs' : 'w-8 h-8 text-base'} rounded-full flex items-center justify-center shadow-md transition-all ${
@@ -213,12 +242,7 @@ export default function CourseListPage() {
                   }`}>
                   {likeMap[course.id]?.liked ? '❤️' : '🤍'}
                 </button>
-                {enroll && !enroll.completed && (
-                  <div className={`absolute top-2 left-2 px-2 py-0.5 bg-blue-500/90 text-white ${compact ? 'text-[9px]' : 'text-[10px]'} font-semibold rounded-full`}>수강중</div>
-                )}
-                {enroll?.completed && (
-                  <div className={`absolute top-2 left-2 px-2 py-0.5 bg-green-500/90 text-white ${compact ? 'text-[9px]' : 'text-[10px]'} font-semibold rounded-full`}>🎓 수료완료</div>
-                )}
+                {/* 하단: 수강 진도바 */}
                 {enroll && !enroll.completed && (
                   <div className="absolute bottom-0 left-0 right-0 h-1.5 bg-black/30">
                     <div className="h-full bg-blue-400 transition-all" style={{ width: `${enroll.progressRate}%` }} />
@@ -292,9 +316,6 @@ export default function CourseListPage() {
                   <div className="flex-1 min-w-0 p-3 flex flex-col justify-between">
                     <div>
                       <div className="flex items-start gap-1 mb-1">
-                        {isRecruiting && (
-                          <span className="shrink-0 text-[9px] px-1.5 py-0.5 bg-green-100 text-green-700 rounded-full font-medium mt-0.5">접수중</span>
-                        )}
                         <h3 className="font-semibold text-gray-900 dark:text-white text-sm leading-snug line-clamp-2">{course.title}</h3>
                       </div>
                       {course.description && (
@@ -318,9 +339,6 @@ export default function CourseListPage() {
                   </div>
                   <div className="p-4 flex flex-col flex-1">
                     <div className="flex items-start gap-1.5 mb-1">
-                      {isRecruiting && (
-                        <span className="shrink-0 text-[10px] px-1.5 py-0.5 bg-green-100 text-green-700 rounded-full font-medium mt-0.5">접수중</span>
-                      )}
                       <h3 className="font-semibold text-gray-900 dark:text-white text-sm leading-tight line-clamp-2">{course.title}</h3>
                     </div>
                     {course.description && (

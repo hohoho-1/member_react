@@ -10,6 +10,7 @@ const TYPE_ICON = {
   COMMENT_LIKE:             '❤️',
   ANSWER:                   '💡',
   COURSE_COMPLETE_PENDING:  '🎓',
+  SYSTEM:                   '📢',
 };
 
 function timeAgo(dateStr) {
@@ -79,24 +80,29 @@ export default function NotificationBell({ showProfile = true }) {
   };
 
   const handleClickNotification = async (noti) => {
-    // 개별 읽음 처리
     if (!noti.read) {
       await authFetch(`/api/notifications/${noti.id}/read`, { method: 'PATCH' });
       setNotifications(prev => prev.map(n => n.id === noti.id ? { ...n, read: true } : n));
       setUnreadCount(prev => Math.max(0, prev - 1));
     }
     setOpen(false);
-    // 수료 대기 알림은 해당 강의 수강자 모달로 이동
-    if (noti.type === 'COURSE_COMPLETE_PENDING') {
-      navigate(noti.postId ? `/courses/admin?courseId=${noti.postId}` : '/courses/admin', { replace: true });
+
+    // 강의 관련 알림 (SYSTEM, COURSE_COMPLETE_PENDING) → courseId로 이동
+    if (noti.courseId) {
+      if (noti.type === 'COURSE_COMPLETE_PENDING') {
+        navigate(`/courses/admin?courseId=${noti.courseId}`);
+      } else {
+        navigate(`/courses/${noti.courseId}`);
+      }
       return;
     }
+
+    // 게시글 알림 → 게시판 경로로 이동
     if (noti.postId) {
-      // 게시판 그룹별 목록 경로 결정
       const returnTo = (() => {
         if (noti.boardGroup === 'COMMUNITY') return `/community?scope=${noti.boardCode}`;
         if (noti.boardGroup === 'SUPPORT')   return `/support?scope=${noti.boardCode}`;
-        return '/community'; // 폴백
+        return '/community';
       })();
       navigate(`/board/${noti.postId}?returnTo=${encodeURIComponent(returnTo)}`);
     }
