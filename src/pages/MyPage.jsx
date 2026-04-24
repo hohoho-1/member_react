@@ -50,13 +50,16 @@ const Pagination = ({ page, totalPages, onPageChange }) => (
 const rowCls = 'px-6 py-4 hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer transition-colors';
 
 export default function MyPage() {
-  usePageTitle('마이페이지');
   const navigate = useNavigate();
   const { success, error } = useToastContext();
   const [searchParams] = useSearchParams();
   const fileInputRef = useRef(null);
   const [imgError, setImgError] = useState(false);
   const [tab, setTab] = useState(searchParams.get('tab') ?? 'posts');
+
+  // 탭 depth 타이틀: "내 글 | 마이페이지 | GetSmart"
+  const tabLabel = TABS.find(t => t.key === tab)?.label.replace(/^\S+\s/, '') ?? '마이페이지';
+  usePageTitle(tabLabel, '마이페이지');
 
   const [user, setUser] = useState(null);
   const [form, setForm] = useState({ username: '', email: '', currentPassword: '', newPassword: '' });

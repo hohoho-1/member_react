@@ -1,6 +1,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { authFetch, getTokenPayload } from '../utils/authFetch';
+import { usePageTitle } from '../hooks/usePageTitle';
 import GalleryLightbox from './GalleryLightbox';
 import { SkeletonPostList } from './SkeletonLoader';
 import ConfirmModal from './ConfirmModal';
@@ -124,7 +125,11 @@ export default function BoardListPage({ groupKey, groupLabel, groupEmoji, boards
   const isLoggedIn = !!payload;
   const isAdmin    = payload?.role === 'ROLE_ADMIN';
 
-  const currentBoard   = boards.find(b => b.code === scope) ?? null;
+  const currentBoard = boards.find(b => b.code === scope) ?? null;
+  const boardName    = currentBoard?.name ?? null;
+
+  // 탭 depth 타이틀: "자유게시판 | 커뮤니티 | GetSmart" or "커뮤니티 | GetSmart"
+  usePageTitle(boardName, groupLabel);
   const isFaqBoard     = currentBoard?.boardType === 'FAQ';
   const isGalleryBoard = currentBoard?.boardType === 'GALLERY';
   const isQnaBoard     = currentBoard?.boardType === 'QNA';

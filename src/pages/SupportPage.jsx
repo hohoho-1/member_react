@@ -5,7 +5,7 @@ import BoardListPage from '../components/BoardListPage';
 import { SkeletonPage } from '../components/SkeletonLoader';
 
 export default function SupportPage() {
-  usePageTitle('고객지원');
+  usePageTitle('고객센터');
   const [boards, setBoards] = useState([]);
 
   useEffect(() => {
