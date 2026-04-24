@@ -242,10 +242,17 @@ export default function CourseListPage() {
                   }`}>
                   {likeMap[course.id]?.liked ? '❤️' : '🤍'}
                 </button>
-                {/* 하단: 수강 진도바 */}
+                {/* 하단: 수강 진도바 + % */}
                 {enroll && !enroll.completed && (
-                  <div className="absolute bottom-0 left-0 right-0 h-1.5 bg-black/30">
-                    <div className="h-full bg-blue-400 transition-all" style={{ width: `${enroll.progressRate}%` }} />
+                  <div className="absolute bottom-0 left-0 right-0">
+                    <div className="relative h-1.5 bg-black/30">
+                      <div className="h-full bg-blue-400 transition-all" style={{ width: `${enroll.progressRate}%` }} />
+                      {enroll.progressRate > 0 && (
+                        <span className="absolute right-1 -top-4 text-[9px] font-bold text-white drop-shadow">
+                          {enroll.progressRate}%
+                        </span>
+                      )}
+                    </div>
                   </div>
                 )}
               </>
@@ -281,9 +288,6 @@ export default function CourseListPage() {
                     {new Date(course.createdAt).toLocaleDateString()}
                   </span>
                   <div className="flex items-center gap-1.5">
-                    {enroll && !enroll.completed && (
-                      <span className="text-[10px] text-blue-500 font-semibold">{enroll.progressRate}%</span>
-                    )}
                     {course.reviewCount > 0 && (
                       <span className="text-[10px] text-yellow-500">⭐ {course.avgRating?.toFixed(1)}</span>
                     )}
