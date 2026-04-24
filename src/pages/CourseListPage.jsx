@@ -239,6 +239,16 @@ export default function CourseListPage() {
                 {course.location && (
                   <p className="text-[10px] sm:text-xs text-gray-400">📍 {course.location}</p>
                 )}
+                {course.maxStudents && (
+                  <p className={`text-[10px] sm:text-xs font-medium ${
+                    course.enrolledCount >= course.maxStudents
+                      ? 'text-red-400'
+                      : 'text-gray-400'
+                  }`}>
+                    👥 {course.enrolledCount ?? 0} / {course.maxStudents}명
+                    {course.enrolledCount >= course.maxStudents && ' (마감)'}
+                  </p>
+                )}
                 <div className="flex items-center justify-between pt-0.5">
                   <span className="text-[10px] text-gray-300 dark:text-gray-600">
                     {new Date(course.createdAt).toLocaleDateString()}

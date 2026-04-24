@@ -1,7 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { authFetch } from '../utils/authFetch';
-
 // YouTube URL → embed URL 변환
 const toEmbedUrl = (url) => {
   if (!url) return '';
@@ -25,6 +24,9 @@ export default function CourseLessonPage() {
   const [quizAnswers, setQuizAnswers] = useState({});
   const [quizResults, setQuizResults] = useState(null);
   const [completing, setCompleting] = useState(false);
+  const [bookmarked, setBookmarked] = useState(false);
+  const [bookmarking, setBookmarking] = useState(false);
+  const [showReviewPrompt, setShowReviewPrompt] = useState(false);
   const startTimeRef = useRef(Date.now());
 
   useEffect(() => {
@@ -32,6 +34,11 @@ export default function CourseLessonPage() {
     startTimeRef.current = Date.now();
     // eslint-disable-next-line
   }, [courseId, lessonId]);
+
+  useEffect(() => {
+    fetchBookmarkStatus();
+    // eslint-disable-next-line
+  }, [lessonId]);
 
   const fetchData = async () => {
     const [courseRes, enrollRes] = await Promise.all([
@@ -57,6 +64,25 @@ export default function CourseLessonPage() {
     }
   };
 
+  const fetchBookmarkStatus = async () => {
+    const res = await authFetch(`/api/courses/lessons/${lessonId}/bookmark`);
+    if (res.ok) {
+      const data = await res.json();
+      setBookmarked(data.bookmarked);
+    }
+  };
+
+  const handleToggleBookmark = async () => {
+    if (bookmarking) return;
+    setBookmarking(true);
+    const res = await authFetch(`/api/courses/lessons/${lessonId}/bookmark`, { method: 'POST' });
+    if (res.ok) {
+      const data = await res.json();
+      setBookmarked(data.bookmarked);
+    }
+    setBookmarking(false);
+  };
+
   const handleComplete = async () => {
     if (completing || completedIds.has(Number(lessonId))) return;
     setCompleting(true);
@@ -69,6 +95,11 @@ export default function CourseLessonPage() {
       const data = await res.json();
       setEnrollment(data);
       setCompletedIds(prev => new Set([...prev, Number(lessonId)]));
+      // 수료 대기 전환 시 리뷰 유도 모달
+      if (data.pendingApproval) {
+        setShowReviewPrompt(true);
+        return;
+      }
       // 다음 레슨으로 자동 이동
       const next = getNextLesson();
       if (next) {
@@ -127,8 +158,33 @@ export default function CourseLessonPage() {
   );
 
   return (
-    <div className="max-w-5xl mx-auto px-3 sm:px-4 py-4 sm:py-6 flex gap-6">
-      {/* 사이드바: 커리큘럼 (lg 이상에서만 표시) */}
+    <>
+    {/* 수료 대기 → 리뷰 유도 모달 */}
+    {showReviewPrompt && (
+      <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl w-full max-w-sm p-6 text-center">
+          <div className="text-5xl mb-3">🎉</div>
+          <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-2">모든 강의를 완료했어요!</h2>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mb-5">
+            관리자 수료 승인 후 수료증이 발급됩니다.<br/>
+            수강 후기를 남겨주시면 다른 수강생에게 큰 도움이 됩니다 😊
+          </p>
+          <div className="flex flex-col gap-2">
+            <button
+              onClick={() => { setShowReviewPrompt(false); navigate(`/courses/${courseId}#reviews`); }}
+              className="w-full py-2.5 bg-blue-500 hover:bg-blue-600 text-white rounded-lg text-sm font-medium transition-colors">
+              ✍️ 후기 작성하러 가기
+            </button>
+            <button
+              onClick={() => setShowReviewPrompt(false)}
+              className="w-full py-2 text-sm text-gray-400 hover:text-gray-600 transition-colors">
+              나중에 하기
+            </button>
+          </div>
+        </div>
+      </div>
+    )}
+    <div className="max-w-5xl mx-auto px-3 sm:px-4 py-4 sm:py-6 flex gap-6">      {/* 사이드바: 커리큘럼 (lg 이상에서만 표시) */}
       <aside className="w-64 shrink-0 hidden lg:block">
         <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 overflow-hidden sticky top-20">
           <div className="p-3 border-b border-gray-100 dark:border-gray-700">
@@ -199,7 +255,20 @@ export default function CourseLessonPage() {
           <div className="flex items-center gap-2 text-xs text-gray-400 dark:text-gray-500 mb-1">
             <span>{lesson.lessonType === 'VIDEO' ? '🎬 영상' : lesson.lessonType === 'QUIZ' ? '📝 퀴즈' : '📄 텍스트'}</span>
           </div>
-          <h1 className="text-xl font-bold text-gray-900 dark:text-white">{lesson.title}</h1>
+          <div className="flex items-start justify-between gap-3">
+            <h1 className="text-xl font-bold text-gray-900 dark:text-white">{lesson.title}</h1>
+            <button
+              onClick={handleToggleBookmark}
+              disabled={bookmarking}
+              title={bookmarked ? '북마크 해제' : '북마크 추가'}
+              className={`shrink-0 mt-0.5 px-3 py-1.5 rounded-lg text-sm border transition-colors ${
+                bookmarked
+                  ? 'bg-amber-50 dark:bg-amber-900/20 border-amber-300 dark:border-amber-600 text-amber-500'
+                  : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-600 text-gray-400 hover:border-amber-300 hover:text-amber-500'
+              }`}>
+              {bookmarked ? '🔖 북마크됨' : '🔖 북마크'}
+            </button>
+          </div>
         </div>
 
         {/* 영상 타입 */}
@@ -359,5 +428,6 @@ export default function CourseLessonPage() {
         </div>
       </main>
     </div>
+    </>
   );
 }

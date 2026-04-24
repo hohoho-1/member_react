@@ -18,7 +18,7 @@ export default function CourseAdminPage() {
     title: '', description: '', thumbnailUrl: '', isPublished: false,
     registrationStartDate: '', registrationEndDate: '',
     educationStartDate: '', educationEndDate: '',
-    location: '', instructor: ''
+    location: '', instructor: '', maxStudents: ''
   });
   const [saving, setSaving] = useState(false);
   const [thumbnailFile, setThumbnailFile] = useState(null);    // 선택된 파일 (아직 미업로드)
@@ -26,21 +26,28 @@ export default function CourseAdminPage() {
   const thumbnailInputRef = useRef(null);
 
   // 수강자 현황 모달
-  const [enrollModal, setEnrollModal] = useState(null); // { courseId, courseTitle }
+  const [enrollModal, setEnrollModal] = useState(null);
   const [enrollments, setEnrollments] = useState([]);
   const [enrollLoading, setEnrollLoading] = useState(false);
-  const [selectedEnrollment, setSelectedEnrollment] = useState(null); // 수강자 상세 모달
+  const [enrollTab, setEnrollTab] = useState('students'); // 'students' | 'waiting'
+  const [waitingList, setWaitingList] = useState([]);
+  const [selectedEnrollment, setSelectedEnrollment] = useState(null);
   const { confirmProps, confirm } = useConfirm();
 
   const openEnrollModal = async (course) => {
     setEnrollModal({ courseId: course.id, courseTitle: course.title });
     setSelectedEnrollment(null);
+    setEnrollTab('students');
     setEnrollLoading(true);
-    const res = await authFetch(`/api/courses/${course.id}/enrollments?size=100`);
-    if (res.ok) {
-      const data = await res.json();
+    const [enrollRes, waitingRes] = await Promise.all([
+      authFetch(`/api/courses/${course.id}/enrollments?size=100`),
+      authFetch(`/api/courses/${course.id}/waiting`),
+    ]);
+    if (enrollRes.ok) {
+      const data = await enrollRes.json();
       setEnrollments(data.content ?? []);
     }
+    if (waitingRes.ok) setWaitingList(await waitingRes.json());
     setEnrollLoading(false);
   };
 
@@ -102,6 +109,51 @@ export default function CourseAdminPage() {
   const isEnrollCompleted = (e) => e.completed || e.isCompleted;
   const isEnrollPending = (e) => e.pendingApproval;
 
+  const handleApproveWaiting = async (w) => {
+    const ok = await confirm({
+      title: '대기자 승인',
+      message: `'${w.username}'님을 수강 전환하시겠습니까?`,
+      confirmText: '승인',
+      confirmColor: 'blue',
+    });
+    if (!ok) return;
+    const res = await authFetch(`/api/courses/admin/waiting/${w.id}/approve`, { method: 'POST' });
+    if (res.ok) {
+      const data = await res.json();
+      const newEnroll = data.enrollment;
+      setWaitingList(prev => prev.filter(item => item.id !== w.id));
+      setEnrollments(prev => [newEnroll, ...prev]);
+      if (data.overCapacity) {
+        success(`${w.username}님이 수강 전환되었습니다. (정원 초과 상태)`);
+      } else {
+        success(`${w.username}님이 수강 전환되었습니다.`);
+      }
+    } else {
+      error('승인에 실패했습니다.');
+    }
+  };
+
+  const handleMoveToWaiting = async (enrollment) => {
+    const ok = await confirm({
+      title: '대기자로 전환',
+      message: `'${enrollment.username}'님을 수강 취소하고 대기자로 전환하시겠습니까?\n학습 진도 및 기록이 삭제됩니다.`,
+      confirmText: '전환',
+      confirmColor: 'amber',
+    });
+    if (!ok) return;
+    const res = await authFetch(`/api/courses/admin/enrollments/${enrollment.id}/move-to-waiting`, { method: 'POST' });
+    if (res.ok) {
+      const newWaiting = await res.json();
+      setEnrollments(prev => prev.filter(e => e.id !== enrollment.id));
+      setWaitingList(prev => [...prev, newWaiting].sort((a, b) => a.position - b.position));
+      if (selectedEnrollment?.id === enrollment.id) setSelectedEnrollment(null);
+      success(`${enrollment.username}님이 대기자로 전환되었습니다.`);
+    } else {
+      const err = await res.json().catch(() => ({}));
+      error(err.message || '전환에 실패했습니다.');
+    }
+  };
+
   const formatStudyTime = (seconds) => {
     const h = Math.floor(seconds / 3600);
     const m = Math.floor((seconds % 3600) / 60);
@@ -127,7 +179,7 @@ export default function CourseAdminPage() {
       title: '', description: '', thumbnailUrl: '', isPublished: false,
       registrationStartDate: '', registrationEndDate: '',
       educationStartDate: '', educationEndDate: '',
-      location: '', instructor: ''
+      location: '', instructor: '', maxStudents: ''
     });
     setThumbnailFile(null);
     setThumbnailPreview('');
@@ -146,7 +198,8 @@ export default function CourseAdminPage() {
       educationStartDate:    course.educationStartDate || '',
       educationEndDate:      course.educationEndDate || '',
       location:   course.location || '',
-      instructor: course.instructor || ''
+      instructor: course.instructor || '',
+      maxStudents: course.maxStudents ?? ''
     });
     setThumbnailFile(null);
     setThumbnailPreview(course.thumbnailUrl || '');
@@ -250,6 +303,7 @@ export default function CourseAdminPage() {
         educationEndDate:      course.educationEndDate      || null,
         location:   course.location   || '',
         instructor: course.instructor || '',
+      maxStudents: course.maxStudents ?? ''
       })
     });
     if (res.ok) { success(course.isPublished ? '강의를 비공개로 전환했습니다.' : '강의를 공개했습니다.'); fetchCourses(); }
@@ -357,7 +411,7 @@ export default function CourseAdminPage() {
 
       {/* 수강자 현황 모달 */}
       {enrollModal && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={() => { setEnrollModal(null); setSelectedEnrollment(null); }}>
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={() => { setEnrollModal(null); setSelectedEnrollment(null); setWaitingList([]); }}>
           <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl w-full max-w-2xl max-h-[85vh] flex flex-col" onClick={e => e.stopPropagation()}>
             <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100 dark:border-gray-700 shrink-0">
               <div>
@@ -373,76 +427,119 @@ export default function CourseAdminPage() {
                     </span>
                   )}
                 </span>
-                <button onClick={() => { setEnrollModal(null); setSelectedEnrollment(null); }}
+                <button onClick={() => { setEnrollModal(null); setSelectedEnrollment(null); setWaitingList([]); }}
                   className="text-gray-400 hover:text-gray-600 text-xl font-bold">×</button>
               </div>
+            </div>
+
+            {/* 수강자 / 대기자 탭 */}
+            <div className="flex border-b border-gray-100 dark:border-gray-700 shrink-0">
+              <button onClick={() => setEnrollTab('students')}
+                className={`flex-1 py-2.5 text-sm font-medium transition-colors ${enrollTab === 'students' ? 'text-blue-600 border-b-2 border-blue-500' : 'text-gray-400 hover:text-gray-600'}`}>
+                수강자 ({enrollments.length})
+              </button>
+              <button onClick={() => setEnrollTab('waiting')}
+                className={`flex-1 py-2.5 text-sm font-medium transition-colors ${enrollTab === 'waiting' ? 'text-amber-600 border-b-2 border-amber-500' : 'text-gray-400 hover:text-gray-600'}`}>
+                대기자 {waitingList.length > 0 && <span className="ml-1 px-1.5 py-0.5 bg-amber-100 text-amber-600 text-xs rounded-full">{waitingList.length}</span>}
+              </button>
             </div>
 
             <div className="overflow-y-auto flex-1">
               {enrollLoading ? (
                 <div className="text-center py-12 text-gray-400">불러오는 중...</div>
-              ) : enrollments.length === 0 ? (
-                <div className="text-center py-12 text-gray-400">
-                  <div className="text-3xl mb-2">📭</div>
-                  <p className="text-sm">수강자가 없습니다.</p>
-                </div>
+              ) : enrollTab === 'waiting' ? (
+                /* 대기자 탭 */
+                waitingList.length === 0 ? (
+                  <div className="text-center py-12 text-gray-400">
+                    <div className="text-3xl mb-2">⏳</div>
+                    <p className="text-sm">대기자가 없습니다.</p>
+                  </div>
+                ) : (
+                  <div className="divide-y divide-gray-100 dark:divide-gray-700">
+                    {waitingList.map(w => (
+                      <div key={w.id} className="px-5 py-3.5 flex items-center justify-between gap-3">
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs font-bold px-2 py-0.5 bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 rounded-full">
+                              {w.position}번
+                            </span>
+                            <span className="text-sm font-semibold text-gray-800 dark:text-white">{w.username}</span>
+                          </div>
+                          <p className="text-xs text-gray-400 mt-0.5">
+                            📅 {new Date(w.registeredAt).toLocaleDateString('ko-KR')} 신청
+                          </p>
+                        </div>
+                        <button onClick={() => handleApproveWaiting(w)}
+                          className="shrink-0 px-3 py-1.5 text-xs bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-colors font-medium">
+                          수강 전환
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )
               ) : (
-                <div className="divide-y divide-gray-100 dark:divide-gray-700">
-                  {enrollments.map(e => (
-                    <div key={e.id} className="px-5 py-3.5 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
-                      <div className="flex items-center justify-between gap-3">
-                        {/* 이름 + 신청일 */}
-                        <div className="min-w-0">
-                          <button
-                            onClick={() => setSelectedEnrollment(e)}
-                            className="text-sm font-semibold text-blue-600 dark:text-blue-400 hover:underline">
-                            {e.username || '-'}
-                          </button>
-                          <p className="text-xs text-gray-400 mt-0.5">{new Date(e.enrolledAt).toLocaleDateString('ko-KR')}</p>
-                        </div>
-                        {/* 상태 배지 */}
-                        <div className="shrink-0">
-                          {isEnrollCompleted(e)
-                            ? <span className="text-xs px-2 py-0.5 bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 rounded-full">🎓 수료완료</span>
-                            : isEnrollPending(e)
-                              ? <span className="text-xs px-2 py-0.5 bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 rounded-full">⏳ 수료대기</span>
-                              : e.progressRate > 0
-                                ? <span className="text-xs px-2 py-0.5 bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400 rounded-full">📖 수강중</span>
-                                : <span className="text-xs px-2 py-0.5 bg-gray-100 text-gray-500 dark:bg-gray-700 dark:text-gray-400 rounded-full">미시작</span>
-                          }
-                        </div>
-                        {/* 관리 버튼 */}
-                        <div className="flex gap-1 shrink-0">
-                          {isEnrollPending(e) && (
+                /* 수강자 탭 */
+                enrollments.length === 0 ? (
+                  <div className="text-center py-12 text-gray-400">
+                    <div className="text-3xl mb-2">📭</div>
+                    <p className="text-sm">수강자가 없습니다.</p>
+                  </div>
+                ) : (
+                  <div className="divide-y divide-gray-100 dark:divide-gray-700">
+                    {enrollments.map(e => (
+                      <div key={e.id} className="px-5 py-3.5 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+                        <div className="flex items-center justify-between gap-3">
+                          <div className="min-w-0">
                             <button
-                              onClick={() => handleAdminApproveCompletion(e)}
-                              className="text-xs px-2 py-1 bg-amber-50 hover:bg-amber-100 text-amber-600 dark:bg-amber-900/20 dark:text-amber-400 rounded-lg transition-colors font-medium">
-                              승인
+                              onClick={() => setSelectedEnrollment(e)}
+                              className="text-sm font-semibold text-blue-600 dark:text-blue-400 hover:underline">
+                              {e.username || '-'}
                             </button>
-                          )}
-                          <button
-                            onClick={() => handleAdminCancelEnrollment(e)}
-                            className="text-xs px-2 py-1 bg-red-50 hover:bg-red-100 text-red-500 dark:bg-red-900/20 dark:hover:bg-red-900/40 dark:text-red-400 rounded-lg transition-colors">
-                            삭제
-                          </button>
+                            <p className="text-xs text-gray-400 mt-0.5">{new Date(e.enrolledAt).toLocaleDateString('ko-KR')}</p>
+                          </div>
+                          <div className="shrink-0">
+                            {isEnrollCompleted(e)
+                              ? <span className="text-xs px-2 py-0.5 bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 rounded-full">🎓 수료완료</span>
+                              : isEnrollPending(e)
+                                ? <span className="text-xs px-2 py-0.5 bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 rounded-full">⏳ 수료대기</span>
+                                : e.progressRate > 0
+                                  ? <span className="text-xs px-2 py-0.5 bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400 rounded-full">📖 수강중</span>
+                                  : <span className="text-xs px-2 py-0.5 bg-gray-100 text-gray-500 dark:bg-gray-700 dark:text-gray-400 rounded-full">미시작</span>
+                            }
+                          </div>
+                          <div className="flex gap-1 shrink-0">
+                            {isEnrollPending(e) && (
+                              <button onClick={() => handleAdminApproveCompletion(e)}
+                                className="text-xs px-2 py-1 bg-amber-50 hover:bg-amber-100 text-amber-600 dark:bg-amber-900/20 dark:text-amber-400 rounded-lg transition-colors font-medium">
+                                승인
+                              </button>
+                            )}
+                            <button onClick={() => handleMoveToWaiting(e)}
+                              className="text-xs px-2 py-1 bg-orange-50 hover:bg-orange-100 text-orange-500 dark:bg-orange-900/20 dark:text-orange-400 rounded-lg transition-colors">
+                              대기전환
+                            </button>
+                            <button onClick={() => handleAdminCancelEnrollment(e)}
+                              className="text-xs px-2 py-1 bg-red-50 hover:bg-red-100 text-red-500 dark:bg-red-900/20 dark:hover:bg-red-900/40 dark:text-red-400 rounded-lg transition-colors">
+                              삭제
+                            </button>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2 mt-2">
+                          <div className="flex-1 bg-gray-200 dark:bg-gray-600 rounded-full h-1.5">
+                            <div className="bg-blue-500 h-1.5 rounded-full transition-all" style={{ width: `${e.progressRate}%` }} />
+                          </div>
+                          <span className="text-xs text-blue-600 dark:text-blue-400 font-semibold shrink-0 w-8 text-right">{e.progressRate}%</span>
+                          <span className="text-xs text-gray-400 shrink-0">{formatStudyTime(e.totalStudySeconds)}</span>
                         </div>
                       </div>
-                      {/* 진도율 바 */}
-                      <div className="flex items-center gap-2 mt-2">
-                        <div className="flex-1 bg-gray-200 dark:bg-gray-600 rounded-full h-1.5">
-                          <div className="bg-blue-500 h-1.5 rounded-full transition-all" style={{ width: `${e.progressRate}%` }} />
-                        </div>
-                        <span className="text-xs text-blue-600 dark:text-blue-400 font-semibold shrink-0 w-8 text-right">{e.progressRate}%</span>
-                        <span className="text-xs text-gray-400 shrink-0">{formatStudyTime(e.totalStudySeconds)}</span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
+                    ))}
+                  </div>
+                )
               )}
             </div>
 
             <div className="px-5 py-3 border-t border-gray-100 dark:border-gray-700 shrink-0">
-              <button onClick={() => { setEnrollModal(null); setSelectedEnrollment(null); }}
+              <button onClick={() => { setEnrollModal(null); setSelectedEnrollment(null); setWaitingList([]); }}
                 className="w-full py-2 border border-gray-200 dark:border-gray-600 text-gray-600 dark:text-gray-400 rounded-lg text-sm hover:bg-gray-50 transition-colors">
                 닫기
               </button>
@@ -521,6 +618,10 @@ export default function CourseAdminPage() {
                 <button onClick={() => setSelectedEnrollment(null)}
                   className="flex-1 py-2 border border-gray-200 dark:border-gray-600 text-gray-600 dark:text-gray-400 rounded-lg text-sm hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
                   닫기
+                </button>
+                <button onClick={() => handleMoveToWaiting(selectedEnrollment)}
+                  className="flex-1 py-2 bg-orange-400 hover:bg-orange-500 text-white rounded-lg text-sm font-medium transition-colors">
+                  대기 전환
                 </button>
                 <button onClick={() => handleAdminCancelEnrollment(selectedEnrollment)}
                   className="flex-1 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg text-sm font-medium transition-colors">
@@ -652,6 +753,16 @@ export default function CourseAdminPage() {
                     className="w-full px-3 py-2 border border-gray-200 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 dark:text-white focus:outline-none focus:border-blue-400"
                   />
                 </div>
+              </div>
+
+              {/* 최대 수강 인원 */}
+              <div>
+                <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">👥 최대 수강 인원 (미입력 시 무제한)</label>
+                <input type="number" min="1" value={form.maxStudents}
+                  onChange={e => setForm(f => ({ ...f, maxStudents: e.target.value }))}
+                  placeholder="예: 30 (정원 초과 시 대기 신청 가능)"
+                  className="w-full px-3 py-2 border border-gray-200 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 dark:text-white focus:outline-none focus:border-blue-400"
+                />
               </div>
 
               {/* 즉시 공개 */}

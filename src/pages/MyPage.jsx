@@ -7,14 +7,16 @@ import ConfirmModal from '../components/ConfirmModal';
 import { useConfirm } from '../hooks/useConfirm';
 
 const TABS = [
-  { key: 'posts',        label: '📝 내 글' },
-  { key: 'comments',     label: '💬 내 댓글' },
-  { key: 'bookmarks',    label: '🔖 북마크' },
-  { key: 'likes',        label: '❤️ 좋아요' },
-  { key: 'answers',      label: '📬 받은 답변' },
-  { key: 'courses',      label: '📚 수강 현황' },
-  { key: 'courseLikes',  label: '❤️ 강의 좋아요' },
-  { key: 'certificates', label: '🎓 수료증' },
+  { key: 'posts',          label: '📝 내 글' },
+  { key: 'comments',       label: '💬 내 댓글' },
+  { key: 'bookmarks',      label: '🔖 북마크' },
+  { key: 'likes',          label: '❤️ 좋아요' },
+  { key: 'answers',        label: '📬 받은 답변' },
+  { key: 'courses',        label: '📚 수강 현황' },
+  { key: 'courseLikes',    label: '❤️ 강의 좋아요' },
+  { key: 'lessonBookmarks',label: '🔖 레슨 북마크' },
+  { key: 'waiting',        label: '⏳ 대기 중' },
+  { key: 'certificates',   label: '🎓 수료증' },
 ];
 
 const getBadgeClass = (code) => {
@@ -87,6 +89,12 @@ export default function MyPage() {
   const [myCourseLikes, setMyCourseLikes] = useState([]);
   const [myCourseLikesLoading, setMyCourseLikesLoading] = useState(false);
 
+  const [lessonBookmarks, setLessonBookmarks] = useState([]);
+  const [lessonBookmarksLoading, setLessonBookmarksLoading] = useState(false);
+
+  const [myWaiting, setMyWaiting] = useState([]);
+  const [myWaitingLoading, setMyWaitingLoading] = useState(false);
+
   const [myAnswers, setMyAnswers] = useState([]);
   const [myAnswersPage, setMyAnswersPage] = useState(0);
   const [myAnswersTotalPages, setMyAnswersTotalPages] = useState(0);
@@ -117,7 +125,9 @@ export default function MyPage() {
     if (tab === 'likes')        loadMyLikes(0);
     if (tab === 'answers')      loadMyAnswers(0);
     if (tab === 'courses')      loadMyEnrollments();
-    if (tab === 'courseLikes')  loadMyCourseLikes();
+    if (tab === 'courseLikes')     loadMyCourseLikes();
+    if (tab === 'lessonBookmarks') loadLessonBookmarks();
+    if (tab === 'waiting')         loadMyWaiting();
     if (tab === 'certificates') { loadMyCertificates(); loadMyEnrollments(); }
   }, [tab]);
 
@@ -162,6 +172,18 @@ export default function MyPage() {
     const res = await authFetch('/api/courses/my/likes');
     if (res.ok) setMyCourseLikes(await res.json());
     setMyCourseLikesLoading(false);
+  };
+  const loadLessonBookmarks = async () => {
+    setLessonBookmarksLoading(true);
+    const res = await authFetch('/api/courses/my/lesson-bookmarks');
+    if (res.ok) setLessonBookmarks(await res.json());
+    setLessonBookmarksLoading(false);
+  };
+  const loadMyWaiting = async () => {
+    setMyWaitingLoading(true);
+    const res = await authFetch('/api/courses/my/waiting');
+    if (res.ok) setMyWaiting(await res.json());
+    setMyWaitingLoading(false);
   };
   const loadMyCertificates = async () => {
     setMyCertificatesLoading(true);
@@ -606,6 +628,76 @@ export default function MyPage() {
                           <span>👁️ {course.viewCount}</span>
                         </div>
                       </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* ── 레슨 북마크 ── */}
+        {tab === 'lessonBookmarks' && (
+          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow overflow-hidden">
+            {lessonBookmarksLoading ? <SkeletonMyPageList count={4} /> : lessonBookmarks.length === 0 ? (
+              <div className="text-center py-12 text-gray-400">
+                <p className="text-3xl mb-3">🔖</p><p>북마크한 레슨이 없습니다.</p>
+                <p className="text-xs text-gray-300 dark:text-gray-600 mt-1">레슨 학습 중 북마크 버튼을 눌러 저장하세요.</p>
+              </div>
+            ) : (
+              <div className="divide-y divide-gray-100 dark:divide-gray-700">
+                {lessonBookmarks.map(b => (
+                  <div key={b.id} className={rowCls} onClick={() => navigate(`/courses/${b.courseId}/lessons/${b.lessonId}`)}>
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="shrink-0 text-sm">
+                        {b.lessonType === 'VIDEO' ? '🎬' : b.lessonType === 'QUIZ' ? '📝' : '📄'}
+                      </span>
+                      <span className="text-sm font-medium text-gray-700 dark:text-gray-200 truncate">{b.lessonTitle}</span>
+                    </div>
+                    <div className="flex gap-3 text-xs text-gray-400 dark:text-gray-500">
+                      <span>📚 {b.courseTitle}</span>
+                      <span>📅 {new Date(b.createdAt).toLocaleDateString('ko-KR')}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* ── 대기 중 ── */}
+        {tab === 'waiting' && (
+          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow overflow-hidden">
+            {myWaitingLoading ? <SkeletonMyPageList count={3} /> : myWaiting.length === 0 ? (
+              <div className="text-center py-12 text-gray-400">
+                <p className="text-3xl mb-3">⏳</p><p>대기 중인 강의가 없습니다.</p>
+              </div>
+            ) : (
+              <div className="divide-y divide-gray-100 dark:divide-gray-700">
+                {myWaiting.map(w => (
+                  <div key={w.id} className="px-4 py-4 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+                    <div className="flex items-center justify-between gap-3">
+                      <div className="flex-1 min-w-0 cursor-pointer" onClick={() => navigate(`/courses/${w.courseId}`)}>
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className="px-2 py-0.5 bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 text-xs font-bold rounded-full">
+                            대기 {w.position}번
+                          </span>
+                          <span className="text-sm font-medium text-gray-700 dark:text-gray-200 truncate">강의 바로가기</span>
+                        </div>
+                        <div className="text-xs text-gray-400 dark:text-gray-500">
+                          📅 신청일 {new Date(w.registeredAt).toLocaleDateString('ko-KR')}
+                        </div>
+                      </div>
+                      <button
+                        onClick={async () => {
+                          const res = await authFetch(`/api/courses/${w.courseId}/waiting`, { method: 'DELETE' });
+                          if (res.ok) {
+                            setMyWaiting(prev => prev.filter(item => item.id !== w.id));
+                          }
+                        }}
+                        className="shrink-0 px-2.5 py-1 text-xs border border-red-200 text-red-400 rounded-lg hover:bg-red-50 dark:hover:bg-red-950 transition-colors">
+                        취소
+                      </button>
                     </div>
                   </div>
                 ))}

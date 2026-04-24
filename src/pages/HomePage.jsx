@@ -337,6 +337,11 @@ export default function HomePage() {
                           </div>
                         )}
                         {isRecruiting && <span className="inline-block text-[10px] px-1.5 py-0.5 bg-green-100 text-green-700 rounded-full font-medium">🟢 접수중</span>}
+                        {course.maxStudents && (
+                          <p className={`text-[10px] font-medium ${course.enrolledCount >= course.maxStudents ? 'text-red-400' : 'text-gray-400'}`}>
+                            👥 {course.enrolledCount ?? 0} / {course.maxStudents}명{course.enrolledCount >= course.maxStudents ? ' (마감)' : ''}
+                          </p>
+                        )}
                       </div>
                     </div>
 
@@ -364,6 +369,11 @@ export default function HomePage() {
                           </div>
                         )}
                         {isRecruiting && <span className="inline-block text-[10px] px-1.5 py-0.5 bg-green-100 text-green-700 rounded-full font-medium">🟢 접수중</span>}
+                        {course.maxStudents && (
+                          <p className={`text-[10px] font-medium ${course.enrolledCount >= course.maxStudents ? 'text-red-400' : 'text-gray-400'}`}>
+                            👥 {course.enrolledCount ?? 0} / {course.maxStudents}명{course.enrolledCount >= course.maxStudents ? ' (마감)' : ''}
+                          </p>
+                        )}
                       </div>
                     </div>
 

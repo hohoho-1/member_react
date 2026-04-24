@@ -550,6 +550,7 @@ export default function CourseDetailPage() {
   const [enrollment, setEnrollment] = useState(null);
   const [loading, setLoading] = useState(true);
   const [enrolling, setEnrolling] = useState(false);
+  const [waiting, setWaiting] = useState(null); // 대기 신청 상태
   const [openSections, setOpenSections] = useState({});
   const [liked, setLiked] = useState(false);
   const [likeCount, setLikeCount] = useState(0);
@@ -559,7 +560,10 @@ export default function CourseDetailPage() {
 
   useEffect(() => {
     fetchCourse();
-    if (isLoggedIn()) fetchMyEnrollment();
+    if (isLoggedIn()) {
+      fetchMyEnrollment();
+      fetchMyWaiting();
+    }
     // eslint-disable-next-line
   }, [courseId]);
 
@@ -586,6 +590,15 @@ export default function CourseDetailPage() {
     }
   };
 
+  const fetchMyWaiting = async () => {
+    const res = await authFetch('/api/courses/my/waiting');
+    if (res.ok) {
+      const data = await res.json();
+      const found = data.find(w => String(w.courseId) === String(courseId));
+      setWaiting(found || null);
+    }
+  };
+
   const handleEnroll = async () => {
     if (!isLoggedIn()) { navigate('/login'); return; }
     setEnrolling(true);
@@ -593,12 +606,51 @@ export default function CourseDetailPage() {
     if (res.ok) {
       const data = await res.json();
       setEnrollment(data);
+      setWaiting(null);
       success('수강 신청이 완료되었습니다!');
     } else {
       const err = await res.json().catch(() => ({}));
-      error(err.message || '수강 신청에 실패했습니다.');
+      if (err.message === 'FULL') {
+        // 정원 초과 → 대기 신청 유도
+        const ok = await confirm({
+          title: '정원 초과',
+          message: '현재 정원이 가득 찼습니다.\n대기자 명단에 등록하시겠습니까?',
+          confirmText: '대기 신청',
+          confirmColor: 'blue',
+        });
+        if (ok) await handleJoinWaiting();
+      } else {
+        error(err.message || '수강 신청에 실패했습니다.');
+      }
     }
     setEnrolling(false);
+  };
+
+  const handleJoinWaiting = async () => {
+    const res = await authFetch(`/api/courses/${courseId}/waiting`, { method: 'POST' });
+    if (res.ok) {
+      const data = await res.json();
+      setWaiting(data);
+      success(`대기 ${data.position}번으로 등록되었습니다.`);
+    } else {
+      const err = await res.json().catch(() => ({}));
+      error(err.message || '대기 신청에 실패했습니다.');
+    }
+  };
+
+  const handleCancelWaiting = async () => {
+    const ok = await confirm({
+      title: '대기 취소',
+      message: '대기 신청을 취소하시겠습니까?',
+      confirmText: '취소',
+      confirmColor: 'red',
+    });
+    if (!ok) return;
+    const res = await authFetch(`/api/courses/${courseId}/waiting`, { method: 'DELETE' });
+    if (res.ok) {
+      setWaiting(null);
+      success('대기 신청이 취소되었습니다.');
+    }
   };
 
   const handleDownload = async (fileId, originalName) => {
@@ -845,6 +897,15 @@ export default function CourseDetailPage() {
                     <span>{course.instructor}</span>
                   </div>
                 )}
+                {course.maxStudents && (
+                  <div className="flex gap-2">
+                    <span className="shrink-0 text-gray-400">👥 정원</span>
+                    <span className={course.enrolledCount >= course.maxStudents ? 'text-red-400 font-medium' : ''}>
+                      {course.enrolledCount ?? 0} / {course.maxStudents}명
+                      {course.enrolledCount >= course.maxStudents && ' (마감)'}
+                    </span>
+                  </div>
+                )}
               </div>
             )}
 
@@ -879,11 +940,17 @@ export default function CourseDetailPage() {
                   )}
                   <button
                     onClick={() => {
-                      const firstLesson = course.sections?.[0]?.lessons?.[0];
-                      if (firstLesson) navigate(`/courses/${courseId}/lessons/${firstLesson.id}`);
+                      // lastLessonId 있으면 이어보기, 없으면 첫 레슨
+                      const resumeLessonId = enrollment.lastLessonId;
+                      if (resumeLessonId) {
+                        navigate(`/courses/${courseId}/lessons/${resumeLessonId}`);
+                      } else {
+                        const firstLesson = course.sections?.[0]?.lessons?.[0];
+                        if (firstLesson) navigate(`/courses/${courseId}/lessons/${firstLesson.id}`);
+                      }
                     }}
                     className="w-full mt-2 py-2.5 bg-blue-500 hover:bg-blue-600 text-white rounded-lg text-sm font-medium transition-colors">
-                    {enrollment.progressRate > 0 ? '이어서 학습하기' : '학습 시작하기'}
+                    {enrollment.lastLessonId ? '▶ 이어서 학습하기' : '▶ 학습 시작하기'}
                   </button>
                   <button
                     onClick={handleCancelEnroll}
@@ -891,13 +958,37 @@ export default function CourseDetailPage() {
                     수강 취소
                   </button>
                 </div>
+              ) : waiting ? (
+                <div className="space-y-2">
+                  <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700 rounded-lg px-4 py-3">
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="text-amber-600 text-sm font-semibold">⏳ 대기 {waiting.position}번</span>
+                    </div>
+                    <p className="text-xs text-amber-500 dark:text-amber-400">정원이 생기면 자동 알림을 받습니다</p>
+                  </div>
+                  <button
+                    onClick={handleCancelWaiting}
+                    className="w-full py-2 text-xs text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors">
+                    대기 취소
+                  </button>
+                </div>
               ) : (
-                <button
-                  onClick={handleEnroll}
-                  disabled={enrolling}
-                  className="w-full py-2.5 bg-blue-500 hover:bg-blue-600 disabled:bg-blue-300 text-white rounded-lg text-sm font-medium transition-colors">
-                  {enrolling ? '신청 중...' : '수강 신청하기'}
-                </button>
+                <div className="space-y-2">
+                  <button
+                    onClick={handleEnroll}
+                    disabled={enrolling}
+                    className="w-full py-2.5 bg-blue-500 hover:bg-blue-600 disabled:bg-blue-300 text-white rounded-lg text-sm font-medium transition-colors">
+                    {enrolling ? '신청 중...' : '수강 신청하기'}
+                  </button>
+                  {course.maxStudents && (
+                    <p className="text-center text-xs text-gray-400">
+                      정원 {course.enrolledCount ?? 0} / {course.maxStudents}명
+                      {course.enrolledCount >= course.maxStudents && (
+                        <span className="ml-1.5 text-red-400 font-medium">정원 마감</span>
+                      )}
+                    </p>
+                  )}
+                </div>
               )}
 
               {isAdmin() && (
