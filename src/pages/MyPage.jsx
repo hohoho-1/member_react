@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { usePageTitle } from '../hooks/usePageTitle';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { authFetch, logout } from '../utils/authFetch';
 import { SkeletonMyPage, SkeletonMyPageList, SkeletonCourseGrid } from '../components/SkeletonLoader';
@@ -49,6 +50,7 @@ const Pagination = ({ page, totalPages, onPageChange }) => (
 const rowCls = 'px-6 py-4 hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer transition-colors';
 
 export default function MyPage() {
+  usePageTitle('마이페이지');
   const navigate = useNavigate();
   const { success, error } = useToastContext();
   const [searchParams] = useSearchParams();

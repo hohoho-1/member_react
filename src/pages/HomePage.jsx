@@ -1,10 +1,12 @@
 import { useEffect, useState } from 'react';
+import { usePageTitle } from '../hooks/usePageTitle';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { authFetch, getTokenPayload } from '../utils/authFetch';
 import UserAvatar from '../components/UserAvatar';
 import { SkeletonPage } from '../components/SkeletonLoader';
 
 export default function HomePage() {
+  usePageTitle(); // 홈은 "GetSmart"만
   const navigate = useNavigate();
   const location = useLocation();
   const payload = getTokenPayload();

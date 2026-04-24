@@ -1,4 +1,5 @@
 import { useEffect, useState, useRef } from 'react';
+import { usePageTitle } from '../hooks/usePageTitle';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { authFetch, getTokenPayload } from '../utils/authFetch';
 import UserAvatar from '../components/UserAvatar';
@@ -179,6 +180,7 @@ function DetailModal({ message, myId, onClose, onDelete, onReply }) {
 
 // ── 메인 페이지 ───────────────────────────────────────────────────────────────
 export default function MessagePage() {
+  usePageTitle('쪽지함');
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const tab = searchParams.get('tab') ?? 'inbox';

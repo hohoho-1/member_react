@@ -1,4 +1,5 @@
 import { useEffect, useState, useRef } from 'react';
+import { usePageTitle } from '../hooks/usePageTitle';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { authFetch } from '../utils/authFetch';
 
@@ -107,6 +108,7 @@ function SectionCard({ badge, badgeCls, title, count, onMore, showMore, children
 }
 
 export default function SearchPage() {
+  usePageTitle('검색');
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
 

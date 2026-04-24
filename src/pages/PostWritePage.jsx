@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
+import { usePageTitle } from '../hooks/usePageTitle';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { authFetch, getTokenPayload } from '../utils/authFetch';
 import { useDraft } from '../hooks/useDraft';
@@ -19,6 +20,7 @@ function formatSavedAt(iso) {
 }
 
 export default function PostWritePage() {
+  usePageTitle('글쓰기');
   const { id } = useParams();
   const navigate = useNavigate();
   const { error } = useToastContext();

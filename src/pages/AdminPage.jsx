@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { usePageTitle } from '../hooks/usePageTitle';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { authFetch, isAdmin, getTokenPayload } from '../utils/authFetch';
 import { SkeletonMyPageList, SkeletonPage } from '../components/SkeletonLoader';
@@ -565,6 +566,7 @@ const ACTION_LABELS = {
 };
 
 export default function AdminPage() {
+  usePageTitle('관리자');
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
 

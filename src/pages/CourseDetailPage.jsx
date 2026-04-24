@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { usePageTitle } from '../hooks/usePageTitle';
 import { useParams, useNavigate } from 'react-router-dom';
 import { authFetch, isLoggedIn, isAdmin } from '../utils/authFetch';
 import ConfirmModal from '../components/ConfirmModal';
@@ -573,6 +574,7 @@ export default function CourseDetailPage() {
     if (res.ok) {
       const data = await res.json();
       setCourse(data);
+      document.title = `${data.title} | GetSmart`;
       setLiked(data.likedByMe ?? false);
       setLikeCount(data.likeCount ?? 0);
     }

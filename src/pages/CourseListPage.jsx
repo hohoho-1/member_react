@@ -1,9 +1,11 @@
 import { useState, useEffect, useRef } from 'react';
+import { usePageTitle } from '../hooks/usePageTitle';
 import { useNavigate } from 'react-router-dom';
 import { authFetch, isAdmin, isLoggedIn } from '../utils/authFetch';
 import { SkeletonCourseGrid } from '../components/SkeletonLoader';
 
 export default function CourseListPage() {
+  usePageTitle('강의 목록');
   const navigate = useNavigate();
   const [courses, setCourses] = useState([]);
 

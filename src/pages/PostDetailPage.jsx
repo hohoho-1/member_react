@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { usePageTitle } from '../hooks/usePageTitle';
 import { useNavigate, useParams, useSearchParams, useLocation } from 'react-router-dom';
 import { authFetch, getTokenPayload } from '../utils/authFetch';
 import UserAvatar from '../components/UserAvatar';
@@ -269,6 +270,7 @@ export default function PostDetailPage() {
     if (res.ok) {
       const data = await res.json();
       setPost(data);
+      document.title = `${data.title} | GetSmart`;
       setLikeCount(data.likeCount ?? 0);
       setLikedByMe(data.likedByMe ?? false);
       setBookmarkedByMe(data.bookmarkedByMe ?? false);

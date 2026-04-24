@@ -1,8 +1,10 @@
 import { useState, useEffect } from 'react';
+import { usePageTitle } from '../hooks/usePageTitle';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { isLoggedIn } from '../utils/authFetch';
 
 export default function LoginPage() {
+  usePageTitle('로그인');
   const navigate = useNavigate();
   const location = useLocation();
 

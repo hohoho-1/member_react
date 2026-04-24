@@ -1,9 +1,11 @@
 import { useEffect, useState } from 'react';
+import { usePageTitle } from '../hooks/usePageTitle';
 import { authFetch } from '../utils/authFetch';
 import BoardListPage from '../components/BoardListPage';
 import { SkeletonPage } from '../components/SkeletonLoader';
 
 export default function SupportPage() {
+  usePageTitle('고객지원');
   const [boards, setBoards] = useState([]);
 
   useEffect(() => {

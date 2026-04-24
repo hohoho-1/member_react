@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { usePageTitle } from '../hooks/usePageTitle';
 import { Calendar, dateFnsLocalizer } from 'react-big-calendar';
 import { format, parse, startOfWeek, getDay } from 'date-fns';
 import { ko } from 'date-fns/locale';
@@ -296,6 +297,7 @@ function EventItem({ event }) {
 
 // ── 메인 페이지 ───────────────────────────────────────────────────────────
 export default function SchedulePage() {
+  usePageTitle('일정');
   const payload = getTokenPayload();
   const isAdmin = payload?.role === 'ROLE_ADMIN';
   const navigate = useNavigate();

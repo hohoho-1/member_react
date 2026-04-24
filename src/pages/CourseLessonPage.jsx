@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { usePageTitle } from '../hooks/usePageTitle';
 import { useParams, useNavigate } from 'react-router-dom';
 import { authFetch } from '../utils/authFetch';
 // YouTube URL → embed URL 변환

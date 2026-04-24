@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react';
+import { usePageTitle } from '../hooks/usePageTitle';
 import { useParams, useNavigate } from 'react-router-dom';
 
 export default function CertificateVerifyPage() {
+  usePageTitle('수료증 확인');
   const { code } = useParams();
   const navigate = useNavigate();
   const [cert, setCert] = useState(null);
