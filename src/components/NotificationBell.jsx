@@ -32,11 +32,32 @@ export default function NotificationBell({ showProfile = true }) {
   const [myProfile, setMyProfile] = useState(null);
   const dropdownRef = useRef(null);
 
-  // 읽지 않은 알림 수 폴링 (30초마다)
+  // SSE 실시간 알림 연결
   useEffect(() => {
-    fetchUnreadCount();
-    const interval = setInterval(fetchUnreadCount, 30000);
-    return () => clearInterval(interval);
+    const token = localStorage.getItem('accessToken');
+    if (!token) return;
+
+    const es = new EventSource(`http://localhost:8080/api/notifications/stream?token=${token}`);
+
+    es.addEventListener('notification', (e) => {
+      const newNotif = JSON.parse(e.data);
+      setNotifications(prev => [newNotif, ...prev]);
+      setUnreadCount(prev => prev + 1);
+    });
+
+    es.addEventListener('heartbeat', () => {});
+    es.onerror = () => { es.close(); };
+
+    return () => es.close();
+  }, []);
+
+  // 초기 unread count 로드
+  useEffect(() => {
+    const token = localStorage.getItem('accessToken');
+    if (!token) return;
+    authFetch('/api/notifications/unread-count').then(res => res.ok ? res.json() : null).then(data => {
+      if (data) setUnreadCount(data.count);
+    });
   }, []);
 
   // 내 프로필 정보 조회 (최초 1회)
@@ -59,14 +80,6 @@ export default function NotificationBell({ showProfile = true }) {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  const fetchUnreadCount = async () => {
-    const res = await authFetch('/api/notifications/unread-count');
-    if (res.ok) {
-      const data = await res.json();
-      setUnreadCount(data.count);
-    }
-  };
-
   const fetchNotifications = async () => {
     const res = await authFetch('/api/notifications');
     if (res.ok) {
@@ -87,7 +100,6 @@ export default function NotificationBell({ showProfile = true }) {
     }
     setOpen(false);
 
-    // 강의 관련 알림 (SYSTEM, COURSE_COMPLETE_PENDING) → courseId로 이동
     if (noti.courseId) {
       if (noti.type === 'COURSE_COMPLETE_PENDING') {
         navigate(`/courses/admin?courseId=${noti.courseId}`);
@@ -97,7 +109,6 @@ export default function NotificationBell({ showProfile = true }) {
       return;
     }
 
-    // 게시글 알림 → 게시판 경로로 이동
     if (noti.postId) {
       const returnTo = (() => {
         if (noti.boardGroup === 'COMMUNITY') return `/community?scope=${noti.boardCode}`;
@@ -119,7 +130,6 @@ export default function NotificationBell({ showProfile = true }) {
 
   return (
     <div className="flex items-center gap-2" ref={dropdownRef}>
-      {/* 프로필 이미지 + 이름 → 마이페이지 */}
       {showProfile && payload && (
         <button
           onClick={() => navigate('/mypage')}
@@ -135,7 +145,6 @@ export default function NotificationBell({ showProfile = true }) {
         </button>
       )}
 
-      {/* 벨 아이콘 버튼 */}
       <div className="relative">
         <button
           onClick={handleBellClick}
@@ -149,74 +158,69 @@ export default function NotificationBell({ showProfile = true }) {
           )}
         </button>
 
-        {/* 드롭다운 */}
         {open && (
           <div className="absolute right-0 top-11 w-80 bg-white rounded-2xl shadow-xl border border-gray-100 z-50 overflow-hidden">
-          {/* 헤더 */}
-          <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
-            <span className="font-bold text-gray-700 text-sm">🔔 알림</span>
-            {unreadCount > 0 && (
-              <button
-                onClick={handleMarkAllAsRead}
-                className="text-xs text-blue-500 hover:text-blue-700 font-medium transition-colors">
-                전체 읽음
-              </button>
-            )}
-          </div>
+            <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
+              <span className="font-bold text-gray-700 text-sm">🔔 알림</span>
+              {unreadCount > 0 && (
+                <button
+                  onClick={handleMarkAllAsRead}
+                  className="text-xs text-blue-500 hover:text-blue-700 font-medium transition-colors">
+                  전체 읽음
+                </button>
+              )}
+            </div>
 
-          {/* 알림 목록 */}
-          <div className="max-h-96 overflow-y-auto">
-            {notifications.length === 0 ? (
-              <div className="text-center py-10 text-gray-400 text-sm">알림이 없습니다.</div>
-            ) : (
-              <>
-                {/* 읽지 않은 알림 */}
-                {unreadList.length > 0 && (
-                  <>
-                    <div className="px-4 py-1.5 text-xs font-semibold text-gray-400 bg-gray-50">새 알림</div>
-                    {unreadList.map(noti => (
-                      <button
-                        key={noti.id}
-                        onClick={() => handleClickNotification(noti)}
-                        className="w-full text-left px-4 py-3 hover:bg-blue-50 transition-colors border-b border-gray-50 bg-blue-50/50">
-                        <div className="flex items-start gap-2">
-                          <span className="text-base shrink-0 mt-0.5">{TYPE_ICON[noti.type]}</span>
-                          <div className="flex-1 min-w-0">
-                            <p className="text-sm text-gray-700 leading-snug">{noti.message}</p>
-                            <p className="text-xs text-gray-400 mt-1">{timeAgo(noti.createdAt)}</p>
+            <div className="max-h-96 overflow-y-auto">
+              {notifications.length === 0 ? (
+                <div className="text-center py-10 text-gray-400 text-sm">알림이 없습니다.</div>
+              ) : (
+                <>
+                  {unreadList.length > 0 && (
+                    <>
+                      <div className="px-4 py-1.5 text-xs font-semibold text-gray-400 bg-gray-50">새 알림</div>
+                      {unreadList.map(noti => (
+                        <button
+                          key={noti.id}
+                          onClick={() => handleClickNotification(noti)}
+                          className="w-full text-left px-4 py-3 hover:bg-blue-50 transition-colors border-b border-gray-50 bg-blue-50/50">
+                          <div className="flex items-start gap-2">
+                            <span className="text-base shrink-0 mt-0.5">{TYPE_ICON[noti.type]}</span>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm text-gray-700 leading-snug">{noti.message}</p>
+                              <p className="text-xs text-gray-400 mt-1">{timeAgo(noti.createdAt)}</p>
+                            </div>
+                            <span className="w-2 h-2 bg-blue-500 rounded-full shrink-0 mt-1.5"></span>
                           </div>
-                          <span className="w-2 h-2 bg-blue-500 rounded-full shrink-0 mt-1.5"></span>
-                        </div>
-                      </button>
-                    ))}
-                  </>
-                )}
+                        </button>
+                      ))}
+                    </>
+                  )}
 
-                {/* 읽은 알림 */}
-                {readList.length > 0 && (
-                  <>
-                    <div className="px-4 py-1.5 text-xs font-semibold text-gray-400 bg-gray-50">읽은 알림</div>
-                    {readList.map(noti => (
-                      <button
-                        key={noti.id}
-                        onClick={() => handleClickNotification(noti)}
-                        className="w-full text-left px-4 py-3 hover:bg-gray-50 transition-colors border-b border-gray-50">
-                        <div className="flex items-start gap-2">
-                          <span className="text-base shrink-0 mt-0.5 opacity-50">{TYPE_ICON[noti.type]}</span>
-                          <div className="flex-1 min-w-0">
-                            <p className="text-sm text-gray-400 leading-snug">{noti.message}</p>
-                            <p className="text-xs text-gray-300 mt-1">{timeAgo(noti.createdAt)}</p>
+                  {readList.length > 0 && (
+                    <>
+                      <div className="px-4 py-1.5 text-xs font-semibold text-gray-400 bg-gray-50">읽은 알림</div>
+                      {readList.map(noti => (
+                        <button
+                          key={noti.id}
+                          onClick={() => handleClickNotification(noti)}
+                          className="w-full text-left px-4 py-3 hover:bg-gray-50 transition-colors border-b border-gray-50">
+                          <div className="flex items-start gap-2">
+                            <span className="text-base shrink-0 mt-0.5 opacity-50">{TYPE_ICON[noti.type]}</span>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm text-gray-400 leading-snug">{noti.message}</p>
+                              <p className="text-xs text-gray-300 mt-1">{timeAgo(noti.createdAt)}</p>
+                            </div>
                           </div>
-                        </div>
-                      </button>
-                    ))}
-                  </>
-                )}
-              </>
-            )}
+                        </button>
+                      ))}
+                    </>
+                  )}
+                </>
+              )}
+            </div>
           </div>
-        </div>
-      )}
+        )}
       </div>
     </div>
   );
