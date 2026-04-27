@@ -632,13 +632,6 @@ export default function CourseDetailPage() {
 
   const handleEnroll = async () => {
     if (!isLoggedIn()) { navigate('/login'); return; }
-
-    // 유료 강의면 결제 플로우로
-    if (course.price && course.price > 0) {
-      await handlePayAndEnroll();
-      return;
-    }
-
     setEnrolling(true);
     const res = await authFetch(`/api/courses/${courseId}/enroll`, { method: 'POST' });
     if (res.ok) {
@@ -967,7 +960,31 @@ export default function CourseDetailPage() {
             <div className="border-t border-gray-100 dark:border-gray-700 pt-3">
               {enrollment ? (
                 <div className="space-y-2">
-                  <div className="flex items-center justify-between text-sm">
+                  {/* 결제 대기 상태 */}
+                  {enrollment.paymentRequired ? (
+                    <div className="space-y-2">
+                      <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700 rounded-lg px-4 py-3">
+                        <p className="text-sm font-semibold text-amber-700 dark:text-amber-300 mb-1">💳 결제 대기 중</p>
+                        <p className="text-xs text-amber-600 dark:text-amber-400">마이페이지에서 결제를 완료해야 강의를 수강할 수 있습니다.</p>
+                        {enrollment.paymentDeadline && (
+                          <p className="text-xs text-amber-500 mt-1">
+                            마감: {new Date(enrollment.paymentDeadline).toLocaleString('ko-KR')}
+                          </p>
+                        )}
+                      </div>
+                      <button
+                        onClick={() => navigate('/mypage?tab=courses')}
+                        className="w-full py-2.5 bg-blue-500 hover:bg-blue-600 text-white rounded-lg text-sm font-medium transition-colors">
+                        💳 마이페이지에서 결제하기
+                      </button>
+                      <button
+                        onClick={handleCancelEnroll}
+                        className="w-full py-2 text-xs text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors">
+                        수강 취소
+                      </button>
+                    </div>
+                  ) : (
+                  <div className="space-y-2">
                     <span className="text-gray-600 dark:text-gray-400">진도율</span>
                     <span className="font-semibold text-blue-600">{enrollment.progressRate}%</span>
                   </div>
@@ -1011,6 +1028,8 @@ export default function CourseDetailPage() {
                     className="w-full py-2 text-xs text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors">
                     수강 취소
                   </button>
+                </div>
+                  )} {/* paymentRequired 분기 끝 */}
                 </div>
               ) : waiting ? (
                 <div className="space-y-2">

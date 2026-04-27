@@ -582,13 +582,24 @@ export default function MyPage() {
                         <div className="flex items-start justify-between gap-2 mb-1">
                           <div className="flex flex-wrap items-center gap-1.5 flex-1 min-w-0">
                             <span className="font-medium text-sm text-gray-800 dark:text-gray-200 truncate">{e.courseTitle}</span>
+                            {e.paymentRequired && (
+                              <span className="shrink-0 text-xs px-1.5 py-0.5 bg-amber-100 text-amber-700 rounded-full font-medium">💳 결제 필요</span>
+                            )}
                             {(e.completed || e.isCompleted) && <span className="shrink-0 text-xs px-1.5 py-0.5 bg-green-100 text-green-700 rounded-full font-medium">🎓 수료완료</span>}
                             {e.pendingApproval && <span className="shrink-0 text-xs px-1.5 py-0.5 bg-amber-100 text-amber-700 rounded-full font-medium">⏳ 수료대기</span>}
                           </div>
+                          <div className="flex gap-2">
+                          {e.paymentRequired && (
+                            <button onClick={ev => { ev.stopPropagation(); navigate(`/courses/${e.courseId}`); }}
+                              className="shrink-0 px-2 py-1 text-xs border border-blue-400 text-blue-500 bg-blue-50 dark:bg-blue-900/20 rounded-lg hover:bg-blue-100 transition-colors font-medium">
+                              💳 결제하기
+                            </button>
+                          )}
                           <button onClick={ev => { ev.stopPropagation(); setCancelTarget({ courseId: e.courseId, courseTitle: e.courseTitle }); }}
                             className="shrink-0 px-2 py-1 text-xs border border-red-200 text-red-400 rounded-lg hover:bg-red-50 dark:hover:bg-red-950 transition-colors">
                             취소
                           </button>
+                          </div>
                         </div>
                         <div className="flex items-center gap-2 mb-1">
                           <div className="flex-1 bg-gray-200 dark:bg-gray-600 rounded-full h-1.5">
