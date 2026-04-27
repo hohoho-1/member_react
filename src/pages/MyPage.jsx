@@ -788,8 +788,6 @@ export default function MyPage() {
             </div>
           );
         })()}
-      </div>
-    </div>
 
         {/* ── 결제 내역 ── */}
         {tab === 'payments' && (
