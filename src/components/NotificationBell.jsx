@@ -42,7 +42,10 @@ export default function NotificationBell({ showProfile = true }) {
     es.addEventListener('notification', (e) => {
       const newNotif = JSON.parse(e.data);
       setNotifications(prev => prev.some(n => n.id === newNotif.id) ? prev : [newNotif, ...prev]);
-      setUnreadCount(prev => prev + 1);
+      // 클로저 문제 방지 — 서버에서 직접 재조회
+      authFetch('/api/notifications/unread-count').then(res => res.ok ? res.json() : null).then(data => {
+        if (data) setUnreadCount(data.count);
+      });
     });
 
     es.addEventListener('heartbeat', () => {});
