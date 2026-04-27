@@ -857,11 +857,12 @@ export default function MyPage() {
                             className="shrink-0 px-2.5 py-1 text-xs border border-blue-200 text-blue-500 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-950 transition-colors">
                             강의 보기
                           </button>
-                          <button onClick={() => window.open(`https://dashboard.tosspayments.com/receipt/redirection?paymentKey=${p.paymentKey}&type=PAYMENT`, '_blank')}
+                          {p.receiptUrl && (
+                          <button onClick={() => window.open(p.receiptUrl, '_blank')}
                             className="shrink-0 px-2.5 py-1 text-xs border border-gray-200 text-gray-500 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
                             🧾 영수증
                           </button>
-                        </div>
+                          )}                        </div>
                       )}
                     </div>
                   </div>
