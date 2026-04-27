@@ -852,10 +852,16 @@ export default function MyPage() {
                         </div>
                       </div>
                       {p.status === 'DONE' && (
-                        <button onClick={() => navigate('/courses')}
-                          className="shrink-0 px-2.5 py-1 text-xs border border-blue-200 text-blue-500 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-950 transition-colors">
-                          강의 보기
-                        </button>
+                        <div className="flex gap-2">
+                          <button onClick={() => navigate('/courses')}
+                            className="shrink-0 px-2.5 py-1 text-xs border border-blue-200 text-blue-500 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-950 transition-colors">
+                            강의 보기
+                          </button>
+                          <button onClick={() => window.open(`https://dashboard.tosspayments.com/receipt/redirection?paymentKey=${p.paymentKey}&type=PAYMENT`, '_blank')}
+                            className="shrink-0 px-2.5 py-1 text-xs border border-gray-200 text-gray-500 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+                            🧾 영수증
+                          </button>
+                        </div>
                       )}
                     </div>
                   </div>
