@@ -602,8 +602,43 @@ export default function CourseDetailPage() {
     }
   };
 
+  const handlePayAndEnroll = async () => {
+    setEnrolling(true);
+    try {
+      // 1. orderId 사전 발급
+      const prepRes = await authFetch('/api/payments/prepare', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ courseId, amount: course.price, orderName: course.title }),
+      });
+      if (!prepRes.ok) { error('결제 준비에 실패했습니다.'); setEnrolling(false); return; }
+      const { orderId } = await prepRes.json();
+
+      // 2. 토스 결제창 호출
+      const tossPayments = window.TossPayments('test_ck_ma60RZblrqPGm9k1N4bbVwzYWBn1');
+      tossPayments.requestPayment('카드', {
+        amount: course.price,
+        orderId,
+        orderName: course.title,
+        customerName: '수강생',
+        successUrl: `${window.location.origin}/payment/success`,
+        failUrl: `${window.location.origin}/payment/fail`,
+      });
+    } catch (e) {
+      error('결제 중 오류가 발생했습니다.');
+      setEnrolling(false);
+    }
+  };
+
   const handleEnroll = async () => {
     if (!isLoggedIn()) { navigate('/login'); return; }
+
+    // 유료 강의인 경우 결제 먼저
+    if (course.price && course.price > 0) {
+      await handlePayAndEnroll();
+      return;
+    }
+
     setEnrolling(true);
     const res = await authFetch(`/api/courses/${courseId}/enroll`, { method: 'POST' });
     if (res.ok) {
@@ -1000,6 +1035,13 @@ export default function CourseDetailPage() {
                   : '수강 신청하기';
                 return (
                   <div className="space-y-2">
+                    {course.price > 0 && (
+                      <div className="text-center">
+                        <span className="text-2xl font-bold text-gray-800 dark:text-white">
+                          {course.price.toLocaleString()}원
+                        </span>
+                      </div>
+                    )}
                     <button
                       onClick={handleEnroll}
                       disabled={btnDisabled}

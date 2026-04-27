@@ -22,6 +22,8 @@ import CourseLessonPage from './pages/CourseLessonPage';
 import CourseAdminPage from './pages/CourseAdminPage';
 import CourseCurriculumPage from './pages/CourseCurriculumPage';
 import CertificateVerifyPage from './pages/CertificateVerifyPage';
+import PaymentSuccessPage from './pages/PaymentSuccessPage';
+import PaymentFailPage from './pages/PaymentFailPage';
 import MessagePage from './pages/MessagePage';
 import NotFoundPage from './pages/NotFoundPage';
 
@@ -54,6 +56,8 @@ function App() {
           <Route path="/courses/admin" element={<PrivateRoute><Layout><CourseAdminPage /></Layout></PrivateRoute>} />
           <Route path="/courses/admin/:courseId/curriculum" element={<PrivateRoute><Layout><CourseCurriculumPage /></Layout></PrivateRoute>} />
           <Route path="/courses/certificates/verify/:code" element={<Layout><CertificateVerifyPage /></Layout>} />
+          <Route path="/payment/success" element={<Layout><PaymentSuccessPage /></Layout>} />
+          <Route path="/payment/fail" element={<Layout><PaymentFailPage /></Layout>} />
 
           {/* 하위호환 리다이렉트 */}
           <Route path="/board" element={<Navigate to="/community?scope=FREE" replace />} />

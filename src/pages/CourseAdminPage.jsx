@@ -18,7 +18,7 @@ export default function CourseAdminPage() {
     title: '', description: '', thumbnailUrl: '', isPublished: false,
     registrationStartDate: '', registrationEndDate: '',
     educationStartDate: '', educationEndDate: '',
-    location: '', instructor: '', maxStudents: ''
+    location: '', instructor: '', maxStudents: '', price: ''
   });
   const [saving, setSaving] = useState(false);
   const [thumbnailFile, setThumbnailFile] = useState(null);    // 선택된 파일 (아직 미업로드)
@@ -179,7 +179,7 @@ export default function CourseAdminPage() {
       title: '', description: '', thumbnailUrl: '', isPublished: false,
       registrationStartDate: '', registrationEndDate: '',
       educationStartDate: '', educationEndDate: '',
-      location: '', instructor: '', maxStudents: ''
+      location: '', instructor: '', maxStudents: '', price: ''
     });
     setThumbnailFile(null);
     setThumbnailPreview('');
@@ -199,6 +199,7 @@ export default function CourseAdminPage() {
       educationEndDate:      course.educationEndDate || '',
       location:   course.location || '',
       instructor: course.instructor || '',
+      price: course.price || '',
       maxStudents: course.maxStudents ?? ''
     });
     setThumbnailFile(null);
@@ -303,6 +304,7 @@ export default function CourseAdminPage() {
         educationEndDate:      course.educationEndDate      || null,
         location:   course.location   || '',
         instructor: course.instructor || '',
+      price: course.price || '',
       maxStudents: course.maxStudents ?? ''
       })
     });
@@ -760,7 +762,12 @@ export default function CourseAdminPage() {
                 <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">👥 최대 수강 인원 (미입력 시 무제한)</label>
                 <input type="number" min="1" value={form.maxStudents}
                   onChange={e => setForm(f => ({ ...f, maxStudents: e.target.value }))}
-                  placeholder="예: 30 (정원 초과 시 대기 신청 가능)"
+                  placeholder="예: 30 (정원 초과 시 대기 신청 가능)" />
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mt-3 mb-1">수강료 (원, 비워두면 무료)</label>
+                <input type="number" min="0" value={form.price}
+                  onChange={e => setForm(f => ({ ...f, price: e.target.value }))}
+                  className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-400"
+                  placeholder="예: 50000 (50,000원)" />
                   className="w-full px-3 py-2 border border-gray-200 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 dark:text-white focus:outline-none focus:border-blue-400"
                 />
               </div>
