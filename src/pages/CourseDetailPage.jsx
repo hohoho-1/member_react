@@ -543,6 +543,52 @@ function QnaSection({ courseId, enrollment }) {
   );
 }
 
+// ── 수강 신청 버튼 섹션 ──────────────────────────────
+function EnrollSection({ course, enrolling, onEnroll }) {
+  const isFull = course.maxStudents && course.enrolledCount >= course.maxStudents;
+  const today = new Date().toISOString().slice(0, 10);
+  const regStart = course.registrationStartDate;
+  const regEnd = course.registrationEndDate;
+  const notInRegPeriod = regStart && regEnd
+    ? (today < regStart || today > regEnd)
+    : regStart ? today < regStart : false;
+  const btnDisabled = enrolling || isFull || notInRegPeriod;
+  const btnText = enrolling ? '신청 중...'
+    : isFull ? '정원 마감'
+    : notInRegPeriod ? '접수 기간이 아닙니다'
+    : '수강 신청하기';
+
+  return (
+    <div className="space-y-2">
+      {course.price > 0 ? (
+        <div className="text-center">
+          <span className="text-2xl font-bold text-gray-800 dark:text-white">
+            {course.price.toLocaleString()}원
+          </span>
+        </div>
+      ) : (
+        <div className="text-center">
+          <span className="text-xl font-bold text-green-600 dark:text-green-400">무료</span>
+        </div>
+      )}
+      <button
+        onClick={onEnroll}
+        disabled={btnDisabled}
+        className={`w-full py-2.5 text-white rounded-lg text-sm font-medium transition-colors ${
+          btnDisabled ? 'bg-gray-400 cursor-not-allowed' : 'bg-blue-500 hover:bg-blue-600'
+        }`}>
+        {btnText}
+      </button>
+      {course.maxStudents && (
+        <p className="text-center text-xs text-gray-400">
+          정원 {course.enrolledCount ?? 0} / {course.maxStudents}명
+          {isFull && <span className="ml-1.5 text-red-400 font-medium">정원 마감</span>}
+        </p>
+      )}
+    </div>
+  );
+}
+
 // ── 메인 페이지 ───────────────────────────────────────
 export default function CourseDetailPage() {
   const { courseId } = useParams();
@@ -1044,58 +1090,13 @@ export default function CourseDetailPage() {
                     대기 취소
                   </button>
                 </div>
-              ) : (() => {
-                const isFull = course.maxStudents && course.enrolledCount >= course.maxStudents;
-                const today = new Date().toISOString().slice(0, 10);
-                const regStart = course.registrationStartDate;
-                const regEnd = course.registrationEndDate;
-                const notInRegPeriod = regStart && regEnd
-                  ? (today < regStart || today > regEnd)
-                  : regStart
-                  ? today < regStart
-                  : false;
-                const btnDisabled = enrolling || isFull || notInRegPeriod;
-                const btnText = enrolling
-                  ? '신청 중...'
-                  : isFull
-                  ? '정원 마감'
-                  : notInRegPeriod
-                  ? '접수 기간이 아닙니다'
-                  : '수강 신청하기';
-                return (
-                  <div className="space-y-2">
-                    {course.price > 0 ? (
-                      <div className="text-center">
-                        <span className="text-2xl font-bold text-gray-800 dark:text-white">
-                          {course.price.toLocaleString()}원
-                        </span>
-                      </div>
-                    ) : (
-                      <div className="text-center">
-                        <span className="text-xl font-bold text-green-600 dark:text-green-400">무료</span>
-                      </div>
-                    )}
-                    <button
-                      onClick={handleEnroll}
-                      disabled={btnDisabled}
-                      className={`w-full py-2.5 text-white rounded-lg text-sm font-medium transition-colors ${
-                        btnDisabled
-                          ? 'bg-gray-400 cursor-not-allowed'
-                          : 'bg-blue-500 hover:bg-blue-600'
-                      }`}>
-                      {btnText}
-                    </button>
-                    {course.maxStudents && (
-                      <p className="text-center text-xs text-gray-400">
-                        정원 {course.enrolledCount ?? 0} / {course.maxStudents}명
-                        {isFull && (
-                          <span className="ml-1.5 text-red-400 font-medium">정원 마감</span>
-                        )}
-                      </p>
-                    )}
-                  </div>
-                );
-              })()}
+              ) : (
+                <EnrollSection
+                  course={course}
+                  enrolling={enrolling}
+                  onEnroll={handleEnroll}
+                />
+              )}
 
               {isAdmin() && (
                 <button
