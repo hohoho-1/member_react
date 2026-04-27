@@ -411,6 +411,14 @@ export default function CourseDetailPage() {
 
   const handleEnroll = async () => {
     if (!isLoggedIn()) { navigate('/login'); return; }
+
+    // 수강 신청 전 확인 모달
+    const confirmMsg = course.price > 0
+      ? `'${course.title}' 강의에 수강 신청하시겠습니까?\n\n수강료: ${course.price.toLocaleString()}원 (신청 후 마이페이지에서 결제)`
+      : `'${course.title}' 강의에 수강 신청하시겠습니까?`;
+    const ok = await confirm({ title: '수강 신청', message: confirmMsg, confirmText: '신청하기', confirmColor: 'blue' });
+    if (!ok) return;
+
     setEnrolling(true);
     const res = await authFetch(`/api/courses/${courseId}/enroll`, { method: 'POST' });
     if (res.ok) {
