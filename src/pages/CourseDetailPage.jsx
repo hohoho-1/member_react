@@ -984,7 +984,8 @@ export default function CourseDetailPage() {
                       </button>
                     </div>
                   ) : (
-                  <div className="space-y-2">
+                  <>
+                  <div className="flex items-center justify-between text-sm">
                     <span className="text-gray-600 dark:text-gray-400">진도율</span>
                     <span className="font-semibold text-blue-600">{enrollment.progressRate}%</span>
                   </div>
@@ -1011,7 +1012,6 @@ export default function CourseDetailPage() {
                   )}
                   <button
                     onClick={() => {
-                      // lastLessonId 있으면 이어보기, 없으면 첫 레슨
                       const resumeLessonId = enrollment.lastLessonId;
                       if (resumeLessonId) {
                         navigate(`/courses/${courseId}/lessons/${resumeLessonId}`);
@@ -1028,9 +1028,8 @@ export default function CourseDetailPage() {
                     className="w-full py-2 text-xs text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors">
                     수강 취소
                   </button>
-                </div>
-                  )} {/* paymentRequired 분기 끝 */}
-                </div>
+                  </>
+                  )}
               ) : waiting ? (
                 <div className="space-y-2">
                   <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700 rounded-lg px-4 py-3">
