@@ -41,7 +41,7 @@ export default function NotificationBell({ showProfile = true }) {
 
     es.addEventListener('notification', (e) => {
       const newNotif = JSON.parse(e.data);
-      setNotifications(prev => [newNotif, ...prev]);
+      setNotifications(prev => prev.some(n => n.id === newNotif.id) ? prev : [newNotif, ...prev]);
       setUnreadCount(prev => prev + 1);
     });
 
@@ -83,7 +83,9 @@ export default function NotificationBell({ showProfile = true }) {
   const fetchNotifications = async () => {
     const res = await authFetch('/api/notifications');
     if (res.ok) {
-      setNotifications(await res.json());
+      const data = await res.json();
+      setNotifications(data);
+      setUnreadCount(data.filter(n => !n.read).length);
     }
   };
 
