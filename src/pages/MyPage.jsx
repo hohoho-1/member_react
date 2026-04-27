@@ -858,7 +858,7 @@ export default function MyPage() {
                             p.status === 'CANCELED' ? 'bg-gray-100 text-gray-500' :
                                                       'bg-yellow-100 text-yellow-700'
                           }`}>
-                            {p.status === 'DONE' ? '✅ 결제완료' : p.status === 'FAILED' ? '❌ 실패' : p.status === 'CANCELED' ? '취소' : '⏳ 대기'}
+                            {p.status === 'DONE' ? '✅ 결제완료' : p.status === 'FAILED' ? '❌ 실패' : p.status === 'CANCELED' ? '🔄 취소됨' : '⏳ 대기'}
                           </span>
                           <span className="text-sm font-medium text-gray-800 dark:text-gray-200 truncate">{p.orderName}</span>
                         </div>
@@ -885,6 +885,12 @@ export default function MyPage() {
                             결제 취소
                           </button>
                         </div>
+                      )}
+                      {p.status === 'CANCELED' && p.cancelReceiptUrl && (
+                        <button onClick={() => window.open(p.cancelReceiptUrl, '_blank')}
+                          className="shrink-0 px-2.5 py-1 text-xs border border-gray-200 text-gray-400 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+                          🧾 취소영수증
+                        </button>
                       )}
                     </div>
                   </div>
