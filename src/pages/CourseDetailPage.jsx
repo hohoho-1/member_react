@@ -940,6 +940,17 @@ export default function CourseDetailPage() {
                     <span>{course.instructor}</span>
                   </div>
                 )}
+                {course.price > 0 ? (
+                  <div className="flex gap-2">
+                    <span className="shrink-0 text-gray-400">💳 수강료</span>
+                    <span className="font-semibold text-blue-600 dark:text-blue-400">{course.price.toLocaleString()}원</span>
+                  </div>
+                ) : (
+                  <div className="flex gap-2">
+                    <span className="shrink-0 text-gray-400">💳 수강료</span>
+                    <span className="font-semibold text-green-600 dark:text-green-400">무료</span>
+                  </div>
+                )}
                 {course.maxStudents && (
                   <div className="flex gap-2">
                     <span className="shrink-0 text-gray-400">👥 정원</span>
@@ -1035,11 +1046,15 @@ export default function CourseDetailPage() {
                   : '수강 신청하기';
                 return (
                   <div className="space-y-2">
-                    {course.price > 0 && (
+                    {course.price > 0 ? (
                       <div className="text-center">
                         <span className="text-2xl font-bold text-gray-800 dark:text-white">
                           {course.price.toLocaleString()}원
                         </span>
+                      </div>
+                    ) : (
+                      <div className="text-center">
+                        <span className="text-xl font-bold text-green-600 dark:text-green-400">무료</span>
                       </div>
                     )}
                     <button
