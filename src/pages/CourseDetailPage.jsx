@@ -633,7 +633,7 @@ export default function CourseDetailPage() {
   const handleEnroll = async () => {
     if (!isLoggedIn()) { navigate('/login'); return; }
 
-    // 유료 강의인 경우 결제 먼저
+    // 유료 강의면 결제 플로우로
     if (course.price && course.price > 0) {
       await handlePayAndEnroll();
       return;
