@@ -115,6 +115,7 @@ export default function MyPage() {
   const [myCertificatesLoading, setMyCertificatesLoading] = useState(false);
   const [myPayments, setMyPayments] = useState([]);
   const [myPaymentsLoading, setMyPaymentsLoading] = useState(false);
+  const [paymentCancelTarget, setPaymentCancelTarget] = useState(null);
 
   useEffect(() => {
     authFetch('/api/users/me').then(res => res.ok ? res.json() : null).then(data => {
@@ -207,8 +208,24 @@ export default function MyPage() {
     setMyPaymentsLoading(false);
   };
 
-  const handleCancelEnrollment = async (courseId, courseTitle) => {
-    const res = await authFetch(`/api/courses/${courseId}/enroll`, { method: 'DELETE' });
+  const handleCancelPayment = async () => {
+    if (!paymentCancelTarget?.paymentKey) return;
+    const res = await authFetch(`/api/payments/${paymentCancelTarget.paymentKey}/cancel`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ cancelReason: '고객 요청' }),
+    });
+    if (res.ok) {
+      setMyPayments(prev => prev.map(p => p.paymentKey === paymentCancelTarget.paymentKey ? { ...p, status: 'CANCELED' } : p));
+      success('결제가 취소되었습니다.');
+    } else {
+      const d = await res.json().catch(() => ({}));
+      error(d.message || '결제 취소에 실패했습니다.');
+    }
+    setPaymentCancelTarget(null);
+  };
+
+  const handleCancelEnrollment = async (courseId, courseTitle) => {    const res = await authFetch(`/api/courses/${courseId}/enroll`, { method: 'DELETE' });
     if (res.ok) setMyEnrollments(prev => prev.filter(e => e.courseId !== courseId));
     else error('수강 취소에 실패했습니다.');
     setCancelTarget(null);
@@ -862,7 +879,12 @@ export default function MyPage() {
                             className="shrink-0 px-2.5 py-1 text-xs border border-gray-200 text-gray-500 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
                             🧾 영수증
                           </button>
-                          )}                        </div>
+                          )}
+                          <button onClick={() => setPaymentCancelTarget(p)}
+                            className="shrink-0 px-2.5 py-1 text-xs border border-red-200 text-red-400 rounded-lg hover:bg-red-50 dark:hover:bg-red-950 transition-colors">
+                            결제 취소
+                          </button>
+                        </div>
                       )}
                     </div>
                   </div>
@@ -884,6 +906,15 @@ export default function MyPage() {
       confirmColor="red"
       onConfirm={() => handleCancelEnrollment(cancelTarget.courseId, cancelTarget.courseTitle)}
       onCancel={() => setCancelTarget(null)}
+    />
+    <ConfirmModal
+      isOpen={!!paymentCancelTarget}
+      title="결제 취소"
+      message={paymentCancelTarget ? `'${paymentCancelTarget.orderName}' 결제를 취소하시겠습니까?\n수강 신청도 함께 취소됩니다.` : ''}
+      confirmText="결제 취소"
+      confirmColor="red"
+      onConfirm={handleCancelPayment}
+      onCancel={() => setPaymentCancelTarget(null)}
     />
     </>
   );
