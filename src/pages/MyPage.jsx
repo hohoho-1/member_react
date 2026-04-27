@@ -18,6 +18,7 @@ const TABS = [
   { key: 'lessonBookmarks',label: '🔖 레슨 북마크' },
   { key: 'waiting',        label: '⏳ 대기 중' },
   { key: 'certificates',   label: '🎓 수료증' },
+  { key: 'payments',       label: '💳 결제 내역' },
 ];
 
 const getBadgeClass = (code) => {
@@ -112,6 +113,8 @@ export default function MyPage() {
   const { confirmProps, confirm } = useConfirm();
   const [myCertificates, setMyCertificates] = useState([]);
   const [myCertificatesLoading, setMyCertificatesLoading] = useState(false);
+  const [myPayments, setMyPayments] = useState([]);
+  const [myPaymentsLoading, setMyPaymentsLoading] = useState(false);
 
   useEffect(() => {
     authFetch('/api/users/me').then(res => res.ok ? res.json() : null).then(data => {
@@ -134,6 +137,7 @@ export default function MyPage() {
     if (tab === 'lessonBookmarks') loadLessonBookmarks();
     if (tab === 'waiting')         loadMyWaiting();
     if (tab === 'certificates') { loadMyCertificates(); loadMyEnrollments(); }
+    if (tab === 'payments')     loadMyPayments();
   }, [tab]);
 
   const loadMyPosts = async (page) => {
@@ -195,6 +199,12 @@ export default function MyPage() {
     const res = await authFetch('/api/courses/my/certificates');
     if (res.ok) setMyCertificates(await res.json());
     setMyCertificatesLoading(false);
+  };
+  const loadMyPayments = async () => {
+    setMyPaymentsLoading(true);
+    const res = await authFetch('/api/payments/my');
+    if (res.ok) setMyPayments(await res.json());
+    setMyPaymentsLoading(false);
   };
 
   const handleCancelEnrollment = async (courseId, courseTitle) => {
@@ -778,6 +788,54 @@ export default function MyPage() {
             </div>
           );
         })()}
+      </div>
+    </div>
+
+        {/* ── 결제 내역 ── */}
+        {tab === 'payments' && (
+          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow overflow-hidden">
+            {myPaymentsLoading ? <SkeletonMyPageList count={3} /> : myPayments.length === 0 ? (
+              <div className="text-center py-12 text-gray-400">
+                <p className="text-3xl mb-3">💳</p>
+                <p>결제 내역이 없습니다.</p>
+              </div>
+            ) : (
+              <div className="divide-y divide-gray-100 dark:divide-gray-700">
+                {myPayments.map(p => (
+                  <div key={p.id} className="px-5 py-4 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+                    <div className="flex items-center justify-between gap-3">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className={`shrink-0 px-2 py-0.5 rounded-full text-xs font-bold ${
+                            p.status === 'DONE'     ? 'bg-green-100 text-green-700' :
+                            p.status === 'FAILED'   ? 'bg-red-100 text-red-500' :
+                            p.status === 'CANCELED' ? 'bg-gray-100 text-gray-500' :
+                                                      'bg-yellow-100 text-yellow-700'
+                          }`}>
+                            {p.status === 'DONE' ? '✅ 결제완료' : p.status === 'FAILED' ? '❌ 실패' : p.status === 'CANCELED' ? '취소' : '⏳ 대기'}
+                          </span>
+                          <span className="text-sm font-medium text-gray-800 dark:text-gray-200 truncate">{p.orderName}</span>
+                        </div>
+                        <div className="flex flex-wrap gap-x-3 gap-y-0.5 text-xs text-gray-400 dark:text-gray-500">
+                          <span>💰 {p.amount?.toLocaleString()}원</span>
+                          <span>📅 {new Date(p.createdAt).toLocaleString('ko-KR')}</span>
+                          <span className="font-mono text-gray-300 dark:text-gray-600 hidden sm:inline">{p.orderId}</span>
+                        </div>
+                      </div>
+                      {p.status === 'DONE' && (
+                        <button onClick={() => navigate('/courses')}
+                          className="shrink-0 px-2.5 py-1 text-xs border border-blue-200 text-blue-500 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-950 transition-colors">
+                          강의 보기
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
       </div>
     </div>
 
