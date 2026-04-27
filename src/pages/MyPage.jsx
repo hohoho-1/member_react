@@ -216,7 +216,8 @@ export default function MyPage() {
       body: JSON.stringify({ cancelReason: '고객 요청' }),
     });
     if (res.ok) {
-      setMyPayments(prev => prev.map(p => p.paymentKey === paymentCancelTarget.paymentKey ? { ...p, status: 'CANCELED' } : p));
+      // 취소 후 서버에서 다시 조회 (cancelReceiptUrl 등 최신 데이터 반영)
+      await loadMyPayments();
       success('결제가 취소되었습니다.');
     } else {
       const d = await res.json().catch(() => ({}));
