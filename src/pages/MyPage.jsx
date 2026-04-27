@@ -590,7 +590,27 @@ export default function MyPage() {
                           </div>
                           <div className="flex gap-2">
                           {e.paymentRequired && (
-                            <button onClick={ev => { ev.stopPropagation(); navigate(`/courses/${e.courseId}`); }}
+                            <button onClick={async ev => {
+                              ev.stopPropagation();
+                              try {
+                                const prepRes = await authFetch('/api/payments/prepare', {
+                                  method: 'POST',
+                                  headers: { 'Content-Type': 'application/json' },
+                                  body: JSON.stringify({ courseId: e.courseId, amount: e.coursePrice, orderName: e.courseTitle }),
+                                });
+                                if (!prepRes.ok) { error('결제 준비에 실패했습니다.'); return; }
+                                const { orderId } = await prepRes.json();
+                                const tossPayments = window.TossPayments('test_ck_ma60RZblrqPGm9k1N4bbVwzYWBn1');
+                                tossPayments.requestPayment('카드', {
+                                  amount: e.coursePrice,
+                                  orderId,
+                                  orderName: e.courseTitle,
+                                  customerName: '수강생',
+                                  successUrl: `${window.location.origin}/payment/success`,
+                                  failUrl: `${window.location.origin}/payment/fail`,
+                                });
+                              } catch { error('결제 중 오류가 발생했습니다.'); }
+                            }}
                               className="shrink-0 px-2 py-1 text-xs border border-blue-400 text-blue-500 bg-blue-50 dark:bg-blue-900/20 rounded-lg hover:bg-blue-100 transition-colors font-medium">
                               💳 결제하기
                             </button>
